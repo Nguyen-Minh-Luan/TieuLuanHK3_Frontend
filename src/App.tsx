@@ -1,8 +1,9 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Login } from "./features/Login";
 import Home from "./features/Home";
-import Transaction from "./features/transaction/Transaction";
-
+import TransactionPage from "./features/transaction/TransactionPage";
+import TransactionDetail from "./features/transactionDetail/TransactionDetailPage";
+import TransactionDetailPage from "./features/transactionDetail/TransactionDetailPage";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -18,7 +19,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/transaction",
-    element: <Transaction />,
+    element: <TransactionPage />,
+  },
+  {
+    path: "/transactionDetail",
+    element: <TransactionDetailPage />,
   },
 ]);
 
