@@ -1,7 +1,35 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
+import { loginAsync, clearError } from "../store/slices/authSlice";
+
 export function Login() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { status, error, token } = useAppSelector((state) => state.auth);
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Nếu đã có token (đã login) → redirect thẳng về /home
+  useEffect(() => {
+    if (token) navigate("/home", { replace: true });
+  }, [token, navigate]);
+
+  // Xóa lỗi cũ khi user bắt đầu gõ lại
+  useEffect(() => {
+    if (error) dispatch(clearError());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, password]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await dispatch(loginAsync({ username, password }));
+    // Khi fulfilled → token vào store → useEffect trên tự redirect
+  };
+
   return (
     <div className="relative min-h-screen z-10 font-sans overflow-hidden">
       {/* Background Layers */}
@@ -9,8 +37,6 @@ export function Login() {
         <div className="absolute inset-0 architectural-grid" />
         <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[80%] bg-primary/5 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[60%] bg-secondary/5 rounded-full blur-[100px]" />
-
-        {/* Background Decorative Image */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-multiply"></div>
       </div>
 
@@ -57,29 +83,34 @@ export function Login() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Username field */}
             <div className="space-y-2">
               <label
                 className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1"
-                htmlFor="email"
+                htmlFor="username"
               >
-                Corporate Email
+                Username
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors">
                   <span className="material-symbols-outlined text-outline group-focus-within:text-primary text-xl">
-                    alternate_email
+                    person
                   </span>
                 </div>
                 <input
-                  id="email"
-                  type="email"
-                  placeholder="username@ledger.pro"
+                  id="username"
+                  type="text"
+                  placeholder="Tên đăng nhập"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
                   className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-[#191c1e] placeholder:text-outline/50 focus:ring-2 focus:ring-primary/10 transition-all outline-none"
                 />
               </div>
             </div>
 
+            {/* Password field */}
             <div className="space-y-2">
               <label
                 className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1"
@@ -97,6 +128,9 @@ export function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-12 text-[#191c1e] placeholder:text-outline/50 focus:ring-2 focus:ring-primary/10 transition-all outline-none font-mono"
                 />
                 <button
@@ -119,9 +153,53 @@ export function Login() {
               </div>
             </div>
 
-            <button className="w-full precise-gradient text-white font-display font-bold py-4 rounded-xl shadow-xl hover:shadow-2xl hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center space-x-3 mt-4">
-              <span>Sign In</span>
-              <span className="material-symbols-outlined text-xl">login</span>
+            {/* Server error message */}
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2 px-3 border border-red-100"
+              >
+                {error}
+              </motion.p>
+            )}
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="w-full precise-gradient text-white font-display font-bold py-4 rounded-xl shadow-xl hover:shadow-2xl hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center space-x-3 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              {status === "loading" ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  <span>Đang đăng nhập...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <span className="material-symbols-outlined text-xl">login</span>
+                </>
+              )}
             </button>
           </form>
 

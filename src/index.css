@@ -5,7 +5,7 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Manrope", sans-serif;
-  
+
   --color-surface: #f8f9fb;
   --color-surface-container-low: #f2f4f6;
   --color-surface-container-lowest: #ffffff;
@@ -15,7 +15,7 @@
   --color-secondary: #006398;
   --color-outline: #737783;
   --color-outline-variant: rgba(115, 119, 131, 0.15);
-   --color-brand-primary: #003178;
+  --color-brand-primary: #003178;
   --color-brand-secondary: #006398;
   --color-brand-background: #f8f9fb;
   --color-brand-surface: #ffffff;
@@ -23,7 +23,19 @@
   --color-brand-text-muted: #434652;
   --color-brand-error: #ba1a1a;
   --color-brand-success: #006398;
+  --color-surface-dim: #d8dadc;
+  --color-outline-variant-custom: #c3c6d4;
+  --color-tertiary-custom: #602100;
+  --color-outline-custom: #737783;
+  --color-primary-container-custom: #0d47a1;
+  --color-on-primary-custom: #ffffff;
+  --color-on-surface-custom: #191c1e;
+  --color-on-surface-variant-custom: #434652;
+  --color-secondary-custom: #006398;
+  --color-secondary-fixed-custom: #cde5ff;
+  --color-on-secondary-fixed-custom: #001d32;
 }
+
 
 @layer base {
   body {
@@ -36,9 +48,11 @@
   background-size: 32px 32px;
   opacity: 0.05;
 }
+
 .primary-gradient {
   background: linear-gradient(135deg, #003178 0%, #0d47a1 100%);
 }
+
 .monolith-shadow {
   box-shadow: 0 12px 40px rgba(0, 25, 69, 0.06);
 }
@@ -49,4 +63,19 @@
 
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c3c6d4;
+    border-radius: 10px;
+  }
 }
