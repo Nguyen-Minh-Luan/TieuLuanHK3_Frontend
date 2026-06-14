@@ -1,20 +1,13 @@
-import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import { useAppSelector } from "../hooks/useAppDispatch";
 
-interface ProtectedRouteProps {
-    /** Truyền `false` khi chưa đăng nhập để redirect về /login */
-    isAuthenticated: boolean;
-    redirectTo?: string;
-}
+const ProtectedRoute = () => {
+  const token = useAppSelector((state) => state.auth.token);
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-    isAuthenticated,
-    redirectTo = "/login",
-}) => {
-    if (!isAuthenticated) {
-        return <Navigate to={redirectTo} replace />;
-    }
-    return <Outlet />;
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
 };
 
 export default ProtectedRoute;
