@@ -1,50 +1,75 @@
-import { ShoppingCart, Banknote, Plane, Utensils, Filter } from "lucide-react";
+import { ShoppingCart, Banknote, Plane, Utensils, Landmark, Filter } from "lucide-react";
 import { cn } from "../lib/utils";
 
-const transactions = [
-  {
-    id: 1,
-    date: "Oct 24, 2023",
-    description: "Apple Store Corporate",
-    category: "Equipment",
-    amount: -2499.0,
-    status: "Completed",
-    icon: ShoppingCart,
-    iconColor: "bg-orange-100 text-orange-600",
-  },
-  {
-    id: 2,
-    date: "Oct 23, 2023",
-    description: "Client: Global Tech Ltd",
-    category: "Invoicing",
-    amount: 12000.0,
-    status: "Completed",
-    icon: Banknote,
-    iconColor: "bg-blue-100 text-blue-600",
-  },
-  {
-    id: 3,
-    date: "Oct 22, 2023",
-    description: "Lufthansa Airlines",
-    category: "Travel",
-    amount: -840.12,
-    status: "Pending",
-    icon: Plane,
-    iconColor: "bg-slate-100 text-slate-600",
-  },
-  {
-    id: 4,
-    date: "Oct 21, 2023",
-    description: "The Capital Grille",
-    category: "Meals",
-    amount: -312.45,
-    status: "Completed",
-    icon: Utensils,
-    iconColor: "bg-rose-100 text-rose-600",
-  },
-];
+interface TransactionDTO {
+  parentId?: number | null;
+  fundId?: number | null;
+  categoryId?: number | null;
+  partnerId?: number | null;
+  userId?: number | null;
+  type: "INCOME" | "EXPENSE";
+  status: string;
+  amount: number;
+  note?: string;
+  transactionCode: string;
+  transactionDate: string;
+  createdAt?: string;
+}
 
-export function TransactionsData() {
+interface TransactionsDataProps {
+  transactions: TransactionDTO[];
+  categoriesMap: Record<number, string>;
+}
+
+export function TransactionsData({ transactions, categoriesMap }: TransactionsDataProps) {
+  const getCategoryIcon = (categoryName: string, type: string) => {
+    const name = categoryName.toLowerCase();
+    if (type === "INCOME") {
+      return { icon: Banknote, color: "bg-emerald-100 text-emerald-600" };
+    }
+    if (
+      name.includes("travel") ||
+      name.includes("di chuyển") ||
+      name.includes("xe") ||
+      name.includes("flight")
+    ) {
+      return { icon: Plane, color: "bg-slate-100 text-slate-600" };
+    }
+    if (
+      name.includes("meal") ||
+      name.includes("ăn") ||
+      name.includes("food") ||
+      name.includes("restaurant") ||
+      name.includes("tiệc")
+    ) {
+      return { icon: Utensils, color: "bg-rose-100 text-rose-600" };
+    }
+    if (
+      name.includes("equipment") ||
+      name.includes("shopping") ||
+      name.includes("mua") ||
+      name.includes("thiết bị")
+    ) {
+      return { icon: ShoppingCart, color: "bg-orange-100 text-orange-600" };
+    }
+    return { icon: Landmark, color: "bg-blue-100 text-blue-600" };
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-8 border-b border-slate-50 flex justify-between items-center">
@@ -87,67 +112,90 @@ export function TransactionsData() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {transactions.map((t) => (
-              <tr
-                key={t.id}
-                className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
-              >
-                <td className="px-8 py-5 text-sm text-slate-500 font-medium">
-                  {t.date}
-                </td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${t.iconColor} transition-transform group-hover:scale-110`}
-                    >
-                      <t.icon className="w-4 h-4" />
-                    </div>
-                    <span className="font-bold text-brand-text group-hover:text-brand-primary transition-colors">
-                      {t.description}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-8 py-5">
-                  <span className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-tight">
-                    {t.category}
-                  </span>
-                </td>
+            {transactions.length === 0 ? (
+              <tr>
                 <td
-                  className={cn(
-                    "px-8 py-5 text-right font-black",
-                    t.amount > 0 ? "text-emerald-600" : "text-brand-error",
-                  )}
+                  colSpan={5}
+                  className="text-center py-8 text-slate-400 text-sm font-medium"
                 >
-                  {t.amount > 0 ? "+" : ""}
-                  {t.amount.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  })}
-                </td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        t.status === "Completed"
-                          ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                          : "bg-slate-300",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-bold",
-                        t.status === "Completed"
-                          ? "text-emerald-600"
-                          : "text-slate-400",
-                      )}
-                    >
-                      {t.status}
-                    </span>
-                  </div>
+                  Không có giao dịch gần đây
                 </td>
               </tr>
-            ))}
+            ) : (
+              transactions.map((t) => {
+                const categoryName = t.categoryId
+                  ? categoriesMap[t.categoryId] || "Other"
+                  : "Other";
+                const amountVal = t.type === "INCOME" ? t.amount : -t.amount;
+                const statusLabel = t.status === "ACTIVE" ? "Completed" : "Pending";
+                const { icon: IconComponent, color: iconColor } = getCategoryIcon(
+                  categoryName,
+                  t.type
+                );
+
+                return (
+                  <tr
+                    key={t.transactionCode}
+                    className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                  >
+                    <td className="px-8 py-5 text-sm text-slate-500 font-medium">
+                      {formatDate(t.transactionDate)}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${iconColor} transition-transform group-hover:scale-110`}
+                        >
+                          <IconComponent className="w-4 h-4" />
+                        </div>
+                        <span className="font-bold text-brand-text group-hover:text-brand-primary transition-colors">
+                          {t.note || t.transactionCode}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-tight">
+                        {categoryName}
+                      </span>
+                    </td>
+                    <td
+                      className={cn(
+                        "px-8 py-5 text-right font-black",
+                        amountVal > 0 ? "text-emerald-600" : "text-brand-error"
+                      )}
+                    >
+                      {amountVal > 0 ? "+" : ""}
+                      {amountVal.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                      })}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "w-2 h-2 rounded-full",
+                            statusLabel === "Completed"
+                              ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                              : "bg-slate-300"
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            "text-xs font-bold",
+                            statusLabel === "Completed"
+                              ? "text-emerald-600"
+                              : "text-slate-400"
+                          )}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

@@ -10,7 +10,7 @@ import { Sidebar } from "../../../component/Sidebar.tsx";
 
 const ITEMS_PER_PAGE = 4;
 
-export default function UserManagement() {
+export default function UserManagementPage() {
   // Views navigation
   const [activeView, setActiveView] = useState("settings");
 

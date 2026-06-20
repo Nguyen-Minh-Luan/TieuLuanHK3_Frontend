@@ -8,16 +8,17 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const data = [
-  { name: "MAY", actual: 180, projected: 200 },
-  { name: "JUN", actual: 160, projected: 190 },
-  { name: "JUL", actual: 170, projected: 200 },
-  { name: "AUG", actual: 120, projected: 160 },
-  { name: "SEP", actual: 150, projected: 180 },
-  { name: "OCT", actual: 100, projected: 150 },
-];
+interface CashFlowPoint {
+  name: string;
+  actual: number;
+  projected: number;
+}
 
-export function CashFlowChart() {
+interface CashFlowChartProps {
+  data: CashFlowPoint[];
+}
+
+export function CashFlowChart({ data }: CashFlowChartProps) {
   return (
     <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 mb-8">
       <div className="flex justify-between items-center mb-10">
