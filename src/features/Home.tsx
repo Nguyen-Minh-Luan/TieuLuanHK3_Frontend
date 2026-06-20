@@ -88,8 +88,8 @@ export default function Home() {
     let income = 0;
     let expense = 0;
     transactions.forEach((tx) => {
-      if (tx.type === "INCOME") income += tx.amount;
-      else expense += tx.amount;
+      if (tx.type === "INCOME" && (tx.status === "ACTIVE" || tx.status === "UPDATED")) income += tx.amount;
+      if (tx.type === "EXPENSE" && (tx.status === "ACTIVE" || tx.status === "UPDATED")) expense += tx.amount;
     });
     const margin = income > 0 ? ((income - expense) / income) * 100 : 0;
     return {

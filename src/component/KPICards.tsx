@@ -72,7 +72,7 @@ export function KPICards({
           </div>
         </div>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-          Revenue
+          Income
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
           {formatCurrency(totalIncome)}
