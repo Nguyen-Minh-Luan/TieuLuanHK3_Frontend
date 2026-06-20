@@ -4,9 +4,9 @@ import { useAppSelector } from "../hooks/useAppDispatch";
 const ProtectedRoute = () => {
   const token = useAppSelector((state) => state.auth.token);
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
+  // if (!token) {
+  //   return <Navigate to="/login" replace />;
+  // }
   return <Outlet />;
 };
 

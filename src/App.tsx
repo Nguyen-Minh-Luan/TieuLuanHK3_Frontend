@@ -6,6 +6,7 @@ import TransactionDetailPage from "./features/transactionDetail/TransactionDetai
 import UserManagement from "./features/admin/userManager/UserManagement";
 import Budget from "./features/budget/Budget";
 import ProtectedRoute from "./router/ProtectedRoute";
+import DebtPage from "./features/debt/DebtPage";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "/admin/userManager", element: <UserManagement /> },
       { path: "/setting", element: <UserManagement /> },
       { path: "/budget", element: <Budget /> },
+      { path: "/debt", element: <DebtPage /> },
     ],
   },
 ]);

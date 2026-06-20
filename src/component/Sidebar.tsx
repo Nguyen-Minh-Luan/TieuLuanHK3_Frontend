@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Coins,
   LayoutDashboard,
   Plus,
   Receipt,
@@ -12,6 +13,7 @@ import { Link } from "react-router-dom";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/home", active: true },
   { icon: Receipt, label: "Transactions", path: "/transaction", active: false },
+  { icon: Coins, label: "Debt", path: "/debt", active: false },
   { icon: BarChart3, label: "Reports", path: "/report", active: false },
   { icon: Wallet, label: "Budgets", path: "/budget", active: false },
   { icon: Settings, label: "Settings", path: "/setting", active: false },
