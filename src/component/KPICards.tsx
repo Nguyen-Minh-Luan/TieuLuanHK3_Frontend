@@ -7,7 +7,34 @@ import {
   BarChartHorizontal,
 } from "lucide-react";
 
-export function KPICards() {
+interface KPICardsProps {
+  totalBalance: number | null;
+  totalIncome: number | null;
+  totalExpense: number | null;
+  netProfitMargin: number | null;
+}
+
+export function KPICards({
+  totalBalance,
+  totalIncome,
+  totalExpense,
+  netProfitMargin,
+}: KPICardsProps) {
+  const formatCurrency = (val: number | null) => {
+    if (val === null || val === undefined) return "$0.00";
+    return val.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatPercentage = (val: number | null) => {
+    if (val === null || val === undefined) return "0.0%";
+    return `${val.toFixed(1)}%`;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {/* Total Balance */}
@@ -21,14 +48,14 @@ export function KPICards() {
             <Landmark className="w-6 h-6" />
           </div>
           <span className="text-xs font-bold text-brand-secondary bg-blue-50 px-2.5 py-1.5 rounded-lg">
-            +12.4%
+            Live
           </span>
         </div>
         <div className="text-sm font-medium text-slate-500 mb-1">
           Total Balance
         </div>
         <div className="text-4xl font-black text-brand-text font-display">
-          $1,248,390.00
+          {formatCurrency(totalBalance)}
         </div>
       </motion.div>
 
@@ -48,10 +75,10 @@ export function KPICards() {
           Revenue
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
-          $342,100
+          {formatCurrency(totalIncome)}
         </div>
         <div className="text-[10px] text-slate-400 mt-2 italic flex items-center gap-1">
-          Vs. last month
+          Inflow total
         </div>
       </motion.div>
 
@@ -71,10 +98,10 @@ export function KPICards() {
           Expenses
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
-          $128,450
+          {formatCurrency(totalExpense)}
         </div>
         <div className="text-[10px] text-red-600 mt-2 font-bold flex items-center gap-1">
-          +2.1% spike
+          Outflow total
         </div>
       </motion.div>
 
@@ -99,11 +126,11 @@ export function KPICards() {
                   Net Profit Margin
                 </span>
                 <span className="text-[10px] font-bold text-brand-primary px-2 py-0.5 bg-white rounded-md border border-brand-primary/10">
-                  Healthy
+                  {netProfitMargin !== null && netProfitMargin >= 20 ? "Healthy" : "Attention"}
                 </span>
               </div>
               <div className="text-2xl font-black text-brand-primary font-display tracking-tight">
-                62.4%
+                {formatPercentage(netProfitMargin)}
               </div>
             </div>
           </div>
