@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Settings as SettingsIcon,
   Home,
@@ -14,7 +14,6 @@ import {
 
 import type { Transaction, ViewType } from "./types";
 import type { TransactionRequest, TransactionResponse, SpendingWarning } from "./apiTypes";
-import apiClient from "../../services/apiClient";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import {
   fetchTransactions,
@@ -26,6 +25,9 @@ import {
 } from "../../store/slices/transactionSlice";
 import type { FetchParams } from "../../services/transactionService";
 import { fetchTransactions as fetchDashboardTransactions } from "../../store/slices/dashboardSlice";
+import { fetchCategories } from "../../store/slices/categorySlice";
+import { fetchFunds } from "../../store/slices/fundSlice";
+import toast from "react-hot-toast";
 import TransactionModal from "./TransactionModal";
 import ConfirmDialog from "../../component/ConfirmDialog";
 import TransactionsView from "./TransactionsView";
@@ -37,6 +39,7 @@ import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
 
 export default function TransactionPage() {
+  const dispatch = useAppDispatch();
   const [currentView, setView] = useState<ViewType>("Transactions");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -47,19 +50,13 @@ export default function TransactionPage() {
   // System parameters
   const [companyName, setCompanyName] = useState("Architectural Ledger");
 
-  // Dynamic Categories and Funds state
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-  const [funds, setFunds] = useState<{ id: number; name: string }[]>([]);
+  // Dynamic Categories - retrieved from Redux
+  const categories = useAppSelector((state) => state.category.items);
 
   useEffect(() => {
-    apiClient.get("/categories?size=100")
-      .then((res) => setCategories(res.data.data.content || []))
-      .catch((err) => console.error("Error loading categories", err));
-
-    apiClient.get("/funds?size=100")
-      .then((res) => setFunds(res.data.data.content || []))
-      .catch((err) => console.error("Error loading funds", err));
-  }, []);
+    dispatch(fetchCategories());
+    dispatch(fetchFunds());
+  }, [dispatch]);
 
   const categoriesMap = useMemo(() => {
     const map: Record<number, string> = {};
@@ -68,8 +65,6 @@ export default function TransactionPage() {
     });
     return map;
   }, [categories]);
-
-  const dispatch = useAppDispatch();
   const {
     items: rawTransactions,
     totalPages,
@@ -79,10 +74,25 @@ export default function TransactionPage() {
     lastWarning,
   } = useAppSelector((state) => state.transaction);
 
+  const paramsRef = useRef(params);
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
+
   const setParams = useCallback((action: React.SetStateAction<FetchParams>) => {
-    const nextParams = typeof action === 'function' ? action(params) : action;
-    dispatch(setParamsAction(nextParams));
-  }, [dispatch, params]);
+    const nextParams = typeof action === 'function' ? action(paramsRef.current) : action;
+    
+    // Check if nextParams values are identical to current params
+    const keysA = Object.keys(nextParams);
+    const keysB = Object.keys(paramsRef.current);
+    const isEquivalent = keysA.length === keysB.length && keysA.every(
+      (key) => (nextParams as any)[key] === (paramsRef.current as any)[key]
+    );
+
+    if (!isEquivalent) {
+      dispatch(setParamsAction(nextParams));
+    }
+  }, [dispatch]);
 
   // Reactive fetch when status or params change
   useEffect(() => {
@@ -182,64 +192,56 @@ export default function TransactionPage() {
     return rawTransactions.map(mapResponseToTransaction);
   }, [rawTransactions, mapResponseToTransaction]);
 
-  // Toast feedback state
-
-  // Visual Floating Toast feedback state
-  const [toast, setToast] = useState<{
-    type: "success" | "warning" | "error";
-    title: string;
-    message: string;
-    detail?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 8500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
   const showWarningToast = (warning: SpendingWarning) => {
     const isCritical = warning.level === "CRITICAL";
-    setToast({
-      type: isCritical ? "error" : "warning",
-      title: isCritical ? "⚠️ Chi tiêu bất thường nghiêm trọng!" : "⚠️ Vượt mức chi tiêu bình thường",
-      message: warning.message,
-      detail: `Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`,
-    });
+    toast.custom((t) => (
+      <div
+        className={`max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 bg-white ${
+          isCritical
+            ? "border-rose-200 text-rose-950"
+            : "border-amber-200 text-amber-950"
+        } ${t.visible ? 'animate-fade-in' : 'opacity-0'}`}
+      >
+        <div className="flex justify-between items-start gap-4">
+          <span className="font-extrabold text-sm flex items-center gap-1.5">
+            {isCritical ? "🚨 Chi tiêu bất thường nghiêm trọng!" : "⚠️ Vượt mức chi tiêu bình thường"}
+          </span>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+        <p className="text-xs font-semibold opacity-90">{warning.message}</p>
+        <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
+          {`Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`}
+        </p>
+      </div>
+    ), { duration: 8500 });
   };
 
   const handleCreateOrUpdateTx = async (formData: any) => {
     try {
       if (editingTransaction) {
         await dispatch(updateTransaction({ id: Number(editingTransaction.id), data: formData as TransactionRequest })).unwrap();
-        setToast({
-          type: "success",
-          title: "Thao tác thành công",
-          message: "Đã cập nhật giao dịch thành công!",
-        });
+        toast.success("Đã cập nhật giao dịch thành công!");
       } else {
         const result = await dispatch(createTransaction(formData as TransactionRequest)).unwrap();
         const warning = result.data?.warning;
         if (warning && warning.hasWarning) {
           showWarningToast(warning);
         } else {
-          setToast({
-            type: "success",
-            title: "Thao tác thành công",
-            message: "Đã tạo giao dịch mới thành công!",
-          });
+          toast.success("Đã tạo giao dịch mới thành công!");
         }
       }
       setIsModalOpen(false);
       // Sync dashboard data after any mutation
       dispatch(fetchDashboardTransactions());
     } catch (err: any) {
-      setToast({
-        type: "error",
-        title: "Lưu giao dịch thất bại",
-        message: err?.response?.data?.message || err?.message || "Lỗi lưu giao dịch",
-      });
+      const errMsg = err?.response?.data?.message || err?.message || err || "Lỗi lưu giao dịch";
+      toast.error(`Lưu giao dịch thất bại: ${errMsg}`);
+      throw err;
     }
   };
 
@@ -255,19 +257,11 @@ export default function TransactionPage() {
     setDeleteTargetId(null);
     try {
       await dispatch(cancelTransaction(Number(id))).unwrap();
-      setToast({
-        type: "success",
-        title: "Thao tác thành công",
-        message: "Đã hủy giao dịch và hoàn tiền thành công!",
-      });
+      toast.success("Đã hủy giao dịch và hoàn tiền thành công!");
       // Sync dashboard data after cancel
       dispatch(fetchDashboardTransactions());
     } catch (err: any) {
-      setToast({
-        type: "error",
-        title: "Hủy giao dịch thất bại",
-        message: err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này.",
-      });
+      toast.error(`Hủy giao dịch thất bại: ${err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này."}`);
     }
   };
 
@@ -423,41 +417,9 @@ export default function TransactionPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleCreateOrUpdateTx}
         editingTransaction={editingTransaction}
-        categories={categories}
-        funds={funds}
       />
 
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div
-          id="toast-notification"
-          className={`fixed top-6 right-6 z-[120] max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 animate-slide-in-right ${
-            toast.type === "error"
-              ? "bg-rose-50 border-rose-200 text-rose-950"
-              : toast.type === "warning"
-              ? "bg-amber-50 border-amber-200 text-amber-950"
-              : "bg-emerald-50 border-emerald-200 text-emerald-950"
-          }`}
-        >
-          <div className="flex justify-between items-start gap-4">
-            <span className="font-extrabold text-sm flex items-center gap-1.5">
-              {toast.title}
-            </span>
-            <button
-              onClick={() => setToast(null)}
-              className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-          <p className="text-xs font-semibold opacity-90">{toast.message}</p>
-          {toast.detail && (
-            <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
-              {toast.detail}
-            </p>
-          )}
-        </div>
-      )}
+      {/* react-hot-toast will display toasts automatically */}
     </div>
   );
 }

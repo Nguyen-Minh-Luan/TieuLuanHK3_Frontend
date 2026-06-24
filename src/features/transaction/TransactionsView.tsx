@@ -25,8 +25,9 @@ import type { Transaction } from "./types";
 import { Link } from "react-router-dom";
 
 import type { FetchParams } from "../../services/transactionService";
-import apiClient from "../../services/apiClient";
 import { useEffect } from "react";
+import { useAppSelector } from "../../hooks/useAppDispatch";
+import { useDebounce } from "../../hooks/useDebounce";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -59,13 +60,23 @@ export default function TransactionsView({
     setLocalSearch(params.keyword || "");
   }, [params.keyword]);
 
-  // Categories list loaded dynamically for filter dropdown options
-  const [categoriesList, setCategoriesList] = useState<{ id: number; name: string }[]>([]);
+  const debouncedKeyword = useDebounce(localSearch, 300);
+
   useEffect(() => {
-    apiClient.get("/categories?size=100")
-      .then((res) => setCategoriesList(res.data.data.content || []))
-      .catch((err) => console.error("Error loading categories in view", err));
-  }, []);
+    setParams((prev) => {
+      const currentKeyword = prev.keyword || "";
+      const trimmedDebounced = debouncedKeyword.trim();
+      if (currentKeyword === trimmedDebounced) return prev;
+      return {
+        ...prev,
+        keyword: trimmedDebounced || undefined,
+        page: 1,
+      };
+    });
+  }, [debouncedKeyword, setParams]);
+
+  // Categories list loaded dynamically from Redux
+  const categoriesList = useAppSelector((state) => state.category.items);
 
   // Active action menu state
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -227,13 +238,7 @@ export default function TransactionsView({
             type="text"
             value={localSearch}
             onChange={(e) => {
-              const val = e.target.value;
-              setLocalSearch(val);
-              setParams((prev) => ({
-                ...prev,
-                keyword: val.trim() || undefined,
-                page: 1,
-              }));
+              setLocalSearch(e.target.value);
             }}
             placeholder="Search by description, reference ID, or category..."
             className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-800 placeholder:text-slate-400 font-medium"
