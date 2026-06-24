@@ -3,24 +3,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  Search,
-  Bell,
   Settings as SettingsIcon,
-  Menu,
   Home,
   Receipt,
   BarChart3,
-  AlertCircle,
   Plus,
 } from "lucide-react";
 
 import type { Transaction, ViewType } from "./types";
-import { useTransactions } from "./useTransactions";
 import type { TransactionRequest, TransactionResponse, SpendingWarning } from "./apiTypes";
 import apiClient from "../../services/apiClient";
+import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
+import {
+  fetchTransactions,
+  createTransaction,
+  updateTransaction,
+  cancelTransaction,
+  setParams as setParamsAction,
+  clearWarning,
+} from "../../store/slices/transactionSlice";
+import type { FetchParams } from "../../services/transactionService";
+import { fetchTransactions as fetchDashboardTransactions } from "../../store/slices/dashboardSlice";
 import TransactionModal from "./TransactionModal";
+import ConfirmDialog from "../../component/ConfirmDialog";
 import TransactionsView from "./TransactionsView";
 import DashboardView from "./DashboardView";
 import ReportsView from "./ReportsView";
@@ -33,11 +40,12 @@ export default function TransactionPage() {
   const [currentView, setView] = useState<ViewType>("Transactions");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  // Delete confirmation dialog state
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetDesc, setDeleteTargetDesc] = useState<string>("");
 
   // System parameters
   const [companyName, setCompanyName] = useState("Architectural Ledger");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [accountsSearch, setAccountsSearch] = useState("");
 
   // Dynamic Categories and Funds state
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -61,30 +69,27 @@ export default function TransactionPage() {
     return map;
   }, [categories]);
 
-  const fundsMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    funds.forEach((f) => {
-      if (f.id) map[f.id] = f.name;
-    });
-    return map;
-  }, [funds]);
-
-  // Hook for backend API transaction synchronization
+  const dispatch = useAppDispatch();
   const {
-    transactions: rawTransactions,
+    items: rawTransactions,
     totalPages,
     totalElements,
-    loading,
-    error,
+    status,
     params,
-    setParams,
-    create,
-    update,
-    cancel,
-  } = useTransactions({
-    page: 1,
-    size: currentView === "Transactions" ? 10 : 1000,
-  });
+    lastWarning,
+  } = useAppSelector((state) => state.transaction);
+
+  const setParams = useCallback((action: React.SetStateAction<FetchParams>) => {
+    const nextParams = typeof action === 'function' ? action(params) : action;
+    dispatch(setParamsAction(nextParams));
+  }, [dispatch, params]);
+
+  // Reactive fetch when status or params change
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchTransactions(params));
+    }
+  }, [status, params, dispatch]);
 
   // Dynamically change request limit size based on active view tab
   useEffect(() => {
@@ -94,6 +99,14 @@ export default function TransactionPage() {
       size: currentView === "Transactions" ? 10 : 1000,
     }));
   }, [currentView, setParams]);
+
+  // Toast warning handling
+  useEffect(() => {
+    if (lastWarning && lastWarning.hasWarning) {
+      showWarningToast(lastWarning);
+      dispatch(clearWarning());
+    }
+  }, [lastWarning, dispatch]);
 
   // Map backend response format to client-friendly UI interface structures
   const mapResponseToTransaction = useCallback((tx: TransactionResponse): Transaction => {
@@ -169,29 +182,7 @@ export default function TransactionPage() {
     return rawTransactions.map(mapResponseToTransaction);
   }, [rawTransactions, mapResponseToTransaction]);
 
-  // Notifications drawer simulation
-  const [unreadCount, setUnreadCount] = useState(3);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      text: "Hạn mức chi tiêu Procurement vượt ngưỡng 80%",
-      time: "10 phút trước",
-      unread: true,
-    },
-    {
-      id: 2,
-      text: "Giao dịch AWS Enterprise Subscription thất bại (Failed)",
-      time: "2 giờ trước",
-      unread: true,
-    },
-    {
-      id: 3,
-      text: "Báo cáo tài chính quý Q3 đã sẵn sàng tải về",
-      time: "1 ngày trước",
-      unread: true,
-    },
-  ]);
+  // Toast feedback state
 
   // Visual Floating Toast feedback state
   const [toast, setToast] = useState<{
@@ -221,15 +212,15 @@ export default function TransactionPage() {
   const handleCreateOrUpdateTx = async (formData: any) => {
     try {
       if (editingTransaction) {
-        await update(Number(editingTransaction.id), formData as TransactionRequest);
+        await dispatch(updateTransaction({ id: Number(editingTransaction.id), data: formData as TransactionRequest })).unwrap();
         setToast({
           type: "success",
           title: "Thao tác thành công",
           message: "Đã cập nhật giao dịch thành công!",
         });
       } else {
-        const result = await create(formData as TransactionRequest);
-        const warning = result.data.warning;
+        const result = await dispatch(createTransaction(formData as TransactionRequest)).unwrap();
+        const warning = result.data?.warning;
         if (warning && warning.hasWarning) {
           showWarningToast(warning);
         } else {
@@ -241,6 +232,8 @@ export default function TransactionPage() {
         }
       }
       setIsModalOpen(false);
+      // Sync dashboard data after any mutation
+      dispatch(fetchDashboardTransactions());
     } catch (err: any) {
       setToast({
         type: "error",
@@ -250,14 +243,25 @@ export default function TransactionPage() {
     }
   };
 
-  const handleDeleteTx = async (id: string) => {
+  // Called from TransactionsView — opens confirm dialog instead of native confirm()
+  const handleDeleteIntent = (id: string, description?: string) => {
+    setDeleteTargetId(id);
+    setDeleteTargetDesc(description || `ID: ${id}`);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    const id = deleteTargetId;
+    setDeleteTargetId(null);
     try {
-      await cancel(Number(id));
+      await dispatch(cancelTransaction(Number(id))).unwrap();
       setToast({
         type: "success",
         title: "Thao tác thành công",
         message: "Đã hủy giao dịch và hoàn tiền thành công!",
       });
+      // Sync dashboard data after cancel
+      dispatch(fetchDashboardTransactions());
     } catch (err: any) {
       setToast({
         type: "error",
@@ -277,15 +281,6 @@ export default function TransactionPage() {
     setIsModalOpen(true);
   };
 
-  const handleLogoutSimulate = () => {
-    if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi Ledger Pro?")) {
-      localStorage.removeItem("executive_ledger_txns");
-      setTransactions(INITIAL_TRANSACTIONS);
-      setView("Transactions");
-      alert("Đã xóa dữ liệu cục bộ và khôi phục cài đặt gốc thành công!");
-    }
-  };
-
   // Render correct nested component view
   const renderCurrentViewContents = () => {
     switch (currentView) {
@@ -301,12 +296,13 @@ export default function TransactionPage() {
           <TransactionsView
             transactions={transactions}
             onEditTransaction={handleEditIntent}
-            onDeleteTransaction={handleDeleteTx}
+            onDeleteTransaction={handleDeleteIntent}
             onNewEntryClick={handleNewEntryIntent}
             params={params}
             setParams={setParams}
             totalPages={totalPages}
             totalElements={totalElements}
+            status={status}
           />
         );
       case "Reports":
@@ -325,24 +321,33 @@ export default function TransactionPage() {
           <TransactionsView
             transactions={transactions}
             onEditTransaction={handleEditIntent}
-            onDeleteTransaction={handleDeleteTx}
+            onDeleteTransaction={handleDeleteIntent}
             onNewEntryClick={handleNewEntryIntent}
             params={params}
             setParams={setParams}
             totalPages={totalPages}
             totalElements={totalElements}
+            status={status}
           />
         );
     }
   };
 
-  const handleClearNotifications = () => {
-    setAlerts(alerts.map((a) => ({ ...a, unread: false })));
-    setUnreadCount(0);
-  };
+  // Bottom Mobile navigation bar setup
 
   return (
     <div className="bg-slate-50 font-body text-slate-800 min-h-screen flex w-full relative">
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteTargetId !== null}
+        title="Hủy giao dịch"
+        message={`Bạn có chắc chắn muốn hủy giao dịch "${deleteTargetDesc}"? Thao tác này sẽ hoàn tiền vào quỹ và không thể hoàn tác.`}
+        confirmLabel="Xác nhận hủy"
+        cancelLabel="Giữ lại"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+      />
       {/* SideNavBar panel */}
       <Sidebar />
       {/* Main Canvas Area */}

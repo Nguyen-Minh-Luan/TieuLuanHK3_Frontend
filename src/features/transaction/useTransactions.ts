@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import transactionService, { FetchParams } from "../../services/transactionService";
+import transactionService from "../../services/transactionService";
+import type { FetchParams } from "../../services/transactionService";
 import type { TransactionResponse, TransactionRequest } from "./apiTypes";
 
 export function useTransactions(initialParams: FetchParams = {}) {

@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  X,
   Calendar,
   Clock,
   AlertCircle,
   ChevronDown,
-  Briefcase,
   ArrowDown,
   ArrowUp,
   Save
@@ -92,7 +90,7 @@ export default function TransactionModal({
   // Filter categories by type matching current selection (INCOME/EXPENSE)
   const filteredCategories = useMemo(() => {
     const typeUpper = type.toUpperCase();
-    return categories.filter(c => c.type === typeUpper);
+    return categories.filter((c: { id: number; name: string; type?: string }) => c.type === typeUpper);
   }, [categories, type]);
 
   useEffect(() => {
@@ -133,20 +131,6 @@ export default function TransactionModal({
 
     onSave(payload);
     onClose();
-  };
-
-  // Determine icon preference based on category
-    if (cat === 'Revenue') {
-      setType('income');
-      setIcon('payment');
-    } else {
-      setType('expense');
-      if (cat === 'Procurement') setIcon('building');
-      else if (cat === 'Maintenance') setIcon('maintenance');
-      else if (cat === 'Infrastructure') setIcon('cloud');
-      else if (cat === 'HR & Payroll') setIcon('payroll');
-      else setIcon('other');
-    }
   };
 
   return (
@@ -221,7 +205,7 @@ export default function TransactionModal({
                     required
                   >
                     <option value="">Chọn danh mục</option>
-                    {filteredCategories.map((c) => (
+                    {filteredCategories.map((c: { id: number; name: string; type?: string }) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
