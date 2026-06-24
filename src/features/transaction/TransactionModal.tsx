@@ -3,30 +3,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  X,
   Calendar,
   Clock,
   AlertCircle,
   ChevronDown,
-  Briefcase,
   ArrowDown,
   ArrowUp,
   Save
 } from 'lucide-react';
-import { useAppSelector } from '../../hooks/useAppDispatch';
+import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import type { Transaction } from './types';
 import type { TransactionRequest } from './apiTypes';
 import apiClient from '../../services/apiClient';
+import { fetchFunds } from '../../store/slices/fundSlice';
+import { fetchCategories } from '../../store/slices/categorySlice';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: TransactionRequest) => void;
+  onSave: (payload: TransactionRequest) => Promise<void> | void;
   editingTransaction: Transaction | null;
-  categories: { id: number; name: string; type?: string }[];
-  funds: { id: number; name: string }[];
 }
 
 export default function TransactionModal({
@@ -34,8 +32,6 @@ export default function TransactionModal({
   onClose,
   onSave,
   editingTransaction,
-  categories,
-  funds
 }: TransactionModalProps) {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'expense' | 'income'>('expense');
@@ -50,17 +46,26 @@ export default function TransactionModal({
   const [partners, setPartners] = useState<{ id: number; name: string }[]>([]);
 
   const userId = useAppSelector((state) => state.auth.id) || Number(localStorage.getItem("userId")) || 1;
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector((state) => state.category.items);
+  const funds = useAppSelector((state) => state.fund.items);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      dispatch(fetchFunds());
+      dispatch(fetchCategories());
       apiClient.get("/partners?size=100")
         .then((res) => setPartners(res.data.data.content || []))
         .catch((err) => console.error("Error loading partners", err));
     }
-  }, [isOpen]);
+  }, [isOpen, dispatch]);
 
   // Initializer and reset logic
   useEffect(() => {
+    setFormError(null);
+    setSubmitting(false);
     if (editingTransaction && isOpen) {
       const ext = editingTransaction as any;
       setAmount(Math.abs(editingTransaction.amount).toString());
@@ -92,7 +97,7 @@ export default function TransactionModal({
   // Filter categories by type matching current selection (INCOME/EXPENSE)
   const filteredCategories = useMemo(() => {
     const typeUpper = type.toUpperCase();
-    return categories.filter(c => c.type === typeUpper);
+    return categories.filter((c: { id: number; name: string; type?: string }) => c.type === typeUpper);
   }, [categories, type]);
 
   useEffect(() => {
@@ -103,10 +108,10 @@ export default function TransactionModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fundId || !categoryId || !amount || isNaN(parseFloat(amount))) {
-      alert('Vui lòng chọn nguồn tiền, danh mục và điền số tiền hợp lệ!');
+      setFormError('Vui lòng chọn nguồn tiền, danh mục và điền số tiền hợp lệ!');
       return;
     }
 
@@ -131,21 +136,15 @@ export default function TransactionModal({
       debtId: (editingTransaction as any)?.debtId || undefined,
     };
 
-    onSave(payload);
-    onClose();
-  };
-
-  // Determine icon preference based on category
-    if (cat === 'Revenue') {
-      setType('income');
-      setIcon('payment');
-    } else {
-      setType('expense');
-      if (cat === 'Procurement') setIcon('building');
-      else if (cat === 'Maintenance') setIcon('maintenance');
-      else if (cat === 'Infrastructure') setIcon('cloud');
-      else if (cat === 'HR & Payroll') setIcon('payroll');
-      else setIcon('other');
+    try {
+      setSubmitting(true);
+      setFormError(null);
+      await onSave(payload);
+      onClose();
+    } catch (err: any) {
+      setFormError(err?.message || err || 'Lưu giao dịch thất bại!');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -221,7 +220,7 @@ export default function TransactionModal({
                     required
                   >
                     <option value="">Chọn danh mục</option>
-                    {filteredCategories.map((c) => (
+                    {filteredCategories.map((c: { id: number; name: string; type?: string }) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -361,21 +360,30 @@ export default function TransactionModal({
               </div>
             )}
 
+            {formError && (
+              <div className="bg-red-50 text-red-800 border border-red-100 rounded-xl p-3 flex gap-2 w-full text-xs animate-fade-in items-center">
+                <AlertCircle className="h-4.5 w-4.5 text-red-500 shrink-0" />
+                <span className="font-semibold">{formError}</span>
+              </div>
+            )}
+
             {/* Buttons aligned bottom right inside form container */}
             <div className="flex gap-4 items-center justify-end pt-5 border-t border-slate-100">
               <button
                 type="button"
                 onClick={onClose}
-                className="py-3.5 px-6 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors hover:bg-slate-50 rounded-xl cursor-pointer"
+                disabled={submitting}
+                className="py-3.5 px-6 text-sm font-semibold text-slate-500 hover:text-slate-800 disabled:opacity-50 transition-colors hover:bg-slate-50 rounded-xl cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 type="submit"
-                className="py-3.5 px-8 bg-[#003178] hover:bg-[#002150] text-white rounded-xl text-sm font-extrabold shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                disabled={submitting}
+                className="py-3.5 px-8 bg-[#003178] hover:bg-[#002150] disabled:opacity-50 text-white rounded-xl text-sm font-extrabold shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Save className="h-4.5 w-4.5" />
-                Lưu Giao Dịch
+                {submitting ? 'Đang lưu...' : 'Lưu Giao Dịch'}
               </button>
             </div>
 

@@ -3,24 +3,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
-  Search,
-  Bell,
   Settings as SettingsIcon,
-  Menu,
   Home,
   Receipt,
   BarChart3,
-  AlertCircle,
   Plus,
 } from "lucide-react";
 
 import type { Transaction, ViewType } from "./types";
-import { useTransactions } from "./useTransactions";
 import type { TransactionRequest, TransactionResponse, SpendingWarning } from "./apiTypes";
-import apiClient from "../../services/apiClient";
+import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
+import {
+  fetchTransactions,
+  createTransaction,
+  updateTransaction,
+  cancelTransaction,
+  setParams as setParamsAction,
+  clearWarning,
+} from "../../store/slices/transactionSlice";
+import type { FetchParams } from "../../services/transactionService";
+import { fetchTransactions as fetchDashboardTransactions } from "../../store/slices/dashboardSlice";
+import { fetchCategories } from "../../store/slices/categorySlice";
+import { fetchFunds } from "../../store/slices/fundSlice";
+import toast from "react-hot-toast";
 import TransactionModal from "./TransactionModal";
+import ConfirmDialog from "../../component/ConfirmDialog";
 import TransactionsView from "./TransactionsView";
 import DashboardView from "./DashboardView";
 import ReportsView from "./ReportsView";
@@ -30,28 +39,24 @@ import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
 
 export default function TransactionPage() {
+  const dispatch = useAppDispatch();
   const [currentView, setView] = useState<ViewType>("Transactions");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  // Delete confirmation dialog state
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetDesc, setDeleteTargetDesc] = useState<string>("");
 
   // System parameters
   const [companyName, setCompanyName] = useState("Architectural Ledger");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [accountsSearch, setAccountsSearch] = useState("");
 
-  // Dynamic Categories and Funds state
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-  const [funds, setFunds] = useState<{ id: number; name: string }[]>([]);
+  // Dynamic Categories - retrieved from Redux
+  const categories = useAppSelector((state) => state.category.items);
 
   useEffect(() => {
-    apiClient.get("/categories?size=100")
-      .then((res) => setCategories(res.data.data.content || []))
-      .catch((err) => console.error("Error loading categories", err));
-
-    apiClient.get("/funds?size=100")
-      .then((res) => setFunds(res.data.data.content || []))
-      .catch((err) => console.error("Error loading funds", err));
-  }, []);
+    dispatch(fetchCategories());
+    dispatch(fetchFunds());
+  }, [dispatch]);
 
   const categoriesMap = useMemo(() => {
     const map: Record<number, string> = {};
@@ -60,31 +65,41 @@ export default function TransactionPage() {
     });
     return map;
   }, [categories]);
-
-  const fundsMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    funds.forEach((f) => {
-      if (f.id) map[f.id] = f.name;
-    });
-    return map;
-  }, [funds]);
-
-  // Hook for backend API transaction synchronization
   const {
-    transactions: rawTransactions,
+    items: rawTransactions,
     totalPages,
     totalElements,
-    loading,
-    error,
+    status,
     params,
-    setParams,
-    create,
-    update,
-    cancel,
-  } = useTransactions({
-    page: 1,
-    size: currentView === "Transactions" ? 10 : 1000,
-  });
+    lastWarning,
+  } = useAppSelector((state) => state.transaction);
+
+  const paramsRef = useRef(params);
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
+
+  const setParams = useCallback((action: React.SetStateAction<FetchParams>) => {
+    const nextParams = typeof action === 'function' ? action(paramsRef.current) : action;
+    
+    // Check if nextParams values are identical to current params
+    const keysA = Object.keys(nextParams);
+    const keysB = Object.keys(paramsRef.current);
+    const isEquivalent = keysA.length === keysB.length && keysA.every(
+      (key) => (nextParams as any)[key] === (paramsRef.current as any)[key]
+    );
+
+    if (!isEquivalent) {
+      dispatch(setParamsAction(nextParams));
+    }
+  }, [dispatch]);
+
+  // Reactive fetch when status or params change
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchTransactions(params));
+    }
+  }, [status, params, dispatch]);
 
   // Dynamically change request limit size based on active view tab
   useEffect(() => {
@@ -94,6 +109,14 @@ export default function TransactionPage() {
       size: currentView === "Transactions" ? 10 : 1000,
     }));
   }, [currentView, setParams]);
+
+  // Toast warning handling
+  useEffect(() => {
+    if (lastWarning && lastWarning.hasWarning) {
+      showWarningToast(lastWarning);
+      dispatch(clearWarning());
+    }
+  }, [lastWarning, dispatch]);
 
   // Map backend response format to client-friendly UI interface structures
   const mapResponseToTransaction = useCallback((tx: TransactionResponse): Transaction => {
@@ -169,101 +192,76 @@ export default function TransactionPage() {
     return rawTransactions.map(mapResponseToTransaction);
   }, [rawTransactions, mapResponseToTransaction]);
 
-  // Notifications drawer simulation
-  const [unreadCount, setUnreadCount] = useState(3);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      text: "Hạn mức chi tiêu Procurement vượt ngưỡng 80%",
-      time: "10 phút trước",
-      unread: true,
-    },
-    {
-      id: 2,
-      text: "Giao dịch AWS Enterprise Subscription thất bại (Failed)",
-      time: "2 giờ trước",
-      unread: true,
-    },
-    {
-      id: 3,
-      text: "Báo cáo tài chính quý Q3 đã sẵn sàng tải về",
-      time: "1 ngày trước",
-      unread: true,
-    },
-  ]);
-
-  // Visual Floating Toast feedback state
-  const [toast, setToast] = useState<{
-    type: "success" | "warning" | "error";
-    title: string;
-    message: string;
-    detail?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 8500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
   const showWarningToast = (warning: SpendingWarning) => {
     const isCritical = warning.level === "CRITICAL";
-    setToast({
-      type: isCritical ? "error" : "warning",
-      title: isCritical ? "⚠️ Chi tiêu bất thường nghiêm trọng!" : "⚠️ Vượt mức chi tiêu bình thường",
-      message: warning.message,
-      detail: `Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`,
-    });
+    toast.custom((t) => (
+      <div
+        className={`max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 bg-white ${
+          isCritical
+            ? "border-rose-200 text-rose-950"
+            : "border-amber-200 text-amber-950"
+        } ${t.visible ? 'animate-fade-in' : 'opacity-0'}`}
+      >
+        <div className="flex justify-between items-start gap-4">
+          <span className="font-extrabold text-sm flex items-center gap-1.5">
+            {isCritical ? "🚨 Chi tiêu bất thường nghiêm trọng!" : "⚠️ Vượt mức chi tiêu bình thường"}
+          </span>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+        <p className="text-xs font-semibold opacity-90">{warning.message}</p>
+        <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
+          {`Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`}
+        </p>
+      </div>
+    ), { duration: 8500 });
   };
 
   const handleCreateOrUpdateTx = async (formData: any) => {
     try {
       if (editingTransaction) {
-        await update(Number(editingTransaction.id), formData as TransactionRequest);
-        setToast({
-          type: "success",
-          title: "Thao tác thành công",
-          message: "Đã cập nhật giao dịch thành công!",
-        });
+        await dispatch(updateTransaction({ id: Number(editingTransaction.id), data: formData as TransactionRequest })).unwrap();
+        toast.success("Đã cập nhật giao dịch thành công!");
       } else {
-        const result = await create(formData as TransactionRequest);
-        const warning = result.data.warning;
+        const result = await dispatch(createTransaction(formData as TransactionRequest)).unwrap();
+        const warning = result.data?.warning;
         if (warning && warning.hasWarning) {
           showWarningToast(warning);
         } else {
-          setToast({
-            type: "success",
-            title: "Thao tác thành công",
-            message: "Đã tạo giao dịch mới thành công!",
-          });
+          toast.success("Đã tạo giao dịch mới thành công!");
         }
       }
       setIsModalOpen(false);
+      // Sync dashboard data after any mutation
+      dispatch(fetchDashboardTransactions());
     } catch (err: any) {
-      setToast({
-        type: "error",
-        title: "Lưu giao dịch thất bại",
-        message: err?.response?.data?.message || err?.message || "Lỗi lưu giao dịch",
-      });
+      const errMsg = err?.response?.data?.message || err?.message || err || "Lỗi lưu giao dịch";
+      toast.error(`Lưu giao dịch thất bại: ${errMsg}`);
+      throw err;
     }
   };
 
-  const handleDeleteTx = async (id: string) => {
+  // Called from TransactionsView — opens confirm dialog instead of native confirm()
+  const handleDeleteIntent = (id: string, description?: string) => {
+    setDeleteTargetId(id);
+    setDeleteTargetDesc(description || `ID: ${id}`);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) return;
+    const id = deleteTargetId;
+    setDeleteTargetId(null);
     try {
-      await cancel(Number(id));
-      setToast({
-        type: "success",
-        title: "Thao tác thành công",
-        message: "Đã hủy giao dịch và hoàn tiền thành công!",
-      });
+      await dispatch(cancelTransaction(Number(id))).unwrap();
+      toast.success("Đã hủy giao dịch và hoàn tiền thành công!");
+      // Sync dashboard data after cancel
+      dispatch(fetchDashboardTransactions());
     } catch (err: any) {
-      setToast({
-        type: "error",
-        title: "Hủy giao dịch thất bại",
-        message: err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này.",
-      });
+      toast.error(`Hủy giao dịch thất bại: ${err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này."}`);
     }
   };
 
@@ -275,15 +273,6 @@ export default function TransactionPage() {
   const handleNewEntryIntent = () => {
     setEditingTransaction(null);
     setIsModalOpen(true);
-  };
-
-  const handleLogoutSimulate = () => {
-    if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi Ledger Pro?")) {
-      localStorage.removeItem("executive_ledger_txns");
-      setTransactions(INITIAL_TRANSACTIONS);
-      setView("Transactions");
-      alert("Đã xóa dữ liệu cục bộ và khôi phục cài đặt gốc thành công!");
-    }
   };
 
   // Render correct nested component view
@@ -301,12 +290,13 @@ export default function TransactionPage() {
           <TransactionsView
             transactions={transactions}
             onEditTransaction={handleEditIntent}
-            onDeleteTransaction={handleDeleteTx}
+            onDeleteTransaction={handleDeleteIntent}
             onNewEntryClick={handleNewEntryIntent}
             params={params}
             setParams={setParams}
             totalPages={totalPages}
             totalElements={totalElements}
+            status={status}
           />
         );
       case "Reports":
@@ -325,24 +315,33 @@ export default function TransactionPage() {
           <TransactionsView
             transactions={transactions}
             onEditTransaction={handleEditIntent}
-            onDeleteTransaction={handleDeleteTx}
+            onDeleteTransaction={handleDeleteIntent}
             onNewEntryClick={handleNewEntryIntent}
             params={params}
             setParams={setParams}
             totalPages={totalPages}
             totalElements={totalElements}
+            status={status}
           />
         );
     }
   };
 
-  const handleClearNotifications = () => {
-    setAlerts(alerts.map((a) => ({ ...a, unread: false })));
-    setUnreadCount(0);
-  };
+  // Bottom Mobile navigation bar setup
 
   return (
     <div className="bg-slate-50 font-body text-slate-800 min-h-screen flex w-full relative">
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteTargetId !== null}
+        title="Hủy giao dịch"
+        message={`Bạn có chắc chắn muốn hủy giao dịch "${deleteTargetDesc}"? Thao tác này sẽ hoàn tiền vào quỹ và không thể hoàn tác.`}
+        confirmLabel="Xác nhận hủy"
+        cancelLabel="Giữ lại"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+      />
       {/* SideNavBar panel */}
       <Sidebar />
       {/* Main Canvas Area */}
@@ -418,41 +417,9 @@ export default function TransactionPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleCreateOrUpdateTx}
         editingTransaction={editingTransaction}
-        categories={categories}
-        funds={funds}
       />
 
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div
-          id="toast-notification"
-          className={`fixed top-6 right-6 z-[120] max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 animate-slide-in-right ${
-            toast.type === "error"
-              ? "bg-rose-50 border-rose-200 text-rose-950"
-              : toast.type === "warning"
-              ? "bg-amber-50 border-amber-200 text-amber-950"
-              : "bg-emerald-50 border-emerald-200 text-emerald-950"
-          }`}
-        >
-          <div className="flex justify-between items-start gap-4">
-            <span className="font-extrabold text-sm flex items-center gap-1.5">
-              {toast.title}
-            </span>
-            <button
-              onClick={() => setToast(null)}
-              className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-          <p className="text-xs font-semibold opacity-90">{toast.message}</p>
-          {toast.detail && (
-            <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
-              {toast.detail}
-            </p>
-          )}
-        </div>
-      )}
+      {/* react-hot-toast will display toasts automatically */}
     </div>
   );
 }

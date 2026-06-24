@@ -22,22 +22,23 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import type { Transaction } from "./types";
-import { CATEGORIES, STATUSES } from "./data";
 import { Link } from "react-router-dom";
 
 import type { FetchParams } from "../../services/transactionService";
-import apiClient from "../../services/apiClient";
 import { useEffect } from "react";
+import { useAppSelector } from "../../hooks/useAppDispatch";
+import { useDebounce } from "../../hooks/useDebounce";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
   onEditTransaction: (tx: Transaction) => void;
-  onDeleteTransaction: (id: string) => void;
+  onDeleteTransaction: (id: string, description?: string) => void;
   onNewEntryClick: () => void;
   params: FetchParams;
   setParams: React.Dispatch<React.SetStateAction<FetchParams>>;
   totalPages: number;
   totalElements: number;
+  status?: "idle" | "loading" | "succeeded" | "failed";
 }
 
 export default function TransactionsView({
@@ -49,6 +50,7 @@ export default function TransactionsView({
   setParams,
   totalPages,
   totalElements,
+  status,
 }: TransactionsViewProps) {
   // Local state to keep the search textbox typing smooth
   const [localSearch, setLocalSearch] = useState(params.keyword || "");
@@ -58,20 +60,39 @@ export default function TransactionsView({
     setLocalSearch(params.keyword || "");
   }, [params.keyword]);
 
-  // Categories list loaded dynamically for filter dropdown options
-  const [categoriesList, setCategoriesList] = useState<{ id: number; name: string }[]>([]);
+  const debouncedKeyword = useDebounce(localSearch, 300);
+
   useEffect(() => {
-    apiClient.get("/categories?size=100")
-      .then((res) => setCategoriesList(res.data.data.content || []))
-      .catch((err) => console.error("Error loading categories in view", err));
-  }, []);
+    setParams((prev) => {
+      const currentKeyword = prev.keyword || "";
+      const trimmedDebounced = debouncedKeyword.trim();
+      if (currentKeyword === trimmedDebounced) return prev;
+      return {
+        ...prev,
+        keyword: trimmedDebounced || undefined,
+        page: 1,
+      };
+    });
+  }, [debouncedKeyword, setParams]);
+
+  // Categories list loaded dynamically from Redux
+  const categoriesList = useAppSelector((state) => state.category.items);
 
   // Active action menu state
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
+  const sortField = params.sortBy === "transaction_date" ? "date" : params.sortBy === "amount" ? "amount" : "";
+  const sortOrder = params.sortDir || "desc";
+
+  const dateRangeValue = useMemo(() => {
+    if (params.fromDate === "2023-10-01" && params.toDate === "2023-10-31") return "OctOnly";
+    if (params.fromDate === "2023-09-01" && params.toDate === "2023-09-30") return "SepOnly";
+    return "All";
+  }, [params.fromDate, params.toDate]);
+
   const getIconComponent = (
     iconName: Transaction["icon"],
-    category: string,
+    _category?: string,
   ) => {
     switch (iconName) {
       case "building":
@@ -215,17 +236,23 @@ export default function TransactionsView({
           <Search className="ml-3 h-5 w-5 text-slate-400 shrink-0" />
           <input
             type="text"
-            value={searchTerm}
+            value={localSearch}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset page on filter
+              setLocalSearch(e.target.value);
             }}
             placeholder="Search by description, reference ID, or category..."
             className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-800 placeholder:text-slate-400 font-medium"
           />
-          {searchTerm && (
+          {localSearch && (
             <button
-              onClick={() => setSearchTerm("")}
+              onClick={() => {
+                setLocalSearch("");
+                setParams((prev) => ({
+                  ...prev,
+                  keyword: undefined,
+                  page: 1,
+                }));
+              }}
               className="mr-2 py-1 px-2 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
             >
               Clear
@@ -237,16 +264,21 @@ export default function TransactionsView({
         <div className="md:col-span-2 bg-surface-container-lowest rounded-xl p-1 shadow-xs border border-slate-200/50 flex items-center justify-between group transition-colors">
           <div className="relative w-full flex items-center justify-between">
             <select
-              value={selectedCategory}
+              value={params.categoryId || ""}
               onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setCurrentPage(1);
+                const val = e.target.value ? Number(e.target.value) : undefined;
+                setParams((prev) => ({
+                  ...prev,
+                  categoryId: val,
+                  page: 1,
+                }));
               }}
               className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-700 font-bold appearance-none cursor-pointer pr-8"
             >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              <option value="">All Categories</option>
+              {categoriesList.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -258,18 +290,21 @@ export default function TransactionsView({
         <div className="md:col-span-2 bg-surface-container-lowest rounded-xl p-1 shadow-xs border border-slate-200/50 flex items-center justify-between group transition-colors">
           <div className="relative w-full flex items-center justify-between">
             <select
-              value={selectedStatus}
+              value={params.status || ""}
               onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
+                const val = e.target.value || undefined;
+                setParams((prev) => ({
+                  ...prev,
+                  status: val,
+                  page: 1,
+                }));
               }}
               className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-700 font-bold appearance-none cursor-pointer pr-8"
             >
-              {STATUSES.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
+              <option value="">All Status</option>
+              <option value="ACTIVE">Completed</option>
+              <option value="UPDATED">Pending</option>
+              <option value="CANCELLED">Failed</option>
             </select>
             <ChevronDown className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
           </div>
@@ -281,10 +316,24 @@ export default function TransactionsView({
             <Calendar className="ml-3 h-5 w-5 text-slate-400 shrink-0" />
             <div className="w-full">
               <select
-                value={selectedDateRange}
+                value={dateRangeValue}
                 onChange={(e) => {
-                  setSelectedDateRange(e.target.value);
-                  setCurrentPage(1);
+                  const val = e.target.value;
+                  let fromDate: string | undefined = undefined;
+                  let toDate: string | undefined = undefined;
+                  if (val === "OctOnly") {
+                    fromDate = "2023-10-01";
+                    toDate = "2023-10-31";
+                  } else if (val === "SepOnly") {
+                    fromDate = "2023-09-01";
+                    toDate = "2023-09-30";
+                  }
+                  setParams((prev) => ({
+                    ...prev,
+                    fromDate,
+                    toDate,
+                    page: 1,
+                  }));
                 }}
                 className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-[13px] text-slate-800 font-bold py-2 px-2 appearance-none cursor-pointer"
               >
@@ -341,7 +390,33 @@ export default function TransactionsView({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
-              {paginatedTransactions.length > 0 ? (
+              {status === "loading" && paginatedTransactions.length === 0 ? (
+                // Loading skeleton rows shown on initial load
+                <>
+                  {[...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4.5">
+                        <div className="h-3 bg-slate-200 rounded w-20 mb-1" />
+                        <div className="h-2 bg-slate-100 rounded w-14" />
+                      </td>
+                      <td className="px-6 py-4.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0" />
+                          <div>
+                            <div className="h-3 bg-slate-200 rounded w-36 mb-1" />
+                            <div className="h-2 bg-slate-100 rounded w-24" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4.5"><div className="h-5 bg-slate-200 rounded-full w-20" /></td>
+                      <td className="px-6 py-4.5 text-right"><div className="h-3 bg-slate-200 rounded w-16 ml-auto" /></td>
+                      <td className="px-6 py-4.5 text-right"><div className="h-5 bg-slate-100 rounded-full w-14 ml-auto" /></td>
+                      <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-200 rounded-full w-20 mx-auto" /></td>
+                      <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-100 rounded w-6 mx-auto" /></td>
+                    </tr>
+                  ))}
+                </>
+              ) : paginatedTransactions.length > 0 ? (
                 paginatedTransactions.map((tx) => {
                   const iconStyle = getIconComponent(tx.icon, tx.category);
                   return (
@@ -451,19 +526,13 @@ export default function TransactionsView({
                                 </button>
                                 <button
                                   onClick={() => {
-                                    if (
-                                      confirm(
-                                        `Xác nhận xóa giao dịch "${tx.description}"?`,
-                                      )
-                                    ) {
-                                      onDeleteTransaction(tx.id);
-                                    }
+                                    onDeleteTransaction(tx.id, tx.description);
                                     setActiveMenuId(null);
                                   }}
                                   className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors text-left gap-2 cursor-pointer"
                                 >
                                   <Trash2 className="h-4 w-4 text-red-600" />
-                                  Delete Row
+                                  Hủy giao dịch
                                 </button>
                               </div>
                             </>
@@ -473,6 +542,32 @@ export default function TransactionsView({
                     </Link>
                   );
                 })
+              ) : status === "loading" ? (
+                // Loading skeleton rows
+                <>
+                  {[...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4.5">
+                        <div className="h-3 bg-slate-200 rounded w-20 mb-1" />
+                        <div className="h-2 bg-slate-100 rounded w-14" />
+                      </td>
+                      <td className="px-6 py-4.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0" />
+                          <div>
+                            <div className="h-3 bg-slate-200 rounded w-36 mb-1" />
+                            <div className="h-2 bg-slate-100 rounded w-24" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4.5"><div className="h-5 bg-slate-200 rounded-full w-20" /></td>
+                      <td className="px-6 py-4.5 text-right"><div className="h-3 bg-slate-200 rounded w-16 ml-auto" /></td>
+                      <td className="px-6 py-4.5 text-right"><div className="h-5 bg-slate-100 rounded-full w-14 ml-auto" /></td>
+                      <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-200 rounded-full w-20 mx-auto" /></td>
+                      <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-100 rounded w-6 mx-auto" /></td>
+                    </tr>
+                  ))}
+                </>
               ) : (
                 <tr>
                   <td colSpan={7} className="text-center py-12 px-6">
@@ -487,10 +582,16 @@ export default function TransactionsView({
                       </span>
                       <button
                         onClick={() => {
-                          setSearchTerm("");
-                          setSelectedCategory("All Categories");
-                          setSelectedStatus("All Status");
-                          setSelectedDateRange("All");
+                          setLocalSearch("");
+                          setParams((prev) => ({
+                            ...prev,
+                            keyword: undefined,
+                            categoryId: undefined,
+                            status: undefined,
+                            fromDate: undefined,
+                            toDate: undefined,
+                            page: 1,
+                          }));
                         }}
                         className="mt-3 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
                       >
@@ -509,16 +610,16 @@ export default function TransactionsView({
           <div className="text-xs font-semibold text-slate-500">
             Showing{" "}
             <span className="font-extrabold text-blue-900">
-              {totalItems > 0 ? (activePage - 1) * itemsPerPage + 1 : 0} -{" "}
-              {Math.min(activePage * itemsPerPage, totalItems)}
+              {totalElements > 0 ? (activePage - 1) * itemsPerPage + 1 : 0} -{" "}
+              {Math.min(activePage * itemsPerPage, totalElements)}
             </span>{" "}
-            of <span className="font-bold text-slate-700">{totalItems}</span>{" "}
+            of <span className="font-bold text-slate-700">{totalElements}</span>{" "}
             results
           </div>
 
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              onClick={() => setParams((p) => ({ ...p, page: Math.max((p.page || 1) - 1, 1) }))}
               disabled={activePage === 1}
               className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-150 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
@@ -564,7 +665,7 @@ export default function TransactionsView({
                 return (
                   <button
                     key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
+                    onClick={() => setParams((p) => ({ ...p, page: pageNum }))}
                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${isSelected
                       ? "bg-primary text-white"
                       : "hover:bg-slate-200/60 text-slate-600"
@@ -577,7 +678,7 @@ export default function TransactionsView({
             </div>
 
             <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              onClick={() => setParams((p) => ({ ...p, page: Math.min((p.page || 1) + 1, totalPages) }))}
               disabled={activePage === totalPages}
               className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-150 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
