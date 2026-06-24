@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 
 import type { Transaction, ViewType } from "./types";
-import { INITIAL_TRANSACTIONS } from "./data";
+import { useTransactions } from "./useTransactions";
+import type { TransactionRequest, TransactionResponse, SpendingWarning } from "./apiTypes";
+import apiClient from "../../services/apiClient";
 import TransactionModal from "./TransactionModal";
 import TransactionsView from "./TransactionsView";
 import DashboardView from "./DashboardView";
@@ -28,36 +30,144 @@ import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
 
 export default function TransactionPage() {
-  // Master state with LocalStorage recovery
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem("executive_ledger_txns");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Lỗi phân tích dữ liệu lịch sử transactions", e);
-      }
-    }
-    return INITIAL_TRANSACTIONS;
-  });
-
-  // Persist master list state
-  useEffect(() => {
-    localStorage.setItem("executive_ledger_txns", JSON.stringify(transactions));
-  }, [transactions]);
-
-  // View router
   const [currentView, setView] = useState<ViewType>("Transactions");
-
-  // Edit/Add overlay modal trigger
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] =
-    useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // System parameters
   const [companyName, setCompanyName] = useState("Architectural Ledger");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountsSearch, setAccountsSearch] = useState("");
+
+  // Dynamic Categories and Funds state
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [funds, setFunds] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    apiClient.get("/categories?size=100")
+      .then((res) => setCategories(res.data.data.content || []))
+      .catch((err) => console.error("Error loading categories", err));
+
+    apiClient.get("/funds?size=100")
+      .then((res) => setFunds(res.data.data.content || []))
+      .catch((err) => console.error("Error loading funds", err));
+  }, []);
+
+  const categoriesMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    categories.forEach((c) => {
+      if (c.id) map[c.id] = c.name;
+    });
+    return map;
+  }, [categories]);
+
+  const fundsMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    funds.forEach((f) => {
+      if (f.id) map[f.id] = f.name;
+    });
+    return map;
+  }, [funds]);
+
+  // Hook for backend API transaction synchronization
+  const {
+    transactions: rawTransactions,
+    totalPages,
+    totalElements,
+    loading,
+    error,
+    params,
+    setParams,
+    create,
+    update,
+    cancel,
+  } = useTransactions({
+    page: 1,
+    size: currentView === "Transactions" ? 10 : 1000,
+  });
+
+  // Dynamically change request limit size based on active view tab
+  useEffect(() => {
+    setParams((prev) => ({
+      ...prev,
+      page: 1,
+      size: currentView === "Transactions" ? 10 : 1000,
+    }));
+  }, [currentView, setParams]);
+
+  // Map backend response format to client-friendly UI interface structures
+  const mapResponseToTransaction = useCallback((tx: TransactionResponse): Transaction => {
+    const categoryName = categoriesMap[tx.categoryId] || "Procurement";
+    const isExpense = tx.type === "EXPENSE" || tx.type === "EXPENSE_DEBT";
+    const amount = isExpense ? -Math.abs(tx.amount) : Math.abs(tx.amount);
+
+    let overSpending: "Critical" | "Warning" | "Fine" = "Fine";
+    if (tx.hasWarning) {
+      overSpending = "Critical";
+    } else {
+      const mag = Math.abs(amount);
+      if (isExpense) {
+        if (mag >= 10000) overSpending = "Critical";
+        else if (mag >= 2000) overSpending = "Warning";
+      }
+    }
+
+    let status: "Completed" | "Pending" | "Failed" = "Completed";
+    if (tx.status === "ACTIVE") status = "Completed";
+    else if (tx.status === "UPDATED") status = "Pending";
+    else if (tx.status === "CANCELLED") status = "Failed";
+
+    let icon: Transaction["icon"] = "other";
+    const catUpper = categoryName.toUpperCase();
+    if (catUpper.includes("PROCUR")) icon = "building";
+    else if (catUpper.includes("REVEN")) icon = "payment";
+    else if (catUpper.includes("MAINTEN")) icon = "maintenance";
+    else if (catUpper.includes("INFRA") || catUpper.includes("CLOUD")) icon = "cloud";
+    else if (catUpper.includes("HR") || catUpper.includes("PAYROLL")) icon = "payroll";
+
+    let dateStr = tx.transactionDate;
+    let timeStr = "";
+    try {
+      const d = new Date(tx.transactionDate);
+      if (!isNaN(d.getTime())) {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        dateStr = `${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}, ${d.getFullYear()}`;
+        
+        let hours = d.getHours();
+        const mins = String(d.getMinutes()).padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+        timeStr = `${String(hours).padStart(2, "0")}:${mins} ${ampm}`;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Extended transaction properties to preserve database keys for updates
+    return {
+      id: String(tx.id),
+      date: dateStr,
+      time: timeStr,
+      description: tx.note || "Giao dịch không tên",
+      refId: tx.transactionCode || `TXN-${tx.id}`,
+      category: categoryName,
+      amount,
+      overSpending,
+      status,
+      icon,
+      // Metadata fields for edit mode pre-fill
+      categoryId: tx.categoryId,
+      fundId: tx.fundId,
+      partnerId: tx.partnerId,
+      debtId: tx.debtId,
+      rawNote: tx.note,
+      rawType: tx.type,
+    } as any;
+  }, [categoriesMap]);
+
+  const transactions = useMemo(() => {
+    return rawTransactions.map(mapResponseToTransaction);
+  }, [rawTransactions, mapResponseToTransaction]);
 
   // Notifications drawer simulation
   const [unreadCount, setUnreadCount] = useState(3);
@@ -83,40 +193,78 @@ export default function TransactionPage() {
     },
   ]);
 
-  const handleCreateOrUpdateTx = (
-    txData: Omit<Transaction, "id"> & { id?: string },
-  ) => {
-    if (txData.id) {
-      // Modify existing
-      setTransactions(
-        transactions.map((t) =>
-          t.id === txData.id ? ({ ...t, ...txData } as Transaction) : t,
-        ),
-      );
-    } else {
-      // Create fresh
-      const newTx: Transaction = {
-        id: `tx-${Date.now()}`,
-        ...txData,
-      } as Transaction;
-      setTransactions([newTx, ...transactions]);
+  // Visual Floating Toast feedback state
+  const [toast, setToast] = useState<{
+    type: "success" | "warning" | "error";
+    title: string;
+    message: string;
+    detail?: string;
+  } | null>(null);
 
-      // Add a notification about new transaction if it is critical
-      if (newTx.overSpending === "Critical") {
-        const newNotice = {
-          id: Date.now(),
-          text: `Vượt chi nghiêm trọng (Critical): "${newTx.description}" - $${Math.abs(newTx.amount).toLocaleString()}`,
-          time: "Vừa xong",
-          unread: true,
-        };
-        setAlerts([newNotice, ...alerts]);
-        setUnreadCount((c) => c + 1);
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 8500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const showWarningToast = (warning: SpendingWarning) => {
+    const isCritical = warning.level === "CRITICAL";
+    setToast({
+      type: isCritical ? "error" : "warning",
+      title: isCritical ? "⚠️ Chi tiêu bất thường nghiêm trọng!" : "⚠️ Vượt mức chi tiêu bình thường",
+      message: warning.message,
+      detail: `Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`,
+    });
+  };
+
+  const handleCreateOrUpdateTx = async (formData: any) => {
+    try {
+      if (editingTransaction) {
+        await update(Number(editingTransaction.id), formData as TransactionRequest);
+        setToast({
+          type: "success",
+          title: "Thao tác thành công",
+          message: "Đã cập nhật giao dịch thành công!",
+        });
+      } else {
+        const result = await create(formData as TransactionRequest);
+        const warning = result.data.warning;
+        if (warning && warning.hasWarning) {
+          showWarningToast(warning);
+        } else {
+          setToast({
+            type: "success",
+            title: "Thao tác thành công",
+            message: "Đã tạo giao dịch mới thành công!",
+          });
+        }
       }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setToast({
+        type: "error",
+        title: "Lưu giao dịch thất bại",
+        message: err?.response?.data?.message || err?.message || "Lỗi lưu giao dịch",
+      });
     }
   };
 
-  const handleDeleteTx = (id: string) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+  const handleDeleteTx = async (id: string) => {
+    try {
+      await cancel(Number(id));
+      setToast({
+        type: "success",
+        title: "Thao tác thành công",
+        message: "Đã hủy giao dịch và hoàn tiền thành công!",
+      });
+    } catch (err: any) {
+      setToast({
+        type: "error",
+        title: "Hủy giao dịch thất bại",
+        message: err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này.",
+      });
+    }
   };
 
   const handleEditIntent = (tx: Transaction) => {
@@ -155,6 +303,10 @@ export default function TransactionPage() {
             onEditTransaction={handleEditIntent}
             onDeleteTransaction={handleDeleteTx}
             onNewEntryClick={handleNewEntryIntent}
+            params={params}
+            setParams={setParams}
+            totalPages={totalPages}
+            totalElements={totalElements}
           />
         );
       case "Reports":
@@ -175,6 +327,10 @@ export default function TransactionPage() {
             onEditTransaction={handleEditIntent}
             onDeleteTransaction={handleDeleteTx}
             onNewEntryClick={handleNewEntryIntent}
+            params={params}
+            setParams={setParams}
+            totalPages={totalPages}
+            totalElements={totalElements}
           />
         );
     }
@@ -262,7 +418,41 @@ export default function TransactionPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleCreateOrUpdateTx}
         editingTransaction={editingTransaction}
+        categories={categories}
+        funds={funds}
       />
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          id="toast-notification"
+          className={`fixed top-6 right-6 z-[120] max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 animate-slide-in-right ${
+            toast.type === "error"
+              ? "bg-rose-50 border-rose-200 text-rose-950"
+              : toast.type === "warning"
+              ? "bg-amber-50 border-amber-200 text-amber-950"
+              : "bg-emerald-50 border-emerald-200 text-emerald-950"
+          }`}
+        >
+          <div className="flex justify-between items-start gap-4">
+            <span className="font-extrabold text-sm flex items-center gap-1.5">
+              {toast.title}
+            </span>
+            <button
+              onClick={() => setToast(null)}
+              className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-xs font-semibold opacity-90">{toast.message}</p>
+          {toast.detail && (
+            <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
+              {toast.detail}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

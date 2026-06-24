@@ -25,11 +25,19 @@ import type { Transaction } from "./types";
 import { CATEGORIES, STATUSES } from "./data";
 import { Link } from "react-router-dom";
 
+import type { FetchParams } from "../../services/transactionService";
+import apiClient from "../../services/apiClient";
+import { useEffect } from "react";
+
 interface TransactionsViewProps {
   transactions: Transaction[];
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
   onNewEntryClick: () => void;
+  params: FetchParams;
+  setParams: React.Dispatch<React.SetStateAction<FetchParams>>;
+  totalPages: number;
+  totalElements: number;
 }
 
 export default function TransactionsView({
@@ -37,27 +45,32 @@ export default function TransactionsView({
   onEditTransaction,
   onDeleteTransaction,
   onNewEntryClick,
+  params,
+  setParams,
+  totalPages,
+  totalElements,
 }: TransactionsViewProps) {
-  // Search and filter states
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [selectedDateRange, setSelectedDateRange] = useState("All"); // October only vs All
+  // Local state to keep the search textbox typing smooth
+  const [localSearch, setLocalSearch] = useState(params.keyword || "");
 
-  // Sorting state
-  const [sortField, setSortField] = useState<"date" | "amount">("date");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  // Sync local search when params.keyword is updated externally
+  useEffect(() => {
+    setLocalSearch(params.keyword || "");
+  }, [params.keyword]);
+
+  // Categories list loaded dynamically for filter dropdown options
+  const [categoriesList, setCategoriesList] = useState<{ id: number; name: string }[]>([]);
+  useEffect(() => {
+    apiClient.get("/categories?size=100")
+      .then((res) => setCategoriesList(res.data.data.content || []))
+      .catch((err) => console.error("Error loading categories in view", err));
+  }, []);
 
   // Active action menu state
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
   const getIconComponent = (
     iconName: Transaction["icon"],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     category: string,
   ) => {
     switch (iconName) {
@@ -95,20 +108,19 @@ export default function TransactionsView({
   };
 
   const getCategoryTheme = (cat: string) => {
-    switch (cat) {
-      case "Procurement":
-        return "bg-blue-100/50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
-      case "Revenue":
-        return "bg-emerald-100/50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300";
-      case "Maintenance":
-        return "bg-amber-100/50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300";
-      case "Infrastructure":
-        return "bg-rose-100/40 text-rose-800 dark:bg-rose-900/20 dark:text-rose-300";
-      case "HR & Payroll":
-        return "bg-violet-100/50 text-violet-800 dark:bg-violet-900/20 dark:text-violet-300";
-      default:
-        return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300";
+    const catUpper = cat.toUpperCase();
+    if (catUpper.includes("PROCUR")) {
+      return "bg-blue-100/50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
+    } else if (catUpper.includes("REVEN")) {
+      return "bg-emerald-100/50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300";
+    } else if (catUpper.includes("MAINTEN")) {
+      return "bg-amber-100/50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300";
+    } else if (catUpper.includes("INFRA") || catUpper.includes("CLOUD")) {
+      return "bg-rose-100/40 text-rose-800 dark:bg-rose-900/20 dark:text-rose-300";
+    } else if (catUpper.includes("HR") || catUpper.includes("PAYROLL")) {
+      return "bg-violet-100/50 text-violet-800 dark:bg-violet-900/20 dark:text-violet-300";
     }
+    return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300";
   };
 
   const getOverspendingTheme = (os: Transaction["overSpending"]) => {
@@ -148,78 +160,21 @@ export default function TransactionsView({
     }
   };
 
-  // Process rows by searching, filtering, and sorting
-  const processedTransactions = useMemo(() => {
-    let result = [...transactions];
+  // Transactions are already fully filtered, sorted, and paginated by backend
+  const paginatedTransactions = transactions;
+  const activePage = params.page || 1;
+  const itemsPerPage = params.size || 10;
 
-    // Search query matches
-    if (searchTerm.trim() !== "") {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.description.toLowerCase().includes(q) ||
-          t.refId.toLowerCase().includes(q) ||
-          t.category.toLowerCase().includes(q),
-      );
-    }
-
-    // Category matches
-    if (selectedCategory !== "All Categories") {
-      result = result.filter((t) => t.category === selectedCategory);
-    }
-
-    // Status matches
-    if (selectedStatus !== "All Status") {
-      result = result.filter((t) => t.status === selectedStatus);
-    }
-
-    // Date range filtering
-    if (selectedDateRange === "OctOnly") {
-      result = result.filter((t) => t.date.includes("Oct"));
-    } else if (selectedDateRange === "SepOnly") {
-      result = result.filter((t) => t.date.includes("Sep"));
-    }
-
-    // Sorting
-    result.sort((a, b) => {
-      if (sortField === "date") {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
-      } else {
-        return sortOrder === "desc" ? b.amount - a.amount : a.amount - b.amount;
-      }
-    });
-
-    return result;
-  }, [
-    transactions,
-    searchTerm,
-    selectedCategory,
-    selectedStatus,
-    selectedDateRange,
-    sortField,
-    sortOrder,
-  ]);
-
-  // Adjust pagination if page index exceeds calculated boundaries
-  const totalItems = processedTransactions.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  const activePage = Math.min(currentPage, totalPages);
-
-  const paginatedTransactions = useMemo(() => {
-    const startIdx = (activePage - 1) * itemsPerPage;
-    return processedTransactions.slice(startIdx, startIdx + itemsPerPage);
-  }, [processedTransactions, activePage]);
-
-  // Toggle dynamic column sorts
+  // Toggle backend sorting state parameters
   const handleSort = (field: "date" | "amount") => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("desc");
-    }
+    const backendSortBy = field === "date" ? "transaction_date" : "amount";
+    const nextDir = params.sortBy === backendSortBy && params.sortDir === "desc" ? "asc" : "desc";
+    setParams((prev) => ({
+      ...prev,
+      sortBy: backendSortBy,
+      sortDir: nextDir,
+      page: 1,
+    }));
   };
 
   return (

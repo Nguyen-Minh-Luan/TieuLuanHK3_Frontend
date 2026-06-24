@@ -15,120 +15,127 @@ import {
   ArrowUp,
   Save
 } from 'lucide-react';
+import { useAppSelector } from '../../hooks/useAppDispatch';
 import type { Transaction } from './types';
+import type { TransactionRequest } from './apiTypes';
+import apiClient from '../../services/apiClient';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (transaction: Omit<Transaction, 'id'> & { id?: string }) => void;
+  onSave: (payload: TransactionRequest) => void;
   editingTransaction: Transaction | null;
+  categories: { id: number; name: string; type?: string }[];
+  funds: { id: number; name: string }[];
 }
 
 export default function TransactionModal({
   isOpen,
   onClose,
   onSave,
-  editingTransaction
+  editingTransaction,
+  categories,
+  funds
 }: TransactionModalProps) {
-  const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'expense' | 'income'>('expense');
-  const [category, setCategory] = useState('Procurement');
-  const [status, setStatus] = useState<'Completed' | 'Pending' | 'Failed'>('Completed');
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [fundId, setFundId] = useState<number | null>(null);
+  const [partnerId, setPartnerId] = useState<number | null>(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [refId, setRefId] = useState('');
-  const [icon, setIcon] = useState<Transaction['icon']>('building');
-
-  // Realistic localized states
-  const [sourceAccount, setSourceAccount] = useState('Tài khoản chính (VPBank - 88102)');
   const [note, setNote] = useState('');
 
-  // Trigger default initializers and reset
+  // Fetch partners list dynamically from backend
+  const [partners, setPartners] = useState<{ id: number; name: string }[]>([]);
+
+  const userId = useAppSelector((state) => state.auth.id) || Number(localStorage.getItem("userId")) || 1;
+
   useEffect(() => {
-    if (editingTransaction) {
-      setDescription(editingTransaction.description || '');
-      const amt = Math.abs(editingTransaction.amount);
-      setAmount(amt.toString());
+    if (isOpen) {
+      apiClient.get("/partners?size=100")
+        .then((res) => setPartners(res.data.data.content || []))
+        .catch((err) => console.error("Error loading partners", err));
+    }
+  }, [isOpen]);
+
+  // Initializer and reset logic
+  useEffect(() => {
+    if (editingTransaction && isOpen) {
+      const ext = editingTransaction as any;
+      setAmount(Math.abs(editingTransaction.amount).toString());
       setType(editingTransaction.amount >= 0 ? 'income' : 'expense');
-      setCategory(editingTransaction.category || 'Procurement');
-      setStatus(editingTransaction.status || 'Completed');
-      setDate(editingTransaction.date || '');
-      setTime(editingTransaction.time || '');
-      setRefId(editingTransaction.refId || '');
-      setIcon(editingTransaction.icon || 'building');
-      setNote('');
-    } else {
-      setDescription('');
+      setCategoryId(ext.categoryId || null);
+      setFundId(ext.fundId || null);
+      setPartnerId(ext.partnerId || null);
+      setNote(ext.rawNote || '');
+      
+      const d = ext.rawDate ? new Date(ext.rawDate) : new Date();
+      if (!isNaN(d.getTime())) {
+        setDate(d.toISOString().split('T')[0]);
+        setTime(d.toTimeString().split(' ')[0].substring(0, 5));
+      }
+    } else if (isOpen) {
       setAmount('');
       setType('expense');
-      setCategory('Procurement');
-      setStatus('Completed');
+      setCategoryId(null);
+      setFundId(null);
+      setPartnerId(null);
       setNote('');
 
       const now = new Date();
-      // Format Oct 24, 2023 for consistency
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const mName = months[now.getMonth()];
-      const dNum = String(now.getDate()).padStart(2, '0');
-      const yNum = now.getFullYear();
-      setDate(`${mName} ${dNum}, ${yNum}`);
-
-      // Format time e.g., 14:32 PM
-      let hours = now.getHours();
-      const mins = String(now.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      setTime(`${String(hours).padStart(2, '0')}:${mins} ${ampm}`);
-
-      // Generate reference ID e.g., REF-92834710-X
-      const ranDigits = Math.floor(10000000 + Math.random() * 90000000);
-      const ranChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
-      setRefId(`REF-${ranDigits}-${ranChar}`);
-      setIcon('building');
+      setDate(now.toISOString().split('T')[0]);
+      setTime(now.toTimeString().split(' ')[0].substring(0, 5));
     }
   }, [editingTransaction, isOpen]);
+
+  // Filter categories by type matching current selection (INCOME/EXPENSE)
+  const filteredCategories = useMemo(() => {
+    const typeUpper = type.toUpperCase();
+    return categories.filter(c => c.type === typeUpper);
+  }, [categories, type]);
+
+  useEffect(() => {
+    if (isOpen && !editingTransaction && filteredCategories.length > 0 && !categoryId) {
+      setCategoryId(filteredCategories[0].id);
+    }
+  }, [filteredCategories, isOpen, editingTransaction, categoryId]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || !amount || isNaN(parseFloat(amount))) {
-      alert('Vui lòng điền mô tả và số tiền hợp lệ!');
+    if (!fundId || !categoryId || !amount || isNaN(parseFloat(amount))) {
+      alert('Vui lòng chọn nguồn tiền, danh mục và điền số tiền hợp lệ!');
       return;
     }
 
-    const numericalAmount = parseFloat(amount) * (type === 'expense' ? -1 : 1);
-
-    // Auto calculate overspending
-    let overSpending: 'Critical' | 'Warning' | 'Fine' = 'Fine';
-    if (type === 'expense') {
-      const mag = Math.abs(numericalAmount);
-      if (mag >= 10000) {
-        overSpending = 'Critical';
-      } else if (mag >= 2000) {
-        overSpending = 'Warning';
+    let isoDate = new Date().toISOString();
+    if (date) {
+      const timePart = time || "00:00";
+      const combined = new Date(`${date}T${timePart}:00`);
+      if (!isNaN(combined.getTime())) {
+        isoDate = combined.toISOString();
       }
     }
 
-    onSave({
-      ...(editingTransaction ? { id: editingTransaction.id } : {}),
-      date,
-      time,
-      description: description.trim(),
-      refId,
-      category,
-      amount: numericalAmount,
-      overSpending,
-      status,
-      icon
-    });
+    const payload: TransactionRequest = {
+      fundId: Number(fundId),
+      categoryId: Number(categoryId),
+      partnerId: partnerId ? Number(partnerId) : undefined,
+      userId,
+      type: type === 'income' ? 'INCOME' : 'EXPENSE',
+      amount: parseFloat(amount),
+      note: note.trim() || undefined,
+      transactionDate: isoDate,
+      debtId: (editingTransaction as any)?.debtId || undefined,
+    };
+
+    onSave(payload);
     onClose();
   };
 
   // Determine icon preference based on category
-  const handleCategoryChange = (cat: string) => {
-    setCategory(cat);
     if (cat === 'Revenue') {
       setType('income');
       setIcon('payment');
@@ -179,14 +186,17 @@ export default function TransactionModal({
                 </label>
                 <div className="relative">
                   <select
-                    value={sourceAccount}
-                    onChange={(e) => setSourceAccount(e.target.value)}
+                    value={fundId || ""}
+                    onChange={(e) => setFundId(e.target.value ? Number(e.target.value) : null)}
                     className="w-full bg-[#f4f6f8] hover:bg-[#ebedf1] border border-transparent rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:bg-white focus:border-primary transition-all text-slate-800 cursor-pointer appearance-none pr-10"
+                    required
                   >
-                    <option value="Tài khoản chính (VPBank - 88102)">Chọn tài khoản nguồn</option>
-                    <option value="Tài khoản chính (VPBank - 88102)">Tài khoản chính (VPBank - 88102)</option>
-                    <option value="Tài khoản đầu tư (Techcombank)">Tài khoản đầu tư (Techcombank)</option>
-                    <option value="Quỹ tiền mặt (Cash Fund)">Quỹ tiền mặt (Cash Fund)</option>
+                    <option value="">Chọn nguồn tiền</option>
+                    {funds.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
                 </div>
@@ -205,16 +215,17 @@ export default function TransactionModal({
                 </div>
                 <div className="relative">
                   <select
-                    value={category}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    value={categoryId || ""}
+                    onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
                     className="w-full bg-[#f4f6f8] hover:bg-[#ebedf1] border border-transparent rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:bg-white focus:border-primary transition-all text-slate-800 cursor-pointer appearance-none pr-10"
+                    required
                   >
-                    <option value="">Chọn danh mục giao dịch</option>
-                    <option value="Procurement">Procurement</option>
-                    <option value="Revenue">Revenue</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Infrastructure">Infrastructure</option>
-                    <option value="HR & Payroll">HR & Payroll</option>
+                    <option value="">Chọn danh mục</option>
+                    {filteredCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
                 </div>
@@ -225,16 +236,20 @@ export default function TransactionModal({
                 <label className="text-sm font-bold text-slate-800 block font-headline">
                   Đối tác / Nhà cung cấp
                 </label>
-                <div className="relative flex items-center bg-[#f4f6f8] focus-within:bg-white border border-transparent focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-xl px-4 py-3.5 transition-all">
-                  <Briefcase className="h-5 w-5 text-slate-400 mr-2.5 shrink-0 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Nhập tên đối tác..."
-                    className="w-full bg-transparent border-none outline-hidden text-sm font-semibold text-slate-800 focus:outline-hidden focus:ring-0 p-0"
-                    required
-                  />
+                <div className="relative">
+                  <select
+                    value={partnerId || ""}
+                    onChange={(e) => setPartnerId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-[#f4f6f8] hover:bg-[#ebedf1] border border-transparent rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:bg-white focus:border-primary transition-all text-slate-800 cursor-pointer appearance-none pr-10"
+                  >
+                    <option value="">Chọn đối tác (Không bắt buộc)</option>
+                    {partners.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 
@@ -275,26 +290,23 @@ export default function TransactionModal({
                   Ngày &amp; Giờ giao dịch
                 </label>
                 <div className="relative flex items-center bg-[#f4f6f8] focus-within:bg-white border border-transparent focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-xl px-4 py-3.5 transition-all">
-                  <Calendar className="h-5 w-5 text-slate-400 mr-2 shrink-0 pointer-events-none" />
+                  <Calendar className="h-5 w-5 text-slate-400 mr-2.5 shrink-0 pointer-events-none" />
                   <input
-                    type="text"
+                    type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    placeholder="dd/mm/yyyy"
-                    className="bg-transparent border-none outline-hidden text-sm font-semibold text-slate-800 focus:outline-hidden focus:ring-0 p-0 w-1/2"
+                    className="bg-transparent border-none outline-hidden text-sm font-semibold text-slate-800 focus:outline-hidden focus:ring-0 p-0 w-1/2 cursor-pointer font-bold"
                     required
                   />
                   <span className="text-slate-300 mx-2 select-none">|</span>
                   <Clock className="h-5 w-5 text-slate-400 mr-2 shrink-0 pointer-events-none" />
                   <input
-                    type="text"
+                    type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    placeholder="--:--"
-                    className="bg-transparent border-none outline-hidden text-sm font-semibold text-slate-800 focus:outline-hidden focus:ring-0 p-0 w-1/2"
+                    className="bg-transparent border-none outline-hidden text-sm font-semibold text-slate-800 focus:outline-hidden focus:ring-0 p-0 w-1/2 cursor-pointer font-bold"
                     required
                   />
-                  <Calendar className="h-5 w-5 text-slate-400 ml-2 shrink-0 pointer-events-none" />
                 </div>
               </div>
 

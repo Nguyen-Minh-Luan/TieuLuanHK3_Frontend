@@ -3,6 +3,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // --- Types ---
 interface AuthState {
+  id: number | null;
   username: string | null;
   fullName: string | null;
   token: string | null;
@@ -16,6 +17,7 @@ interface LoginPayload {
 }
 
 interface LoginResponse {
+  id: number;
   username: string;
   fullName: string;
   token: string;
@@ -23,8 +25,9 @@ interface LoginResponse {
 
 // --- Initial State ---
 const initialState: AuthState = {
-  username: null,
-  fullName: null,
+  id: localStorage.getItem("userId") ? Number(localStorage.getItem("userId")) : null,
+  username: localStorage.getItem("username") ?? null,
+  fullName: localStorage.getItem("fullName") ?? null,
   token: localStorage.getItem("token") ?? null, // Persist qua F5
   status: "idle",
   error: null,
@@ -58,12 +61,16 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
+      state.id = null;
       state.username = null;
       state.fullName = null;
       state.token = null;
       state.status = "idle";
       state.error = null;
       localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("username");
+      localStorage.removeItem("fullName");
     },
     clearError(state) {
       state.error = null;
@@ -77,10 +84,14 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.status = "succeeded";
+        state.id = action.payload.id;
         state.username = action.payload.username;
         state.fullName = action.payload.fullName;
         state.token = action.payload.token;
         localStorage.setItem("token", action.payload.token); // Persist token
+        localStorage.setItem("userId", String(action.payload.id));
+        localStorage.setItem("username", action.payload.username);
+        localStorage.setItem("fullName", action.payload.fullName);
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.status = "failed";
