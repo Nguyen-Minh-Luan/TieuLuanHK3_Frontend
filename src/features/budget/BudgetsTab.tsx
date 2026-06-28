@@ -4,6 +4,8 @@ import type { Fund } from './types';
 
 interface BudgetsTabProps {
   funds: Fund[];
+  isLoading?: boolean;
+  error?: string | null;
   onOpenAddFund: () => void;
   onOpenEditFund: (fund: Fund) => void;
   onDeleteFund: (id: string) => void;
@@ -12,6 +14,8 @@ interface BudgetsTabProps {
 
 export default function BudgetsTab({
   funds,
+  isLoading = false,
+  error = null,
   onOpenAddFund,
   onOpenEditFund,
   onDeleteFund,
@@ -85,6 +89,26 @@ export default function BudgetsTab({
 
         {/* Interactive Responsive Table */}
         <div className="overflow-x-auto w-full" id="budgets-table-wrapper">
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-400" id="loading-indicator">
+              <div className="w-8 h-8 border-2 border-slate-200 border-t-brand-primary rounded-full animate-spin" />
+              <span className="text-xs font-medium">Đang tải danh sách nguồn tiền...</span>
+            </div>
+          )}
+
+          {/* Error State */}
+          {!isLoading && error && (
+            <div className="py-12 px-6 flex flex-col items-center gap-2" id="error-indicator">
+              <span className="text-2xl">⚠️</span>
+              <span className="text-sm font-semibold text-rose-600">Không thể tải dữ liệu</span>
+              <span className="text-xs text-slate-400">{error}</span>
+            </div>
+          )}
+
+          {/* Table — chỉ hiển thị khi không loading và không có lỗi */}
+          {!isLoading && !error && (
           <table className="w-full text-left border-collapse" id="budgets-table">
             <thead>
               <tr className="bg-slate-50/70 border-b border-transparent text-[11px] font-bold text-slate-400 tracking-wider font-heading uppercase" id="budgets-table-head">
@@ -198,6 +222,7 @@ export default function BudgetsTab({
               )}
             </tbody>
           </table>
+          )}
         </div>
       </div>
 

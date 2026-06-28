@@ -1,30 +1,62 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import BudgetsTab from './BudgetsTab';
 import FundModal from './FundModal';
-import { INITIAL_FUNDS, INITIAL_TRANSACTIONS } from './data';
 import type { Fund, Transaction } from './types';
-import { HelpCircle, Sparkles, X, ShieldCheck, Info, FileSpreadsheet } from 'lucide-react';
+import { INITIAL_TRANSACTIONS } from './data';
+import { HelpCircle, Sparkles, X, ShieldCheck } from 'lucide-react';
 import { Sidebar } from '../../component/Sidebar';
 import Header from '../../component/Header';
+import type { AppDispatch, RootState } from '../../store';
+import {
+  fetchFunds,
+  createFund,
+  updateFund,
+  deleteFund,
+  fetchTotalBalance,
+  resetSubmitStatus,
+} from '../../store/slices/fundSlice';
+import { mapFundToRequest } from './apiTypes';
 
 export default function Budget() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: funds, status, submitStatus, error } = useSelector((state: RootState) => state.fund);
+
   const [currentTab, setCurrentTab] = useState<string>('budgets'); // Matches screenshot default view "Budgets" active state
-  const [funds, setFunds] = useState<Fund[]>(INITIAL_FUNDS);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [searchText, setSearchText] = useState<string>('');
 
   // Modals visibility states
   const [isFundModalOpen, setIsFundModalOpen] = useState(false);
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [editingFund, setEditingFund] = useState<Fund | null>(null);
 
   // Custom overlays visibility
   const [helpOpen, setHelpOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // Load danh sách quỹ khi mount hoặc khi status = 'idle'
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchFunds({ page: 1, size: 50, sortBy: 'name', sortDir: 'asc' }));
+      dispatch(fetchTotalBalance());
+    }
+  }, [status, dispatch]);
+
+  // Thông báo kết quả submit (create/update)
+  useEffect(() => {
+    if (submitStatus === 'succeeded') {
+      toast.success('Lưu nguồn tiền thành công!');
+      dispatch(resetSubmitStatus());
+    } else if (submitStatus === 'failed' && error) {
+      toast.error(error);
+      dispatch(resetSubmitStatus());
+    }
+  }, [submitStatus, error, dispatch]);
+
   // Computed Notifications list (derived dynamically from the state)
   const systemNotifications = useMemo(() => {
-    const list = [];
+    const list: Array<{ id: string; title: string; message: string; date: string; type: string }> = [];
 
     // Low balance warnings
     funds.forEach(f => {
@@ -33,7 +65,7 @@ export default function Budget() {
         list.push({
           id: `notif-limit-${f.id}`,
           title: `⚠️ Hạn mức rủi ro chạm biên`,
-          message: `Nguồn quỹ "${f.name}" chỉ còn khả dụng ${ratio * 100}% (${f.availableBalance.toLocaleString('de-DE')}$)`,
+          message: `Nguồn quỹ "${f.name}" chỉ còn khả dụng ${(ratio * 100).toFixed(1)}% (${f.availableBalance.toLocaleString('de-DE')}$)`,
           date: new Date().toISOString(),
           type: 'warning'
         });
@@ -46,7 +78,7 @@ export default function Budget() {
         list.push({
           id: `notif-pending-${f.id}`,
           title: `🕒 Chờ kích hoạt đối tác`,
-          message: `Ngân sách "${f.name}" cần được xác minh biểu biểu mẫu mẫu số 12 trước khi thực hiện giải ngân.`,
+          message: `Ngân sách "${f.name}" cần được xác minh biểu mẫu số 12 trước khi thực hiện giải ngân.`,
           date: new Date().toISOString(),
           type: 'info'
         });
@@ -56,60 +88,28 @@ export default function Budget() {
     return list;
   }, [funds]);
 
-  // Handler: Add or update a fund
-  const handleSaveFund = (savedFund: Omit<Fund, 'id' | 'updatedAt'> & { id?: string }) => {
-    if (savedFund.id) {
-      // Editing existing
-      setFunds(prev => prev.map(f => {
-        if (f.id === savedFund.id) {
-          // Keep same id and update
-          return {
-            ...f,
-            ...savedFund,
-            updatedAt: new Date().toISOString().split('T')[0]
-          } as Fund;
-        }
-        return f;
-      }));
-    } else {
-      // Adding new fund
-      const nextId = `f-${Date.now()}`;
-      const newFundObj: Fund = {
-        id: nextId,
-        name: savedFund.name,
-        type: savedFund.type,
-        totalCapital: savedFund.totalCapital,
-        availableBalance: savedFund.availableBalance,
-        status: savedFund.status,
-        code: savedFund.code.toUpperCase(),
-        note: savedFund.note,
-        updatedAt: new Date().toISOString().split('T')[0]
-      };
-      setFunds(prev => [...prev, newFundObj]);
+  // Handler: Add or update a fund — dispatch Redux action
+  const handleSaveFund = async (savedFund: Omit<Fund, 'id' | 'updatedAt'> & { id?: string }) => {
+    const request = mapFundToRequest(savedFund);
+    // Áp dụng toUpperCase cho code trước khi gửi API
+    if (request.code) request.code = request.code.toUpperCase();
 
-      // Log secondary inflow log if initial balance specified is higher than 0
-      if (savedFund.availableBalance > 0) {
-        const nextTxId = `tx-${Math.floor(100 + Math.random() * 900)}`;
-        const initialTx: Transaction = {
-          id: nextTxId,
-          date: new Date().toISOString(),
-          fundId: nextId,
-          fundName: savedFund.name,
-          type: 'Cấp vốn',
-          amount: savedFund.availableBalance,
-          description: `Bơm tính thanh khoản ban đầu cho nguồn lực ${savedFund.code}`,
-          status: 'Thành công'
-        };
-        setTransactions(prev => [initialTx, ...prev]);
-      }
+    if (savedFund.id) {
+      // Cập nhật quỹ đã có
+      await dispatch(updateFund({ id: Number(savedFund.id), data: request }));
+    } else {
+      // Tạo quỹ mới
+      await dispatch(createFund(request));
     }
     setEditingFund(null);
   };
 
-  // Handler: Delete fund
-  const handleDeleteFund = (id: string) => {
-    setFunds(prev => prev.filter(f => f.id !== id));
-    // Prune corresponding transactions optionally, or keep history
+  // Handler: Delete fund — dispatch Redux action
+  const handleDeleteFund = async (id: string) => {
+    await dispatch(deleteFund(Number(id)));
+    toast.success('Đã xóa nguồn tiền!');
+    // Prune local transactions để giữ UI nhất quán
+    setTransactions(prev => prev.filter(t => t.fundId !== id));
   };
 
   // Handler: Trigger edit modal
@@ -118,102 +118,14 @@ export default function Budget() {
     setIsFundModalOpen(true);
   };
 
-  // Handler: Register transaction and recalculate balance
-  const handleAddTransaction = (newTx: {
-    fundId: string;
-    type: 'Cấp vốn' | 'Giải ngân' | 'Chuyển quỹ';
-    amount: number;
-    description: string;
-    targetFundId?: string;
-  }) => {
-    const freshTxId = `tx-${Math.floor(100 + Math.random() * 900)}`;
-    const sourceFund = funds.find(f => f.id === newTx.fundId);
 
-    if (!sourceFund) return;
 
-    // Mutate source fund and target fund balances
-    setFunds(prevFunds => prevFunds.map(f => {
-      let updatedBal = f.availableBalance;
-      let status = f.status;
-
-      if (f.id === newTx.fundId) {
-        if (newTx.type === 'Cấp vốn') {
-          updatedBal += newTx.amount;
-        } else {
-          updatedBal -= newTx.amount;
-        }
-      }
-
-      if (newTx.type === 'Chuyển quỹ' && f.id === newTx.targetFundId) {
-        updatedBal += newTx.amount;
-      }
-
-      // Re-evaluate limits status
-      const ratio = f.totalCapital > 0 ? (updatedBal / f.totalCapital) : 0;
-      if (ratio < 0.1 && status === 'HOẠT ĐỘNG') {
-        status = 'GẦN GIỚI HẠN';
-      } else if (ratio >= 0.1 && status === 'GẦN GIỚI HẠN') {
-        status = 'HOẠT ĐỘNG';
-      }
-
-      return {
-        ...f,
-        availableBalance: updatedBal,
-        status: status
-      };
-    }));
-
-    // Register transaction log
-    const trans: Transaction = {
-      id: freshTxId,
-      date: new Date().toISOString(),
-      fundId: newTx.fundId,
-      fundName: sourceFund.name,
-      type: newTx.type,
-      amount: newTx.amount,
-      description: newTx.type === 'Chuyển quỹ' && newTx.targetFundId
-        ? `${newTx.description} (Chuyển đến: ${funds.find(f => f.id === newTx.targetFundId)?.code || 'quỹ liên quan'})`
-        : newTx.description,
-      status: 'Thành công'
-    };
-
-    setTransactions(prev => [trans, ...prev]);
-  };
-
-  // Handler: Delete transaction history entry and rollback balance
-  const handleDeleteTransaction = (txId: string) => {
-    const targetTx = transactions.find(t => t.id === txId);
-    if (!targetTx) return;
-
-    // Optional reverse mapping: if transaction was withdraw, we refund. We do it to maintain data consistency
-    setFunds(prev => prev.map(f => {
-      if (f.id === targetTx.fundId) {
-        let rolledBal = f.availableBalance;
-        if (targetTx.type === 'Giải ngân') {
-          rolledBal += targetTx.amount;
-        } else if (targetTx.type === 'Cấp vốn') {
-          rolledBal -= targetTx.amount;
-        }
-
-        const ratio = f.totalCapital > 0 ? (rolledBal / f.totalCapital) : 0;
-        let status = f.status;
-        if (ratio >= 0.1 && status === 'GẦN GIỚI HẠN') status = 'HOẠT ĐỘNG';
-        if (ratio < 0.1 && status === 'HOẠT ĐỘNG') status = 'GẦN GIỚI HẠN';
-
-        return { ...f, availableBalance: rolledBal, status };
-      }
-      return f;
-    }));
-
-    setTransactions(prev => prev.filter(t => t.id !== txId));
-  };
-
-  // Reset to static data
+  // Reset to static data (chỉ reset transactions vì funds từ Redux)
   const handleResetData = () => {
-    setFunds(INITIAL_FUNDS);
     setTransactions(INITIAL_TRANSACTIONS);
     setCurrentTab('budgets');
   };
+
 
   return (
     <div className="flex h-screen w-screen bg-brand-bg-alt overflow-hidden select-none" id="applet-main-canvas">
@@ -229,6 +141,8 @@ export default function Budget() {
         {currentTab === 'budgets' && (
           <BudgetsTab
             funds={funds}
+            isLoading={status === 'loading'}
+            error={status === 'failed' ? (error ?? 'Đã xảy ra lỗi') : null}
             onOpenAddFund={() => {
               setEditingFund(null);
               setIsFundModalOpen(true);
