@@ -22,7 +22,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import type { Transaction } from "./types";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import type { FetchParams } from "../../services/transactionService";
 import { useEffect } from "react";
@@ -52,6 +52,8 @@ export default function TransactionsView({
   totalElements,
   status,
 }: TransactionsViewProps) {
+  const navigate = useNavigate();
+
   // Local state to keep the search textbox typing smooth
   const [localSearch, setLocalSearch] = useState(params.keyword || "");
 
@@ -351,41 +353,50 @@ export default function TransactionsView({
       <div className="bg-surface-container-lowest rounded-xl shadow-xs border border-slate-200/50 overflow-hidden w-full">
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse min-w-full font-body">
+            <colgroup>
+              <col className="w-[140px]" />
+              <col className="w-[320px]" />
+              <col className="w-[160px]" />
+              <col className="w-[160px]" />
+              <col className="w-[140px]" />
+              <col className="w-[120px]" />
+              <col className="w-[80px]" />
+            </colgroup>
             <thead>
               <tr className="bg-slate-50/60 border-b border-slate-100">
                 <th
                   onClick={() => handleSort("date")}
-                  className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                  className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none text-left"
                 >
                   <div className="flex items-center gap-1">
-                    Date{" "}
+                    Ngày giao dịch{" "}
                     {sortField === "date" && (sortOrder === "desc" ? "↓" : "↑")}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap select-none">
-                  Description
+                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap select-none text-left">
+                  Mô tả / Mã GD
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap select-none">
-                  Category
+                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap select-none text-left">
+                  Danh mục
                 </th>
                 <th
                   onClick={() => handleSort("amount")}
                   className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-right whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none"
                 >
                   <div className="flex items-center justify-end gap-1">
-                    Amount{" "}
+                    Số tiền{" "}
                     {sortField === "amount" &&
                       (sortOrder === "desc" ? "↓" : "↑")}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-right whitespace-nowrap select-none">
-                  Over Spending
+                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
+                  Mức vượt chi
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
-                  Action
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -410,7 +421,7 @@ export default function TransactionsView({
                       </td>
                       <td className="px-6 py-4.5"><div className="h-5 bg-slate-200 rounded-full w-20" /></td>
                       <td className="px-6 py-4.5 text-right"><div className="h-3 bg-slate-200 rounded w-16 ml-auto" /></td>
-                      <td className="px-6 py-4.5 text-right"><div className="h-5 bg-slate-100 rounded-full w-14 ml-auto" /></td>
+                      <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-100 rounded-full w-14 mx-auto" /></td>
                       <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-200 rounded-full w-20 mx-auto" /></td>
                       <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-100 rounded w-6 mx-auto" /></td>
                     </tr>
@@ -420,13 +431,15 @@ export default function TransactionsView({
                 paginatedTransactions.map((tx) => {
                   const iconStyle = getIconComponent(tx.icon, tx.category);
                   return (
-                    <Link
+                    <tr
                       key={tx.id}
                       id={`tx-row-${tx.id}`}
-                      className="hover:bg-slate-50/50 transition-colors group align-middle" to={"/transactionDetail"}                    >
+                      onClick={() => navigate("/transactionDetail")}
+                      className="hover:bg-slate-50/50 transition-colors group align-middle cursor-pointer"
+                    >
                       {/* Date details */}
                       <td className="px-6 py-4.5 whitespace-nowrap">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col tabular-nums">
                           <span className="text-sm font-bold text-slate-800">
                             {tx.date}
                           </span>
@@ -452,7 +465,7 @@ export default function TransactionsView({
                               {tx.description}
                             </span>
                             <span className="text-[11px] text-slate-400 font-mono font-medium block">
-                              {tx.refId}
+                              Mã: {tx.refId}
                             </span>
                           </div>
                         </div>
@@ -470,16 +483,30 @@ export default function TransactionsView({
                       {/* Financial Amount Value (color-flagged) */}
                       <td className="px-6 py-4.5 text-right whitespace-nowrap font-mono">
                         <span
-                          className={`text-sm font-bold ${tx.amount < 0 ? "text-red-500" : "text-emerald-600"}`}
+                          className={`text-sm font-bold inline-flex items-center gap-1 ${
+                            tx.amount < 0 ? "text-red-500" : "text-emerald-600"
+                          }`}
                         >
-                          {tx.amount < 0
-                            ? `-$${Math.abs(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : `+$${tx.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          {tx.amount < 0 ? (
+                            <>
+                              <span>▼</span>
+                              <span>
+                                -${Math.abs(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span>▲</span>
+                              <span>
+                                +${tx.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </>
+                          )}
                         </span>
                       </td>
 
                       {/* Overspending Severity Rating */}
-                      <td className="px-6 py-4.5 text-right whitespace-nowrap">
+                      <td className="px-6 py-4.5 text-center whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getOverspendingTheme(tx.overSpending)}`}
                         >
@@ -493,7 +520,7 @@ export default function TransactionsView({
                       </td>
 
                       {/* Actions Popover menu */}
-                      <td className="px-6 py-4.5 text-center whitespace-nowrap relative">
+                      <td className="px-6 py-4.5 text-center whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-block text-left">
                           <button
                             onClick={() =>
@@ -539,7 +566,7 @@ export default function TransactionsView({
                           )}
                         </div>
                       </td>
-                    </Link>
+                    </tr>
                   );
                 })
               ) : status === "loading" ? (
@@ -562,7 +589,7 @@ export default function TransactionsView({
                       </td>
                       <td className="px-6 py-4.5"><div className="h-5 bg-slate-200 rounded-full w-20" /></td>
                       <td className="px-6 py-4.5 text-right"><div className="h-3 bg-slate-200 rounded w-16 ml-auto" /></td>
-                      <td className="px-6 py-4.5 text-right"><div className="h-5 bg-slate-100 rounded-full w-14 ml-auto" /></td>
+                      <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-100 rounded-full w-14 mx-auto" /></td>
                       <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-200 rounded-full w-20 mx-auto" /></td>
                       <td className="px-6 py-4.5 text-center"><div className="h-5 bg-slate-100 rounded w-6 mx-auto" /></td>
                     </tr>

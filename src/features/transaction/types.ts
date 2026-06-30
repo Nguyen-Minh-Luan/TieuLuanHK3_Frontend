@@ -26,6 +26,5 @@ export interface Budget {
 export type ViewType =
   | "Dashboard"
   | "Transactions"
-  | "Reports"
   | "Budgets"
   | "Settings";

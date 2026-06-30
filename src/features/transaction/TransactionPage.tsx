@@ -17,6 +17,7 @@ import {
   BarChart3,
   Plus,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import type { Transaction, ViewType } from "./types";
 import type {
@@ -43,13 +44,13 @@ import TransactionModal from "./TransactionModal";
 import ConfirmDialog from "../../component/ConfirmDialog";
 import TransactionsView from "./TransactionsView";
 import DashboardView from "./DashboardView";
-import ReportsView from "./ReportsView";
 import BudgetsView from "./BudgetsView";
 import SettingsView from "./SettingsView";
 import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
 
 export default function TransactionPage() {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [currentView, setView] = useState<ViewType>("Transactions");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -352,8 +353,6 @@ export default function TransactionPage() {
             status={status}
           />
         );
-      case "Reports":
-        return <ReportsView transactions={transactions} />;
       case "Budgets":
         return <BudgetsView transactions={transactions} />;
       case "Settings":
@@ -443,8 +442,8 @@ export default function TransactionPage() {
           </div>
 
           <button
-            onClick={() => setView("Reports")}
-            className={`flex flex-col items-center justify-center transition-colors cursor-pointer ${currentView === "Reports" ? "text-primary font-bold" : "text-slate-400 hover:text-slate-700"}`}
+            onClick={() => navigate("/report")}
+            className={`flex flex-col items-center justify-center transition-colors cursor-pointer text-slate-400 hover:text-slate-700`}
           >
             <BarChart3 className="h-5 w-5" />
             <span className="text-[9px] font-bold mt-1 uppercase tracking-wider">
