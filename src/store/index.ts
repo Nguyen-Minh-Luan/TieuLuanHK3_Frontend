@@ -5,6 +5,7 @@ import dashboardReducer from "./slices/dashboardSlice";
 import transactionReducer from "./slices/transactionSlice";
 import fundReducer from "./slices/fundSlice";
 import categoryReducer from "./slices/categorySlice";
+import userReducer from "./slices/userSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     transaction: transactionReducer,
     fund: fundReducer,
     category: categoryReducer,
+    user: userReducer,
   },
 });
 

@@ -11,7 +11,8 @@ interface UserFormModalProps {
     email: string;
     role: UserRole;
     status: UserStatus;
-  }) => void;
+    password?: string;
+  }) => Promise<void>;
   userToEdit: User | null;
 }
 
@@ -23,9 +24,11 @@ export default function UserFormModal({
 }: UserFormModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.VIEWER);
   const [status, setStatus] = useState<UserStatus>(UserStatus.ACTIVE);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (userToEdit) {
@@ -33,10 +36,12 @@ export default function UserFormModal({
       setEmail(userToEdit.email);
       setRole(userToEdit.role);
       setStatus(userToEdit.status);
+      setPassword("");
       setErrorMsg("");
     } else {
       setName("");
       setEmail("");
+      setPassword("");
       setRole(UserRole.VIEWER);
       setStatus(UserStatus.ACTIVE);
       setErrorMsg("");
@@ -45,7 +50,7 @@ export default function UserFormModal({
 
   if (!isOpen) return null;
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setErrorMsg("Vui lòng nhập Họ và Tên.");
@@ -55,15 +60,28 @@ export default function UserFormModal({
       setErrorMsg("Vui lòng nhập Email hợp lệ.");
       return;
     }
+    if (!userToEdit && !password.trim()) {
+      setErrorMsg("Vui lòng nhập Mật khẩu.");
+      return;
+    }
 
-    onSubmit({
-      id: userToEdit?.id,
-      name: name.trim(),
-      email: email.trim(),
-      role,
-      status
-    });
-    onClose();
+    try {
+      setErrorMsg("");
+      setIsSubmitting(true);
+      await onSubmit({
+        id: userToEdit?.id,
+        name: name.trim(),
+        email: email.trim(),
+        role,
+        status,
+        password: userToEdit ? undefined : password.trim()
+      });
+      onClose();
+    } catch (err: any) {
+      setErrorMsg(err || "Lỗi xử lý yêu cầu.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -116,7 +134,7 @@ export default function UserFormModal({
               placeholder="Ví dụ: Nguyễn Văn Dũ"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-surface-container-low border border-surface-container-highest/20 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-custom/15 outline-none font-sans"
+              className="w-full bg-surface-container-low border border-surface-container-highest/20 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-custom/15 outline-none font-sans text-on-surface-custom placeholder-on-surface-variant-custom/60"
             />
           </div>
 
@@ -131,9 +149,26 @@ export default function UserFormModal({
               placeholder="username@ledger.vn"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-surface-container-low border border-surface-container-highest/20 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-custom/15 outline-none font-sans"
+              className="w-full bg-surface-container-low border border-surface-container-highest/20 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-custom/15 outline-none font-sans text-on-surface-custom placeholder-on-surface-variant-custom/60"
             />
           </div>
+
+          {/* Mật khẩu (chỉ khi tạo mới) */}
+          {!userToEdit && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="input-password" className="text-xs font-bold text-on-surface-variant-custom uppercase tracking-wide">
+                Mật khẩu đăng nhập
+              </label>
+              <input
+                id="input-password"
+                type="password"
+                placeholder="Nhập mật khẩu người dùng..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-surface-container-low border border-surface-container-highest/20 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-custom/15 outline-none font-sans text-on-surface-custom placeholder-on-surface-variant-custom/60"
+              />
+            </div>
+          )}
 
           {/* Vai trò */}
           <div className="flex flex-col gap-1.5">
@@ -198,10 +233,15 @@ export default function UserFormModal({
             <button
               id="btn-submit-modal"
               type="submit"
-              className="primary-gradient text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5 shadow-md shadow-primary-custom/10 hover:scale-[1.01] active:drop-shadow transition-all cursor-pointer"
+              disabled={isSubmitting}
+              className="primary-gradient text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5 shadow-md shadow-primary-custom/10 hover:scale-[1.01] active:drop-shadow transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >
-              <Check size={16} className="stroke-[2.5]" />
-              {userToEdit ? "Cập nhật" : "Tạo mới"}
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Check size={16} className="stroke-[2.5]" />
+              )}
+              {isSubmitting ? "Đang xử lý..." : (userToEdit ? "Cập nhật" : "Tạo mới")}
             </button>
           </div>
         </form>

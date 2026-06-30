@@ -1,33 +1,39 @@
-import { useState, useMemo } from "react";
-import { UserPlus, UserMinus, Plus, Building2, HelpCircle, Check, Sparkles, RefreshCw } from "lucide-react";
-import { INITIAL_USERS } from "./data.ts";
+import { useState, useEffect } from "react";
+import { UserPlus, Sparkles, RefreshCw, Check } from "lucide-react";
 import type { User, UserRole, UserStatus } from "./types.ts";
 import Header from "../../../component/Header.tsx";
 import BentoGrid from "./BentoGrid.tsx";
 import UserTable from "./UserTable.tsx";
 import UserFormModal from "./UserFormModal.tsx";
 import { Sidebar } from "../../../component/Sidebar.tsx";
-
-const ITEMS_PER_PAGE = 4;
+import { useAppDispatch, useAppSelector } from "../../../hooks/useAppDispatch.ts";
+import {
+  fetchUsers,
+  createUser,
+  updateUserThunk,
+  deleteUserThunk,
+  setParams
+} from "../../../store/slices/userSlice.ts";
+import { mapLabelToRole, mapLabelToStatus, mapRoleToLabel, mapStatusToLabel } from "./apiTypes.ts";
 
 export default function UserManagementPage() {
   // Views navigation
   const [activeView, setActiveView] = useState("settings");
 
-  // State for user table database
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-
-  // Filters state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-
-  // Page state
-  const [currentPage, setCurrentPage] = useState(1);
+  const dispatch = useAppDispatch();
+  const {
+    items: users,
+    totalElements,
+    params,
+    status
+  } = useAppSelector((state) => state.user);
 
   // Modals status
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
+
+  // Local state for search input to prevent input lag
+  const [localSearch, setLocalSearch] = useState("");
 
   // Success Notification banner
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -39,84 +45,66 @@ export default function UserManagementPage() {
     }, 4500);
   };
 
-  // Generate unique ID in the style of AL-XXXX
-  const generateUniqueId = () => {
-    let newId = "";
-    let isUnique = false;
-    while (!isUnique) {
-      const randNum = Math.floor(1000 + Math.random() * 9000);
-      newId = `AL-${randNum}`;
-      isUnique = !users.some((u) => u.id === newId);
+  // Sync Redux keyword changes back to localSearch
+  useEffect(() => {
+    if (params.keyword !== localSearch) {
+      setLocalSearch(params.keyword ?? "");
     }
-    return newId;
-  };
+  }, [params.keyword]);
 
-  // Get initials for Name avatar
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(" ");
-    if (parts.length >= 2) {
-      const first = parts[0]?.charAt(0) || "";
-      const last = parts[parts.length - 1]?.charAt(0) || "";
-      return `${first}${last}`.toUpperCase();
+  // Debounce filter keyword search dispatching
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if ((params.keyword ?? "") !== localSearch) {
+        dispatch(setParams({ keyword: localSearch, page: 1 }));
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [localSearch, params.keyword, dispatch]);
+
+  // Fetch users when parameters change or list status is idle
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchUsers(params));
     }
-    return (name.slice(0, 2) || "U").toUpperCase();
-  };
+  }, [status, params, dispatch]);
 
   // Handlers for Add/Edit Form submission
-  const handleFormSubmit = (formData: {
+  const handleFormSubmit = async (formData: {
     id?: string;
     name: string;
     email: string;
     role: UserRole;
     status: UserStatus;
+    password?: string;
   }) => {
+    // Generate normalized username from email
+    const username = formData.email.split("@")[0] || formData.name.toLowerCase().replace(/\s+/g, "");
+    const roleVal = mapLabelToRole(formData.role);
+    const statusVal = mapLabelToStatus(formData.status);
+
+    const requestData = {
+      username,
+      fullName: formData.name,
+      email: formData.email,
+      role: roleVal,
+      status: statusVal,
+      password: formData.password
+    };
+
     if (formData.id) {
       // EDIT mode
-      setUsers((prevUsers) =>
-        prevUsers.map((u) => {
-          if (u.id === formData.id) {
-            const initials = getInitials(formData.name);
-            return {
-              ...u,
-              name: formData.name,
-              email: formData.email,
-              role: formData.role,
-              status: formData.status,
-              avatarInitials: initials
-            };
-          }
-          return u;
+      await dispatch(
+        updateUserThunk({
+          id: Number(formData.id),
+          data: requestData
         })
-      );
-      triggerToast(`Đã cập nhật thông tin thành viên ${formData.name} successfully.`);
+      ).unwrap();
+      triggerToast(`Đã cập nhật thông tin thành viên ${formData.name} thành công.`);
     } else {
       // ADD mode
-      const newId = generateUniqueId();
-      const initials = getInitials(formData.name);
-
-      // Preset color classes
-      const bgColors = [
-        "bg-[#003178] text-white",
-        "bg-amber-800 text-amber-100",
-        "bg-teal-700 text-teal-100",
-        "bg-purple-700 text-purple-100",
-        "bg-indigo-700 text-indigo-100",
-        "bg-rose-700 text-rose-100"
-      ];
-      const randomBg = bgColors[Math.floor(Math.random() * bgColors.length)];
-
-      const newUser: User = {
-        id: newId,
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        status: formData.status,
-        avatarInitials: initials,
-        avatarBg: randomBg!
-      };
-
-      setUsers((prevUsers) => [newUser, ...prevUsers]);
-      setCurrentPage(1); // take them to first page to see the added member
+      await dispatch(createUser(requestData)).unwrap();
       triggerToast(`Đã thêm thành viên mới ${formData.name} thành công!`);
     }
   };
@@ -128,50 +116,35 @@ export default function UserManagementPage() {
   };
 
   // Delete action
-  const handleDelete = (userToDelete: User) => {
+  const handleDelete = async (userToDelete: User) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa thành viên ${userToDelete.name} khỏi hệ thống?`)) {
-      setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userToDelete.id));
-      triggerToast(`Đã xóa thành viên ${userToDelete.name} khỏi dữ liệu.`);
+      try {
+        await dispatch(deleteUserThunk(Number(userToDelete.id))).unwrap();
+        triggerToast(`Đã xóa thành viên ${userToDelete.name} khỏi dữ liệu.`);
+      } catch (err: any) {
+        triggerToast(`Không thể xóa: ${err || "Lỗi hệ thống"}`);
+      }
     }
   };
 
   // Reset filters helper
   const handleResetFilters = () => {
-    setSearchQuery("");
-    setSelectedRole("");
-    setSelectedStatus("");
-    setCurrentPage(1);
+    setLocalSearch("");
+    dispatch(
+      setParams({
+        keyword: "",
+        role: undefined,
+        status: undefined,
+        page: 1
+      })
+    );
     triggerToast("Bộ lọc tìm kiếm đã được thiết lập lại.");
   };
 
-  // Filter users lists based on status, role, query search
-  const filteredUsers = useMemo(() => {
-    setCurrentPage(1); // automatically reset to page 1 on filter trigger
-    return users.filter((u) => {
-      const matchSearch =
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.id.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchRole = selectedRole ? u.role === selectedRole : true;
-      const matchStatus = selectedStatus ? u.status === selectedStatus : true;
-
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [users, searchQuery, selectedRole, selectedStatus]);
-
-  // Adjust active pagination slice
-  // Since we reset page upon filter changes inside actual view, we retrieve current page or falls back beautifully
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE) || 1;
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-
-  const paginatedUsers = useMemo(() => {
-    const start = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
-    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredUsers, safeCurrentPage]);
-
-  // Total global statistics (e.g. 1248 + newly added list sizing delta)
-  const simulatedTotalUsers = 1248 + (users.length - INITIAL_USERS.length);
+  // Map Redux params to UI filter values
+  const selectedRole = params.role !== undefined ? mapRoleToLabel(params.role) : "";
+  const selectedStatus = params.status !== undefined ? mapStatusToLabel(params.status) : "";
+  const currentPage = params.page ?? 1;
 
   return (
     <div className="flex h-screen w-full bg-surface text-on-surface-custom font-body select-none overflow-hidden">
@@ -225,23 +198,29 @@ export default function UserManagementPage() {
 
               {/* Stats and Search Filter Row */}
               <BentoGrid
-                totalUsersCount={simulatedTotalUsers}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
+                totalUsersCount={totalElements}
+                searchQuery={localSearch}
+                onSearchChange={setLocalSearch}
                 selectedRole={selectedRole}
-                onRoleChange={setSelectedRole}
+                onRoleChange={(roleLabel) => {
+                  const roleVal = roleLabel ? mapLabelToRole(roleLabel as UserRole) : undefined;
+                  dispatch(setParams({ role: roleVal, page: 1 }));
+                }}
                 selectedStatus={selectedStatus}
-                onStatusChange={setSelectedStatus}
+                onStatusChange={(statusLabel) => {
+                  const statusVal = statusLabel ? mapLabelToStatus(statusLabel as UserStatus) : undefined;
+                  dispatch(setParams({ status: statusVal, page: 1 }));
+                }}
                 onResetFilters={handleResetFilters}
               />
 
               {/* Primary User Table Component */}
               <UserTable
-                users={paginatedUsers}
-                totalFilteredCount={filteredUsers.length}
-                currentPage={safeCurrentPage}
-                onPageChange={setCurrentPage}
-                itemsPerPage={ITEMS_PER_PAGE}
+                users={users}
+                totalFilteredCount={totalElements}
+                currentPage={currentPage}
+                onPageChange={(page) => dispatch(setParams({ page }))}
+                itemsPerPage={params.size ?? 4}
                 onEdit={handleEditInit}
                 onDelete={handleDelete}
               />

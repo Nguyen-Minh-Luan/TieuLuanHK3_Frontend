@@ -5,6 +5,7 @@ import {
   Plus,
   Receipt,
   Settings,
+  User,
   Wallet,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -16,7 +17,7 @@ const menuItems = [
   { icon: Coins, label: "Debt", path: "/debt", active: false },
   { icon: BarChart3, label: "Reports", path: "/report", active: false },
   { icon: Wallet, label: "Budgets", path: "/budget", active: false },
-  { icon: Settings, label: "Settings", path: "/setting", active: false },
+  { icon: User, label: "Users", path: "/users", active: false },
 ];
 const MotionLink = motion(Link);
 export function Sidebar() {

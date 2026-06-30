@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   Settings as SettingsIcon,
   Home,
@@ -13,7 +19,11 @@ import {
 } from "lucide-react";
 
 import type { Transaction, ViewType } from "./types";
-import type { TransactionRequest, TransactionResponse, SpendingWarning } from "./apiTypes";
+import type {
+  TransactionRequest,
+  TransactionResponse,
+  SpendingWarning,
+} from "./apiTypes";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import {
   fetchTransactions,
@@ -27,6 +37,7 @@ import type { FetchParams } from "../../services/transactionService";
 import { fetchTransactions as fetchDashboardTransactions } from "../../store/slices/dashboardSlice";
 import { fetchCategories } from "../../store/slices/categorySlice";
 import { fetchFunds } from "../../store/slices/fundSlice";
+import { type FundFetchParams } from '../../services/fundService';
 import toast from "react-hot-toast";
 import TransactionModal from "./TransactionModal";
 import ConfirmDialog from "../../component/ConfirmDialog";
@@ -42,7 +53,8 @@ export default function TransactionPage() {
   const dispatch = useAppDispatch();
   const [currentView, setView] = useState<ViewType>("Transactions");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
   // Delete confirmation dialog state
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetDesc, setDeleteTargetDesc] = useState<string>("");
@@ -79,20 +91,26 @@ export default function TransactionPage() {
     paramsRef.current = params;
   }, [params]);
 
-  const setParams = useCallback((action: React.SetStateAction<FetchParams>) => {
-    const nextParams = typeof action === 'function' ? action(paramsRef.current) : action;
-    
-    // Check if nextParams values are identical to current params
-    const keysA = Object.keys(nextParams);
-    const keysB = Object.keys(paramsRef.current);
-    const isEquivalent = keysA.length === keysB.length && keysA.every(
-      (key) => (nextParams as any)[key] === (paramsRef.current as any)[key]
-    );
+  const setParams = useCallback(
+    (action: React.SetStateAction<FetchParams>) => {
+      const nextParams =
+        typeof action === "function" ? action(paramsRef.current) : action;
 
-    if (!isEquivalent) {
-      dispatch(setParamsAction(nextParams));
-    }
-  }, [dispatch]);
+      // Check if nextParams values are identical to current params
+      const keysA = Object.keys(nextParams);
+      const keysB = Object.keys(paramsRef.current);
+      const isEquivalent =
+        keysA.length === keysB.length &&
+        keysA.every(
+          (key) => (nextParams as any)[key] === (paramsRef.current as any)[key],
+        );
+
+      if (!isEquivalent) {
+        dispatch(setParamsAction(nextParams));
+      }
+    },
+    [dispatch],
+  );
 
   // Reactive fetch when status or params change
   useEffect(() => {
@@ -119,74 +137,92 @@ export default function TransactionPage() {
   }, [lastWarning, dispatch]);
 
   // Map backend response format to client-friendly UI interface structures
-  const mapResponseToTransaction = useCallback((tx: TransactionResponse): Transaction => {
-    const categoryName = categoriesMap[tx.categoryId] || "Procurement";
-    const isExpense = tx.type === "EXPENSE" || tx.type === "EXPENSE_DEBT";
-    const amount = isExpense ? -Math.abs(tx.amount) : Math.abs(tx.amount);
+  const mapResponseToTransaction = useCallback(
+    (tx: TransactionResponse): Transaction => {
+      const categoryName = categoriesMap[tx.categoryId] || "Procurement";
+      const isExpense = tx.type === "EXPENSE" || tx.type === "EXPENSE_DEBT";
+      const amount = isExpense ? -Math.abs(tx.amount) : Math.abs(tx.amount);
 
-    let overSpending: "Critical" | "Warning" | "Fine" = "Fine";
-    if (tx.hasWarning) {
-      overSpending = "Critical";
-    } else {
-      const mag = Math.abs(amount);
-      if (isExpense) {
-        if (mag >= 10000) overSpending = "Critical";
-        else if (mag >= 2000) overSpending = "Warning";
+      let overSpending: "Critical" | "Warning" | "Fine" = "Fine";
+      if (tx.hasWarning) {
+        overSpending = "Critical";
+      } else {
+        const mag = Math.abs(amount);
+        if (isExpense) {
+          if (mag >= 10000) overSpending = "Critical";
+          else if (mag >= 2000) overSpending = "Warning";
+        }
       }
-    }
 
-    let status: "Completed" | "Pending" | "Failed" = "Completed";
-    if (tx.status === "ACTIVE") status = "Completed";
-    else if (tx.status === "UPDATED") status = "Pending";
-    else if (tx.status === "CANCELLED") status = "Failed";
+      let status: "Completed" | "Pending" | "Failed" = "Completed";
+      if (tx.status === "ACTIVE") status = "Completed";
+      else if (tx.status === "UPDATED") status = "Pending";
+      else if (tx.status === "CANCELLED") status = "Failed";
 
-    let icon: Transaction["icon"] = "other";
-    const catUpper = categoryName.toUpperCase();
-    if (catUpper.includes("PROCUR")) icon = "building";
-    else if (catUpper.includes("REVEN")) icon = "payment";
-    else if (catUpper.includes("MAINTEN")) icon = "maintenance";
-    else if (catUpper.includes("INFRA") || catUpper.includes("CLOUD")) icon = "cloud";
-    else if (catUpper.includes("HR") || catUpper.includes("PAYROLL")) icon = "payroll";
+      let icon: Transaction["icon"] = "other";
+      const catUpper = categoryName.toUpperCase();
+      if (catUpper.includes("PROCUR")) icon = "building";
+      else if (catUpper.includes("REVEN")) icon = "payment";
+      else if (catUpper.includes("MAINTEN")) icon = "maintenance";
+      else if (catUpper.includes("INFRA") || catUpper.includes("CLOUD"))
+        icon = "cloud";
+      else if (catUpper.includes("HR") || catUpper.includes("PAYROLL"))
+        icon = "payroll";
 
-    let dateStr = tx.transactionDate;
-    let timeStr = "";
-    try {
-      const d = new Date(tx.transactionDate);
-      if (!isNaN(d.getTime())) {
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        dateStr = `${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}, ${d.getFullYear()}`;
-        
-        let hours = d.getHours();
-        const mins = String(d.getMinutes()).padStart(2, "0");
-        const ampm = hours >= 12 ? "PM" : "AM";
-        hours = hours % 12 || 12;
-        timeStr = `${String(hours).padStart(2, "0")}:${mins} ${ampm}`;
+      let dateStr = tx.transactionDate;
+      let timeStr = "";
+      try {
+        const d = new Date(tx.transactionDate);
+        if (!isNaN(d.getTime())) {
+          const months = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+          dateStr = `${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}, ${d.getFullYear()}`;
+
+          let hours = d.getHours();
+          const mins = String(d.getMinutes()).padStart(2, "0");
+          const ampm = hours >= 12 ? "PM" : "AM";
+          hours = hours % 12 || 12;
+          timeStr = `${String(hours).padStart(2, "0")}:${mins} ${ampm}`;
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    }
 
-    // Extended transaction properties to preserve database keys for updates
-    return {
-      id: String(tx.id),
-      date: dateStr,
-      time: timeStr,
-      description: tx.note || "Giao dịch không tên",
-      refId: tx.transactionCode || `TXN-${tx.id}`,
-      category: categoryName,
-      amount,
-      overSpending,
-      status,
-      icon,
-      // Metadata fields for edit mode pre-fill
-      categoryId: tx.categoryId,
-      fundId: tx.fundId,
-      partnerId: tx.partnerId,
-      debtId: tx.debtId,
-      rawNote: tx.note,
-      rawType: tx.type,
-    } as any;
-  }, [categoriesMap]);
+      // Extended transaction properties to preserve database keys for updates
+      return {
+        id: String(tx.id),
+        date: dateStr,
+        time: timeStr,
+        description: tx.note || "Giao dịch không tên",
+        refId: tx.transactionCode || `TXN-${tx.id}`,
+        category: categoryName,
+        amount,
+        overSpending,
+        status,
+        icon,
+        // Metadata fields for edit mode pre-fill
+        categoryId: tx.categoryId,
+        fundId: tx.fundId,
+        partnerId: tx.partnerId,
+        debtId: tx.debtId,
+        rawNote: tx.note,
+        rawType: tx.type,
+      } as any;
+    },
+    [categoriesMap],
+  );
 
   const transactions = useMemo(() => {
     return rawTransactions.map(mapResponseToTransaction);
@@ -194,40 +230,51 @@ export default function TransactionPage() {
 
   const showWarningToast = (warning: SpendingWarning) => {
     const isCritical = warning.level === "CRITICAL";
-    toast.custom((t) => (
-      <div
-        className={`max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 bg-white ${
-          isCritical
+    toast.custom(
+      (t) => (
+        <div
+          className={`max-w-sm rounded-2xl shadow-2xl p-4 border flex flex-col gap-1 transition-all duration-300 bg-white ${isCritical
             ? "border-rose-200 text-rose-950"
             : "border-amber-200 text-amber-950"
-        } ${t.visible ? 'animate-fade-in' : 'opacity-0'}`}
-      >
-        <div className="flex justify-between items-start gap-4">
-          <span className="font-extrabold text-sm flex items-center gap-1.5">
-            {isCritical ? "🚨 Chi tiêu bất thường nghiêm trọng!" : "⚠️ Vượt mức chi tiêu bình thường"}
-          </span>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
-          >
-            ✕
-          </button>
+            } ${t.visible ? "animate-fade-in" : "opacity-0"}`}
+        >
+          <div className="flex justify-between items-start gap-4">
+            <span className="font-extrabold text-sm flex items-center gap-1.5">
+              {isCritical
+                ? "🚨 Chi tiêu bất thường nghiêm trọng!"
+                : "⚠️ Vượt mức chi tiêu bình thường"}
+            </span>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="text-xs opacity-60 hover:opacity-100 font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-xs font-semibold opacity-90">{warning.message}</p>
+          <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
+            {`Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`}
+          </p>
         </div>
-        <p className="text-xs font-semibold opacity-90">{warning.message}</p>
-        <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
-          {`Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`}
-        </p>
-      </div>
-    ), { duration: 8500 });
+      ),
+      { duration: 8500 },
+    );
   };
 
   const handleCreateOrUpdateTx = async (formData: any) => {
     try {
       if (editingTransaction) {
-        await dispatch(updateTransaction({ id: Number(editingTransaction.id), data: formData as TransactionRequest })).unwrap();
+        await dispatch(
+          updateTransaction({
+            id: Number(editingTransaction.id),
+            data: formData as TransactionRequest,
+          }),
+        ).unwrap();
         toast.success("Đã cập nhật giao dịch thành công!");
       } else {
-        const result = await dispatch(createTransaction(formData as TransactionRequest)).unwrap();
+        const result = await dispatch(
+          createTransaction(formData as TransactionRequest),
+        ).unwrap();
         const warning = result.data?.warning;
         if (warning && warning.hasWarning) {
           showWarningToast(warning);
@@ -239,7 +286,11 @@ export default function TransactionPage() {
       // Sync dashboard data after any mutation
       dispatch(fetchDashboardTransactions());
     } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || err || "Lỗi lưu giao dịch";
+      const errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        err ||
+        "Lỗi lưu giao dịch";
       toast.error(`Lưu giao dịch thất bại: ${errMsg}`);
       throw err;
     }
@@ -261,7 +312,9 @@ export default function TransactionPage() {
       // Sync dashboard data after cancel
       dispatch(fetchDashboardTransactions());
     } catch (err: any) {
-      toast.error(`Hủy giao dịch thất bại: ${err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này."}`);
+      toast.error(
+        `Hủy giao dịch thất bại: ${err?.response?.data?.message || err?.message || "Không thể hủy giao dịch này."}`,
+      );
     }
   };
 
