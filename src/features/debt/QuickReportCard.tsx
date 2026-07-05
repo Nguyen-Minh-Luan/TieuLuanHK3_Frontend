@@ -1,9 +1,8 @@
-import React from 'react';
-import { TrendingDown, TrendingUp, AlertTriangle } from 'lucide-react';
-import type { Debt } from './types';
+import { TrendingDown } from 'lucide-react';
+import type { DebtDTO } from './apiTypes';
 
 interface QuickReportCardProps {
-  debts: Debt[];
+  debts: DebtDTO[];
 }
 
 export default function QuickReportCard({ debts }: QuickReportCardProps) {
@@ -12,8 +11,8 @@ export default function QuickReportCard({ debts }: QuickReportCardProps) {
 
   // Calc unpaid debt sum
   const totalUnpaid = debts
-    .filter(d => d.status !== 'Paid')
-    .reduce((sum, d) => sum + d.amount, 0);
+    .filter(d => !d.isPaid)
+    .reduce((sum, d) => sum + (d.remainingAmount ?? d.totalAmount), 0);
 
   // Debt-to-Equity ratio (Tỷ lệ nợ/Vốn)
   const ratio = Number((totalUnpaid / corporateEquityCapital).toFixed(2));
@@ -60,8 +59,9 @@ export default function QuickReportCard({ debts }: QuickReportCardProps) {
           <div className="w-full bg-[#e2e8f0] h-2 rounded-full overflow-hidden">
             <div
               id="ratio-gauge"
-              className={`h-full rounded-full transition-all duration-500 ${ratio > 0.65 ? 'bg-[#ef4444]' : ratio > 0.45 ? 'bg-[#f59e0b]' : 'bg-[#0ea5e9]'
-                }`}
+              className={`h-full rounded-full transition-all duration-500 ${
+                ratio > 0.65 ? 'bg-[#ef4444]' : ratio > 0.45 ? 'bg-[#f59e0b]' : 'bg-[#0ea5e9]'
+              }`}
               style={{ width: `${Math.min(100, ratio * 100)}%` }}
             />
           </div>

@@ -434,7 +434,7 @@ export default function TransactionsView({
                     <tr
                       key={tx.id}
                       id={`tx-row-${tx.id}`}
-                      onClick={() => navigate("/transactionDetail")}
+                      onClick={() => navigate(`/transactions/${tx.id}`)}
                       className="hover:bg-slate-50/50 transition-colors group align-middle cursor-pointer"
                     >
                       {/* Date details */}

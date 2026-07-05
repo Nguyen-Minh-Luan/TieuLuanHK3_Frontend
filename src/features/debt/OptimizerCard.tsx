@@ -1,18 +1,22 @@
-import React from 'react';
 import { Lightbulb, CheckCircle2 } from 'lucide-react';
-import type { Debt } from './types';
+import type { DebtDTO } from './apiTypes';
 
 interface OptimizerCardProps {
-  debts: Debt[];
+  debts: DebtDTO[];
 }
 
 export default function OptimizerCard({ debts }: OptimizerCardProps) {
-  // Find the single highest unpaid critical debt
-  const activeCriticalDebts = debts.filter(d => d.status === 'Critical');
-  const activeWarningDebts = debts.filter(d => d.status === 'Warning');
+  // Find unpaid debts
+  const unpaidDebts = debts.filter(d => !d.isPaid);
 
-  // Choose the one that requires the most attention
-  const priorityDebt = activeCriticalDebts[0] || activeWarningDebts[0];
+  // Sort by highest remaining/total amount
+  const sortedUnpaid = [...unpaidDebts].sort((a, b) => {
+    const amtA = a.remainingAmount ?? a.totalAmount;
+    const amtB = b.remainingAmount ?? b.totalAmount;
+    return amtB - amtA;
+  });
+
+  const priorityDebt = sortedUnpaid[0];
 
   return (
     <div id="optimizer-widget" className="bg-[#eff6ff] rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4.5 border border-[#bfdbfe]/30 font-sans select-none shadow-[0_4px_25px_rgba(37,99,235,0.01)]">
@@ -35,12 +39,12 @@ export default function OptimizerCard({ debts }: OptimizerCardProps) {
         <p id="optimizer-advice-text" className="text-xs font-semibold text-[#1e40af] leading-relaxed mt-1">
           {priorityDebt ? (
             <>
-              Dựa trên dòng tiền dự kiến, bạn nên ưu tiên thanh toán khoản nợ{' '}
+              Dựa trên dòng tiền hiện tại, bạn nên ưu tiên cân đối thanh toán khoản nợ{' '}
               <span className="font-mono font-extrabold underline text-[#003178]">
-                {priorityDebt.referenceCode}
+                #{priorityDebt.id}
               </span>{' '}
-              của <span className="font-bold underline">{priorityDebt.creditor}</span> trước ngày{' '}
-              <span className="font-bold underline">{priorityDebt.dueDate}</span> để tránh phí phạt và duy trì xếp hạng tín nhiệm tín dụng.
+              ({priorityDebt.title || 'Không có tiêu đề'}) của <span className="font-bold underline">{priorityDebt.partnerName ?? 'Đối tác'}</span>{' '}
+              để duy trì uy tín tín dụng và tránh phát sinh lãi phạt quá hạn.
             </>
           ) : (
             <>

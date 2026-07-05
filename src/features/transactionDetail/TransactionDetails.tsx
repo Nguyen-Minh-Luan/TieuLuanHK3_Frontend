@@ -4,12 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import type { Transaction } from './types';
+import { useNavigate } from 'react-router-dom';
+import type { Transaction, RelatedDebt } from './types';
+import { useAppSelector } from '../../hooks/useAppDispatch';
 import {
   Edit3,
   Printer,
   XSquare,
-  ChevronRight,
+  ChevronLeft,
   Package,
   Calendar,
   Clock,
@@ -17,31 +19,31 @@ import {
   User,
   Save,
   X,
-  FileText,
-  BadgeCheck,
-  Shield,
-  PrinterIcon
+  BadgeCheck
 } from 'lucide-react';
 
 interface TransactionDetailsProps {
   transaction: Transaction;
+  relatedDebt?: RelatedDebt | null;
   onUpdate: (updated: Transaction) => void;
   onCancel: (id: string) => void;
   onPrintClick: () => void;
-  transactions?: Transaction[];
-  onSelectTransaction?: (id: string) => void;
 }
 
 export default function TransactionDetails({
   transaction,
+  relatedDebt,
   onUpdate,
   onCancel,
-  onPrintClick,
-  transactions,
-  onSelectTransaction
+  onPrintClick
 }: TransactionDetailsProps) {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Transaction>({ ...transaction });
+
+  const categories = useAppSelector((state) => state.category.items);
+  const funds = useAppSelector((state) => state.fund.items);
+  const partners = useAppSelector((state) => state.partner.items);
 
   // Sync state if transaction prop changes
   React.useEffect(() => {
@@ -84,12 +86,14 @@ export default function TransactionDetails({
 
   return (
     <div className="flex-1 font-sans">
-      {/* Dynamic Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-[#737783] text-xs mb-4 uppercase tracking-widest font-bold">
-        <span>Transactions</span>
-        <ChevronRight size={14} className="text-[#737783]/60" />
-        <span className="text-[#003178]">Details</span>
-      </nav>
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/transaction')}
+        className="flex items-center gap-1.5 text-[#737783] text-xs mb-4 uppercase tracking-widest font-bold hover:text-[#003178] transition-colors cursor-pointer"
+      >
+        <ChevronLeft size={14} />
+        Quay lại danh sách
+      </button>
 
       {/* Main title and high priority status block */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#eceef0] pb-8 mb-8" id="section-detail-header">
@@ -220,12 +224,15 @@ export default function TransactionDetails({
                 <div>
                   <label className="text-[10px] font-bold text-[#737783] uppercase tracking-[0.2em] block mb-2">Nguồn tiền</label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      className="bg-[#f2f4f6] text-[#191c1e] text-sm font-semibold p-2.5 rounded-xl w-full border border-[#c3c6d4]"
+                    <select
                       value={editForm.sourceOfFunds}
                       onChange={(e) => setEditForm({ ...editForm, sourceOfFunds: e.target.value })}
-                    />
+                      className="bg-[#f2f4f6] border border-[#c3c6d4] text-[#191c1e] font-semibold text-sm rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-[#003178] outline-none"
+                    >
+                      {funds.map(f => (
+                        <option key={f.id} value={f.name}>{f.name}</option>
+                      ))}
+                    </select>
                   ) : (
                     <p className="text-[#191c1e] font-semibold text-base">{transaction.sourceOfFunds}</p>
                   )}
@@ -240,11 +247,9 @@ export default function TransactionDetails({
                       onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
                       className="bg-[#f2f4f6] border border-[#c3c6d4] text-[#191c1e] font-semibold text-sm rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-[#003178] outline-none"
                     >
-                      <option value="Logistics & Supply">Logistics & Supply</option>
-                      <option value="Customer Offering">Customer Offering</option>
-                      <option value="Marketing & Growth">Marketing & Growth</option>
-                      <option value="Human Resource">Human Resource</option>
-                      <option value="Operational Expenses">Operational Expenses</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
                     </select>
                   ) : (
                     <div className="inline-flex items-center gap-2 bg-[#eceef0] px-3.5 py-2 rounded-lg border border-[#c3c6d4]/10">
@@ -317,8 +322,8 @@ export default function TransactionDetails({
               </div>
             </div>
 
-            {/* Bottom Row - Partners & Originating Staff */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Bottom Row - Partners, Originating Staff, and Related Debt */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
               {/* Counterparty Container */}
               <div className="bg-white rounded-xl p-6 border border-[#eceef0] shadow-sm flex flex-col justify-start">
@@ -341,25 +346,25 @@ export default function TransactionDetails({
                   <div className="flex-1 min-w-0">
                     {isEditing ? (
                       <div className="space-y-1">
-                        <input
-                          type="text"
-                          className="bg-[#f2f4f6] text-[#191c1e] text-xs font-bold p-1 rounded-md w-full border border-[#c3c6d4]"
+                        <select
+                          className="bg-[#f2f4f6] text-[#191c1e] text-xs font-bold p-2.5 rounded-xl w-full border border-[#c3c6d4] focus:ring-2 focus:ring-[#003178] outline-none"
                           value={editForm.counterparty.name}
-                          onChange={(e) => setEditForm({
-                            ...editForm,
-                            counterparty: { ...editForm.counterparty, name: e.target.value }
-                          })}
-                        />
-                        <input
-                          type="text"
-                          className="bg-[#f2f4f6] text-[#737783] text-[10px] p-1 rounded-md w-full border border-[#c3c6d4]"
-                          value={editForm.counterparty.mst}
-                          placeholder="Mã số thuế"
-                          onChange={(e) => setEditForm({
-                            ...editForm,
-                            counterparty: { ...editForm.counterparty, mst: e.target.value }
-                          })}
-                        />
+                          onChange={(e) => {
+                            const selectedPartner = partners.find(p => p.name === e.target.value);
+                            setEditForm({
+                              ...editForm,
+                              counterparty: {
+                                name: e.target.value,
+                                mst: selectedPartner ? (selectedPartner.address || 'Không có MST') : 'Chưa cập nhật'
+                              }
+                            });
+                          }}
+                        >
+                          <option value="Khách hàng vãng lai">Khách hàng vãng lai</option>
+                          {partners.map(p => (
+                            <option key={p.id} value={p.name}>{p.name}</option>
+                          ))}
+                        </select>
                       </div>
                     ) : (
                       <>
@@ -394,6 +399,64 @@ export default function TransactionDetails({
                     <p className="text-xs text-[#434652]">{transaction.creator.role}</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Related Debt Card */}
+              <div className="bg-white rounded-xl p-6 border border-[#eceef0] shadow-sm flex flex-col justify-between col-span-1">
+                <div>
+                  <h4 className="text-[10px] font-bold text-[#737783] uppercase tracking-[0.2em] mb-4">Khoản nợ liên kết</h4>
+                  {relatedDebt ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-black tracking-wider ${
+                          relatedDebt.debtType === 'PAYABLE' 
+                            ? 'bg-amber-100 text-amber-800' 
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {relatedDebt.debtType === 'PAYABLE' ? 'Đang trả nợ' : 'Đang thu nợ'}
+                        </span>
+                        <span className={`text-[9px] font-bold uppercase ${
+                          relatedDebt.isPaid ? 'text-emerald-600' : 'text-amber-600'
+                        }`}>
+                          {relatedDebt.isPaid ? 'Đã hoàn tất' : 'Chưa hoàn tất'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#191c1e] text-sm line-clamp-1">{relatedDebt.title || 'Khoản nợ không tiêu đề'}</p>
+                        <p className="text-xs text-[#737783] truncate">{relatedDebt.partnerName || 'Chưa rõ đối tác'}</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 pt-2 border-t border-[#f2f4f6] text-center">
+                        <div>
+                          <p className="text-[8px] font-bold text-[#737783] uppercase">Tổng nợ</p>
+                          <p className="text-[9px] font-black text-[#191c1e] truncate">{formatCurrency(relatedDebt.totalAmount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] font-bold text-[#737783] uppercase">Đã trả</p>
+                          <p className="text-[9px] font-black text-emerald-600 truncate">{formatCurrency(relatedDebt.paidAmount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] font-bold text-[#737783] uppercase">Còn lại</p>
+                          <p className="text-[9px] font-black text-rose-600 truncate">{formatCurrency(relatedDebt.remainingAmount)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center text-xs text-[#737783]">
+                      <span className="italic font-medium">Giao dịch thường</span>
+                      <span className="text-[10px] mt-1 text-[#737783]/60">Không liên kết khoản nợ nào</span>
+                    </div>
+                  )}
+                </div>
+                {relatedDebt && (
+                  <div className="pt-3 border-t border-[#f2f4f6] mt-3">
+                    <a
+                      href="/debts"
+                      className="w-full text-center block text-xs font-bold text-[#003178] hover:text-[#002150] transition-colors"
+                    >
+                      Xem chi tiết khoản nợ →
+                    </a>
+                  </div>
+                )}
               </div>
 
             </div>

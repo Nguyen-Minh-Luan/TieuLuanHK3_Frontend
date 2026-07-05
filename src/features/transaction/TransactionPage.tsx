@@ -38,7 +38,6 @@ import type { FetchParams } from "../../services/transactionService";
 import { fetchTransactions as fetchDashboardTransactions } from "../../store/slices/dashboardSlice";
 import { fetchCategories } from "../../store/slices/categorySlice";
 import { fetchFunds } from "../../store/slices/fundSlice";
-import { type FundFetchParams } from '../../services/fundService';
 import toast from "react-hot-toast";
 import TransactionModal from "./TransactionModal";
 import ConfirmDialog from "../../component/ConfirmDialog";
@@ -67,8 +66,8 @@ export default function TransactionPage() {
   const categories = useAppSelector((state) => state.category.items);
 
   useEffect(() => {
-    dispatch(fetchCategories());
-    dispatch(fetchFunds());
+    dispatch(fetchCategories({}));
+    dispatch(fetchFunds({}));
   }, [dispatch]);
 
   const categoriesMap = useMemo(() => {

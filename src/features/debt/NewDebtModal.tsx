@@ -1,53 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { X, HelpCircle, Save } from 'lucide-react';
-import type { Debt, CreditorType, DebtStatus } from './types';
+import { X, Save } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
+import { fetchCategoryTree } from '../../store/slices/categorySlice';
+import partnerService, { type PartnerDTO } from '../../services/partnerService';
+import type { DebtDTO, DebtRequest } from './apiTypes';
+import type { CategoryTreeNode } from '../../services/categoryService';
 
 interface NewDebtModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (debt: Omit<Debt, 'id'> & { id?: string }) => void;
-  editDebtData?: Debt | null;
+  onSave: (data: DebtRequest) => void;
+  editDebtData?: DebtDTO | null;
 }
 
-const RECEIVABLE_TITLE_OPTIONS = [
-  'Thu hồi nợ vay cá nhân',
-  'Thu hồi nợ cung cấp dịch vụ',
-  'Thu tiền bán hàng trả chậm',
-  'Thu hồi nợ tạm ứng nhân viên',
-  'Thu hồi tiền đặt cọc dự án',
-  'Thu hồi quỹ đầu tư nhàn rỗi',
-  'Khoản phải thu thương mại khác'
-];
-
-const PAYABLE_TITLE_OPTIONS = [
-  'Vay mua thiết bị văn phòng',
-  'Nợ nhà cung cấp vật tư chính',
-  'Hóa đơn dịch vụ đám mây AWS/GCP',
-  'Tiền thuê mặt bằng mặt phố',
-  'Chi phí vận tải & giao nhận hàng',
-  'Khoản vay lưu động ngân hàng',
-  'Khoản phải trả thương mại khác'
-];
-
-const RECEIVABLE_DEBTOR_OPTIONS = [
-  'Nguyễn Văn An (Cá nhân)',
-  'Công ty TNHH Thương mại Hoàng Phát',
-  'Hợp tác xã dịch vụ Nông nghiệp Xanh',
-  'Đại lý Phân phối Minh Hùng',
-  'Công ty Cổ phần Đầu tư Phát triển Việt Nam',
-  'Phạm Thị Mai (Khách hàng lẻ)',
-  'Trần Quốc Bảo (Đối tác liên danh)'
-];
-
-const PAYABLE_CREDITOR_OPTIONS = [
-  'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
-  'Công ty Cổ phần Viễn thông FPT',
-  'Tổng công ty Tân Cảng Sài Gòn',
-  'Công ty Luật TNHH Minh Khuê',
-  'Nhà máy Sản xuất Thiết bị Điện tử Hòa Bình',
-  'Công ty Cổ phần Vận tải biển Vinafco',
-  'Bảo hiểm PJICO Sài Gòn'
-];
+/** Flatten tree thành danh sách phẳng có prefix indent để hiển thị trong select */
+function flattenCategories(
+  nodes: CategoryTreeNode[],
+  depth = 0
+): { id: number; label: string }[] {
+  const result: { id: number; label: string }[] = [];
+  for (const node of nodes) {
+    const prefix = depth > 0 ? '　'.repeat(depth) + '└ ' : '';
+    result.push({ id: node.id!, label: prefix + node.name });
+    if (node.children?.length) {
+      result.push(...flattenCategories(node.children, depth + 1));
+    }
+  }
+  return result;
+}
 
 export default function NewDebtModal({
   isOpen,
@@ -55,78 +35,74 @@ export default function NewDebtModal({
   onSave,
   editDebtData,
 }: NewDebtModalProps) {
-  // Form Values State
-  const [creditor, setCreditor] = useState('');
-  const [creditorType, setCreditorType] = useState<CreditorType>('payable');
-  const [referenceCode, setReferenceCode] = useState('');
-  const [amount, setAmount] = useState<number>(0);
-  const [dueDate, setDueDate] = useState('');
-  const [status, setStatus] = useState<DebtStatus>('Fine');
-  const [description, setDescription] = useState('');
-  const [notes, setNotes] = useState('');
+  const dispatch = useAppDispatch();
+  const { treeItems } = useAppSelector((s) => s.category);
 
-  // Dynamic selector values for Reference Codes
-  const [referenceCodeOptions, setReferenceCodeOptions] = useState<string[]>([]);
+  // Form states
+  const [title, setTitle] = useState('');
+  const [debtType, setDebtType] = useState<'RECEIVABLE' | 'PAYABLE'>('PAYABLE');
+  const [debtDate, setDebtDate] = useState('');
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [partnerId, setPartnerId] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [note, setNote] = useState('');
+  // Sau
+  const [userId, setUserId] = useState<number>(() => {
+    const stored = localStorage.getItem('userId');
+    return stored ? Number(stored) : 0;
+  });
+
+  // Partners list state (fetched locally)
+  const [partners, setPartners] = useState<PartnerDTO[]>([]);
+  const [loadingPartners, setLoadingPartners] = useState(false);
 
   // Validation Error States
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Trigger values on edit mode
+  // Fetch categories and partners
+  useEffect(() => {
+    if (isOpen) {
+      dispatch(fetchCategoryTree());
+
+      setLoadingPartners(true);
+      partnerService.getAll({ page: 1, size: 100 })
+        .then((res) => {
+          setPartners(res.content || []);
+        })
+        .catch((err) => {
+          console.error('Error fetching partners:', err);
+        })
+        .finally(() => {
+          setLoadingPartners(false);
+        });
+    }
+  }, [isOpen, dispatch]);
+
+  // Load values for edit
   useEffect(() => {
     if (isOpen) {
       if (editDebtData) {
-        setCreditor(editDebtData.creditor);
-        setCreditorType(editDebtData.creditorType);
-        setReferenceCode(editDebtData.referenceCode);
-        setAmount(editDebtData.amount);
-        setDueDate(editDebtData.dueDate);
-        setStatus(editDebtData.status);
-        setDescription(editDebtData.description || '');
-        setNotes(editDebtData.notes || '');
-
-        // Ensure the edit draft code is at the top of selectable options
-        setReferenceCodeOptions([editDebtData.referenceCode]);
+        setTitle(editDebtData.title || '');
+        setDebtType(editDebtData.debtType);
+        setDebtDate(editDebtData.debtDate ? editDebtData.debtDate.split('T')[0] : '');
+        setTotalAmount(editDebtData.totalAmount);
+        setPartnerId(editDebtData.partnerId ? String(editDebtData.partnerId) : '');
+        setCategoryId(editDebtData.categoryId ? String(editDebtData.categoryId) : '');
+        setNote(editDebtData.note || '');
       } else {
-        // Clear values for dynamic creation
-        setCreditorType('payable');
-        setCreditor(PAYABLE_TITLE_OPTIONS[0]);
-
-        // Generate stable 6 random codes for new insertion
-        const randoms = Array.from({ length: 6 }, () => Math.floor(100 + Math.random() * 900));
-        const generated = [
-          `HDGTGT-2026-${randoms[0]}`,
-          `HDKT-2026-${randoms[1]}`,
-          `PTC-2026-${randoms[2]}`,
-          `BANK-2026-${randoms[3]}`,
-          `BILL-2026-${randoms[4]}`,
-          `OTHER-2026-${randoms[5]}`,
-        ];
-        setReferenceCodeOptions(generated);
-        setReferenceCode(generated[0]);
-
-        setAmount(0);
-        setDueDate(PAYABLE_CREDITOR_OPTIONS[0]);
-        setStatus('Fine');
-        setDescription('');
-        setNotes('');
+        setTitle('');
+        setDebtType('PAYABLE');
+        // Default to today
+        setDebtDate(new Date().toISOString().split('T')[0]);
+        setTotalAmount(0);
+        setPartnerId('');
+        setCategoryId('');
+        setUserId(userId);
+        setNote('');
       }
       setErrors({});
     }
   }, [editDebtData, isOpen]);
-
-  // Handle classification swapping and default the creditor title accordingly for new entries
-  const handleCreditorTypeChange = (newType: CreditorType) => {
-    setCreditorType(newType);
-    if (!editDebtData) {
-      if (newType === 'receivable') {
-        setCreditor(RECEIVABLE_TITLE_OPTIONS[0]);
-        setDueDate(RECEIVABLE_DEBTOR_OPTIONS[0]);
-      } else {
-        setCreditor(PAYABLE_TITLE_OPTIONS[0]);
-        setDueDate(PAYABLE_CREDITOR_OPTIONS[0]);
-      }
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -135,17 +111,17 @@ export default function NewDebtModal({
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
 
-    if (!creditor.trim()) {
-      newErrors.creditor = 'Vui lòng chọn tiêu đề.';
+    if (!title.trim()) {
+      newErrors.title = 'Vui lòng nhập tiêu đề.';
     }
-    if (!referenceCode.trim()) {
-      newErrors.referenceCode = 'Vui lòng chọn mã tham chiếu.';
+    if (!debtDate) {
+      newErrors.debtDate = 'Vui lòng chọn ngày nợ.';
     }
-    if (amount <= 0) {
-      newErrors.amount = 'Số tiền nợ phải lớn hơn 0 đ.';
+    if (totalAmount <= 0) {
+      newErrors.totalAmount = 'Số tiền nợ phải lớn hơn 0đ.';
     }
-    if (!dueDate.trim()) {
-      newErrors.dueDate = creditorType === 'receivable' ? 'Vui lòng chọn người nợ.' : 'Vui lòng chọn chủ nợ.';
+    if (!partnerId) {
+      newErrors.partnerId = 'Vui lòng chọn đối tác.';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -153,46 +129,22 @@ export default function NewDebtModal({
       return;
     }
 
-    // Save exactly the input string value
-    const formattedDate = dueDate;
-
-    // Pass data
     onSave({
-      id: editDebtData?.id,
-      dateCreated: editDebtData ? editDebtData.dateCreated : new Date().toLocaleDateString('vi', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-      creditor,
-      creditorType,
-      referenceCode,
-      amount,
-      dueDate: formattedDate,
-      status,
-      description,
-      notes,
+      title: title.trim(),
+      debtType,
+      debtDate,
+      totalAmount,
+      partnerId: Number(partnerId),
+      categoryId: categoryId ? Number(categoryId) : undefined,
+      userId,
+      note: note.trim() || undefined,
     });
 
     onClose();
   };
 
-  // Determine current active titles list
-  const currentTitleOptions = creditorType === 'receivable' ? RECEIVABLE_TITLE_OPTIONS : PAYABLE_TITLE_OPTIONS;
-  // Ensure we include what's currently being edited if it's there
-  const finalTitleOptions = [...currentTitleOptions];
-  if (creditor && !finalTitleOptions.includes(creditor)) {
-    finalTitleOptions.push(creditor);
-  }
-
-  // Determine current active due_date / debtor options list
-  const currentDueDateOptions = creditorType === 'receivable' ? RECEIVABLE_DEBTOR_OPTIONS : PAYABLE_CREDITOR_OPTIONS;
-  const finalDueDateOptions = [...currentDueDateOptions];
-  if (dueDate && !finalDueDateOptions.includes(dueDate)) {
-    finalDueDateOptions.push(dueDate);
-  }
-
-  // Ensure current active reference code is listed in options
-  const finalReferenceOptions = [...referenceCodeOptions];
-  if (referenceCode && !finalReferenceOptions.includes(referenceCode)) {
-    finalReferenceOptions.unshift(referenceCode);
-  }
+  // Flattened categories for display
+  const categoryOptions = flattenCategories(treeItems);
 
   return (
     <div id="modal-container" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none font-sans overflow-y-auto">
@@ -221,71 +173,59 @@ export default function NewDebtModal({
 
         {/* Form Body Fields */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Form Group: Creditor Name (Dropdown as requested) */}
+          {/* Tiêu đề */}
           <div>
             <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
-              Tiêu đề <span className="text-[#d91c1c]">*</span>
+              Tiêu đề / Nội dung nợ <span className="text-[#d91c1c]">*</span>
             </label>
-            <select
-              id="input-creditor"
-              value={creditor}
-              onChange={(e) => setCreditor(e.target.value)}
-              className={`w-full bg-[#f8f9fb] border ${errors.creditor ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer`}
-            >
-              {finalTitleOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            {errors.creditor && (
-              <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.creditor}</span>
+            <input
+              id="input-title"
+              type="text"
+              placeholder="Ví dụ: Vay vốn kinh doanh, Mua thiết bị văn phòng..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={`w-full bg-[#f8f9fb] border ${errors.title ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none`}
+            />
+            {errors.title && (
+              <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.title}</span>
             )}
           </div>
 
-          {/* Form Row: Domain & reference code */}
+          {/* Form Row: Phân loại & Ngày nợ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
                 Phân loại
               </label>
               <select
-                id="input-creditor-type"
-                value={creditorType}
-                onChange={(e) => handleCreditorTypeChange(e.target.value as CreditorType)}
+                id="input-debt-type"
+                value={debtType}
+                onChange={(e) => setDebtType(e.target.value as 'RECEIVABLE' | 'PAYABLE')}
                 className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer"
               >
-                <option value="receivable">NỢ PHẢI THU</option>
-                <option value="payable">NỢ PHẢI CHI</option>
+                <option value="RECEIVABLE">NỢ PHẢI THU (Receivable)</option>
+                <option value="PAYABLE">NỢ PHẢI CHI (Payable)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2 flex items-center justify-between">
-                <span>Mã tham chiếu <span className="text-[#d91c1c]">*</span></span>
-                <span title="Mã hóa đơn hoặc số hợp đồng tham chiếu" className="flex items-center">
-                  <HelpCircle className="w-3.5 h-3.5 text-[#94a3b8]" />
-                </span>
+              <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
+                Ngày nợ <span className="text-[#d91c1c]">*</span>
               </label>
-              <select
-                id="input-ref-code"
-                value={referenceCode}
-                onChange={(e) => setReferenceCode(e.target.value)}
-                className={`w-full bg-[#f8f9fb] border ${errors.referenceCode ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-mono font-medium text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer`}
-              >
-                {finalReferenceOptions.map((code) => (
-                  <option key={code} value={code}>
-                    {code}
-                  </option>
-                ))}
-              </select>
-              {errors.referenceCode && (
-                <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.referenceCode}</span>
+              <input
+                id="input-debt-date"
+                type="date"
+                value={debtDate}
+                onChange={(e) => setDebtDate(e.target.value)}
+                className={`w-full bg-[#f8f9fb] border ${errors.debtDate ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none`}
+              />
+              {errors.debtDate && (
+                <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.debtDate}</span>
               )}
             </div>
           </div>
 
-          {/* Form Row: Amount & Due Date */}
+          {/* Form Row: Số tiền nợ & Đối tác */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
@@ -293,71 +233,77 @@ export default function NewDebtModal({
               </label>
               <div className="relative">
                 <input
-                  id="input-amount"
+                  id="input-total-amount"
                   type="number"
                   min="0"
                   step="100000"
                   placeholder="0"
-                  value={amount || ''}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  className={`w-full bg-[#f8f9fb] border ${errors.amount ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-extrabold text-[#0f172a] pl-4 pr-12 py-3 rounded-xl transition-all outline-none`}
+                  value={totalAmount || ''}
+                  onChange={(e) => setTotalAmount(Number(e.target.value))}
+                  className={`w-full bg-[#f8f9fb] border ${errors.totalAmount ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-extrabold text-[#0f172a] pl-4 pr-12 py-3 rounded-xl transition-all outline-none`}
                 />
                 <span className="absolute right-4 top-3.5 text-xs font-bold text-[#94a3b8]">đ</span>
               </div>
-              {errors.amount && (
-                <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.amount}</span>
+              {errors.totalAmount && (
+                <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.totalAmount}</span>
               )}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
-                {creditorType === 'receivable' ? 'Người nợ' : 'Chủ nợ'} <span className="text-[#d91c1c]">*</span>
+                Đối tác <span className="text-[#d91c1c]">*</span>
               </label>
               <select
-                id="input-due-date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className={`w-full bg-[#f8f9fb] border ${errors.dueDate ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer`}
+                id="input-partner-id"
+                value={partnerId}
+                onChange={(e) => setPartnerId(e.target.value)}
+                className={`w-full bg-[#f8f9fb] border ${errors.partnerId ? 'border-[#ef4444]' : 'border-transparent'} focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer`}
               >
-                {finalDueDateOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                <option value="">{loadingPartners ? 'Đang tải đối tác...' : '— Chọn đối tác —'}</option>
+                {partners.map((p) => (
+                  <option key={p.id} value={String(p.id)}>
+                    {p.name}
                   </option>
                 ))}
               </select>
-              {errors.dueDate && (
-                <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.dueDate}</span>
+              {errors.partnerId && (
+                <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.partnerId}</span>
               )}
             </div>
           </div>
 
-          {/* Form Group: Description */}
+          {/* Form Group: Hạng mục danh mục (Category) */}
           <div>
             <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
-              Nội dung hạng mục
+              Hạng mục danh mục
             </label>
-            <textarea
-              id="input-desc"
-              rows={2}
-              placeholder="Nhập nội dung vắn tắt về nghĩa vụ tài chính..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none resize-none"
-            />
+            <select
+              id="input-category-id"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer"
+            >
+              <option value="">— Chọn hạng mục danh mục (không bắt buộc) —</option>
+              {categoryOptions.map((c) => (
+                <option key={c.id} value={String(c.id)}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Form Group: Internal private Notes */}
+          {/* Form Group: Ghi chú */}
           <div>
             <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
               Ghi chú nội bộ
             </label>
-            <input
-              id="input-notes"
-              type="text"
-              placeholder="Ví dụ: Liên hệ bộ phận kế toán đính kèm phụ lục..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none"
+            <textarea
+              id="input-note"
+              rows={2}
+              placeholder="Nhập ghi chú thêm cho khoản nợ này..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none resize-none"
             />
           </div>
 
@@ -369,7 +315,7 @@ export default function NewDebtModal({
               onClick={onClose}
               className="px-6 py-3 rounded-xl text-xs font-bold text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a] transition-all cursor-pointer"
             >
-              Hủy bỏ (Escape)
+              Hủy bỏ
             </button>
             <button
               id="btn-submit"

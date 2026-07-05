@@ -17,6 +17,8 @@ export interface Creator {
 
 export interface Transaction {
   id: string;
+  apiId?: number; // Backend database ID (optional for mock compatibility)
+  debtId?: number; // Backend debt ID if linked
   type: 'PHIẾU CHI' | 'PHIẾU THU';
   status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED';
   riskStatus: string; // e.g. "FINE (Ổn định)" or "WARNING (Cảnh báo)" or "RISK (Nguy cơ)"
@@ -32,4 +34,16 @@ export interface Transaction {
   notes: string;
 }
 
+export interface RelatedDebt {
+  id: number;
+  debtType: 'RECEIVABLE' | 'PAYABLE';
+  title?: string;
+  partnerName?: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  isPaid: boolean;
+}
+
 export type SidebarTab = 'dashboard' | 'transactions' | 'reports' | 'budgets' | 'settings';
+

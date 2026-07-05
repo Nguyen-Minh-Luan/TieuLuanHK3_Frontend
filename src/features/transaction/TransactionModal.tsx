@@ -54,8 +54,8 @@ export default function TransactionModal({
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(fetchFunds());
-      dispatch(fetchCategories());
+      dispatch(fetchFunds({}));
+      dispatch(fetchCategories({}));
       apiClient.get("/partners?size=100")
         .then((res) => setPartners(res.data.data.content || []))
         .catch((err) => console.error("Error loading partners", err));
@@ -97,12 +97,12 @@ export default function TransactionModal({
   // Filter categories by type matching current selection (INCOME/EXPENSE)
   const filteredCategories = useMemo(() => {
     const typeUpper = type.toUpperCase();
-    return categories.filter((c: { id: number; name: string; type?: string }) => c.type === typeUpper);
+    return categories.filter((c: any) => c.type === typeUpper);
   }, [categories, type]);
 
   useEffect(() => {
     if (isOpen && !editingTransaction && filteredCategories.length > 0 && !categoryId) {
-      setCategoryId(filteredCategories[0].id);
+      setCategoryId(filteredCategories[0].id ?? null);
     }
   }, [filteredCategories, isOpen, editingTransaction, categoryId]);
 
@@ -220,7 +220,7 @@ export default function TransactionModal({
                     required
                   >
                     <option value="">Chọn danh mục</option>
-                    {filteredCategories.map((c: { id: number; name: string; type?: string }) => (
+                    {filteredCategories.map((c: any) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>

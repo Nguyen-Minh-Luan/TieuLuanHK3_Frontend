@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import type { Debt } from './types';
-import { INITIAL_DEBTS } from './data';
+import { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
+import {
+  fetchDebts,
+  fetchDebtSummary,
+  createDebt,
+  updateDebt,
+  deleteDebt,
+  fetchDebtById,
+  setParams,
+  clearSelectedDebt,
+} from '../../store/slices/debtSlice';
+import { useDebounce } from '../../hooks/useDebounce';
 import DebtDetailsModal from './DebtDetailsModal';
 import NewDebtModal from './NewDebtModal';
 import OverviewCards from './OverviewCards';
@@ -17,37 +27,23 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react';
-
-const LOCAL_STORAGE_KEY = 'equity_ledger_debts_db_v1';
+import type { DebtDTO, DebtRequest } from './apiTypes';
 
 export default function DebtPage() {
-  // 1. Main debts database state
-  const [debts, setDebts] = useState<Debt[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error loading debts from localStorage', e);
-      }
-    }
-    return INITIAL_DEBTS;
-  });
+  const dispatch = useAppDispatch();
+  const { items, totalElements, totalPages, params, selectedDebt, summary, status } = useAppSelector(
+    (s) => s.debt
+  );
 
-  // Sync to localstorage on edits
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(debts));
-  }, [debts]);
-
-  // 2. Search input state
+  // Search input local state
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const debouncedSearch = useDebounce(searchTerm, 400);
 
-  // 3. Modal dialogs toggles
+  // Modal dialogs toggles
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
-  const [selectedDetailsDebt, setSelectedDetailsDebt] = useState<Debt | null>(null);
+  const [editingDebt, setEditingDebt] = useState<DebtDTO | null>(null);
 
-  // 4. Toast Feedback Notifications state
+  // Toast Feedback Notifications state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const triggerToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -62,46 +58,80 @@ export default function DebtPage() {
     }
   }, [toast]);
 
-  // Operational Actions:
-
-  // A. Add/Modify Debt
-  const handleSaveDebt = (submittedData: Omit<Debt, 'id'> & { id?: string }) => {
-    if (submittedData.id) {
-      setDebts(prev =>
-        prev.map(d => (d.id === submittedData.id ? ({ ...d, ...submittedData } as Debt) : d))
-      );
-      triggerToast('Đã lưu thay đổi cho phiếu nợ thành công!', 'success');
-    } else {
-      const newDebtItem: Debt = { ...submittedData, id: `debt-${Date.now()}` };
-      setDebts(prev => [newDebtItem, ...prev]);
-      triggerToast('Đã khởi tạo và đính kèm khoản nợ mới thành công!', 'success');
+  // Initial loads and refetches when params change
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchDebts(params));
+      dispatch(fetchDebtSummary());
     }
-    setIsModalOpen(false);
-    setEditingDebt(null);
+  }, [status, params, dispatch]);
+
+  // Debounced search to trigger parameter update
+  useEffect(() => {
+    dispatch(setParams({ keyword: debouncedSearch || undefined, page: 1 }));
+  }, [debouncedSearch, dispatch]);
+
+  // Handle saving new/modified debt
+  const handleSaveDebt = async (submittedData: DebtRequest) => {
+    try {
+      if (editingDebt?.id) {
+        await dispatch(updateDebt({ id: editingDebt.id, data: submittedData })).unwrap();
+        triggerToast('Đã lưu thay đổi cho phiếu nợ thành công!', 'success');
+      } else {
+        await dispatch(createDebt(submittedData)).unwrap();
+        triggerToast('Đã khởi tạo và đính kèm khoản nợ mới thành công!', 'success');
+      }
+      setIsModalOpen(false);
+      setEditingDebt(null);
+    } catch (err: any) {
+      triggerToast(err ?? 'Lưu khoản nợ thất bại!', 'error');
+    }
   };
 
-  // B. Pay-off Debt
-  const handleMarkAsPaid = (id: string) => {
-    setDebts(prev =>
-      prev.map(d => (d.id === id ? { ...d, status: 'Paid' as const } : d))
+  // Mark debt as fully paid
+  // NOTE: Backend không cho phép set paidAmount trực tiếp qua PATCH /debts.
+  // Thanh toán nợ phải thực hiện qua luồng tạo giao dịch (Transaction) liên kết debtId.
+  // Hàm này thông báo cho user thay vì thực hiện patch không hợp lệ.
+  const handleMarkAsPaid = (id: number) => {
+    const debtItem = items.find((d) => d.id === id);
+    if (!debtItem) return;
+    triggerToast(
+      `Để ghi nhận thanh toán cho khoản nợ của ${debtItem.partnerName || 'đối tác'}, ` +
+      `vui lòng tạo giao dịch mới và liên kết với khoản nợ này.`,
+      'info'
     );
-    const creditorName = debts.find(d => d.id === id)?.creditor ?? 'Chủ nợ';
-    triggerToast(`Đã chuyển tiền thanh toán dứt điểm nghĩa vụ nợ cho ${creditorName}!`, 'success');
   };
 
-  // C. Delete Debt
-  const handleDeleteDebt = (id: string) => {
-    const creditorName = debts.find(d => d.id === id)?.creditor ?? 'Khoản nợ';
-    if (confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn khoản nợ của ${creditorName} khỏi công cụ lưu trữ không?`)) {
-      setDebts(prev => prev.filter(d => d.id !== id));
-      triggerToast('Đã xóa bỏ hoàn toàn phiếu nợ khỏi sổ lưu trữ!', 'info');
+  // Delete Debt
+  const handleDeleteDebt = async (id: number) => {
+    const debtItem = items.find((d) => d.id === id);
+    const partnerName = debtItem?.partnerName ?? 'Khoản nợ';
+
+    if (confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn khoản nợ của ${partnerName} khỏi hệ thống không?`)) {
+      try {
+        await dispatch(deleteDebt(id)).unwrap();
+        triggerToast('Đã xóa bỏ hoàn toàn phiếu nợ khỏi sổ lưu trữ!', 'info');
+      } catch (err: any) {
+        triggerToast(err ?? 'Xóa khoản nợ thất bại!', 'error');
+      }
     }
   };
 
-  // D. Set editing data and open modal
-  const handleEditDebt = (debt: Debt) => {
+  // Edit action
+  const handleEditDebt = (debt: DebtDTO) => {
     setEditingDebt(debt);
     setIsModalOpen(true);
+  };
+
+  // View details action
+  const handleViewDetails = async (debt: DebtDTO) => {
+    if (debt.id != null) {
+      await dispatch(fetchDebtById(debt.id));
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    dispatch(setParams({ page }));
   };
 
   return (
@@ -117,8 +147,10 @@ export default function DebtPage() {
         >
           {toast.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-[#10b981]" />
+          ) : toast.type === 'info' ? (
+            <CheckCircle2 className="w-5 h-5 text-[#3b82f6]" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-[#3b82f6]" />
+            <AlertCircle className="w-5 h-5 text-[#ef4444]" />
           )}
           <span className="text-xs font-bold text-[#0f172a] font-sans">{toast.message}</span>
           <button
@@ -146,7 +178,7 @@ export default function DebtPage() {
             <input
               id="nav-search-input"
               type="text"
-              placeholder="Tìm kiếm khoản nợ hoặc mã tham chiếu..."
+              placeholder="Tìm kiếm theo tiêu đề nợ hoặc đối tác..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-[#f1f5f9] placeholder-[#94a3b8] text-sm text-[#0f172a] font-medium pl-11 pr-4 py-2.5 rounded-xl border border-transparent focus:border-[#003178]/20 focus:bg-white outline-none transition-all"
@@ -172,24 +204,6 @@ export default function DebtPage() {
                 <HelpCircle className="w-4 h-4" />
               </button>
             </div>
-
-            <div className="h-6 w-[1px] bg-[#cbd5e1]/40" />
-
-            <div id="admin-profile-badge" className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-xs font-bold text-[#0f172a]">Alex Nguyen</p>
-                <p className="text-[9px] font-mono font-bold text-[#64748b] uppercase tracking-wider">
-                  ADMINISTRATOR
-                </p>
-              </div>
-              <img
-                id="admin-avatar"
-                src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=120&h=120"
-                alt="Alex Nguyen Avatar"
-                referrerPolicy="no-referrer"
-                className="w-10 h-10 rounded-xl object-cover ring-2 ring-[#003178]/10"
-              />
-            </div>
           </div>
         </header>
 
@@ -200,7 +214,7 @@ export default function DebtPage() {
               Quản lý nợ
             </h2>
             <p className="text-xs font-medium text-[#64748b] mt-1.5">
-              Theo dõi và quản lý các khoản nợ phải trả định kỳ và phát sinh.
+              Theo dõi và quản lý các khoản nợ phải thu và nợ phải trả từ API thực tế.
             </p>
           </div>
           <button
@@ -218,29 +232,31 @@ export default function DebtPage() {
 
         {/* 3. Overview KPI Cards */}
         <section id="metrics-summary">
-          <OverviewCards debts={debts} />
+          <OverviewCards summary={summary} />
         </section>
 
         {/* 4. Debt Table */}
         <section id="ledger-data-box">
           <DebtTable
-            debts={debts}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            debts={items}
+            totalElements={totalElements}
+            totalPages={totalPages}
+            currentPage={params.page ?? 1}
+            onPageChange={handlePageChange}
             onMarkAsPaid={handleMarkAsPaid}
             onDeleteDebt={handleDeleteDebt}
             onEditDebt={handleEditDebt}
-            onViewDetails={setSelectedDetailsDebt}
+            onViewDetails={handleViewDetails}
           />
         </section>
 
         {/* 5. Bottom analytical cards */}
         <section id="bottom-charts-row" className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <OptimizerCard debts={debts} />
+            <OptimizerCard debts={items} />
           </div>
           <div className="md:col-span-1">
-            <QuickReportCard debts={debts} />
+            <QuickReportCard debts={items} />
           </div>
         </section>
       </main>
@@ -257,11 +273,13 @@ export default function DebtPage() {
       />
 
       {/* Modal B: View Details */}
-      <DebtDetailsModal
-        debt={selectedDetailsDebt}
-        onClose={() => setSelectedDetailsDebt(null)}
-        onMarkAsPaid={handleMarkAsPaid}
-      />
+      {selectedDebt && (
+        <DebtDetailsModal
+          debt={selectedDebt}
+          onClose={() => dispatch(clearSelectedDebt())}
+          onMarkAsPaid={handleMarkAsPaid}
+        />
+      )}
     </div>
   );
 }

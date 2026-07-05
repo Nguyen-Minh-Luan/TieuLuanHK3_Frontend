@@ -8,6 +8,8 @@ import Budget from "./features/budget/Budget";
 import ProtectedRoute from "./router/ProtectedRoute";
 import DebtPage from "./features/debt/DebtPage";
 import ReportsView from "./features/reports/ReportsView";
+import CategoryPage from "./features/category/CategoryPage";
+import PartnerPage from "./features/partner/PartnerPage";
 
 const router = createBrowserRouter([
   {
@@ -24,13 +26,15 @@ const router = createBrowserRouter([
     children: [
       { path: "/home", element: <Home /> },
       { path: "/transaction", element: <TransactionPage /> },
-      { path: "/transactionDetail", element: <TransactionDetailPage /> },
+      { path: "/transactions/:id", element: <TransactionDetailPage /> },
       { path: "/report", element: <ReportsView /> },
       { path: "/users", element: <UserManagementPage /> },
       { path: "/admin/userManager", element: <UserManagementPage /> },
       { path: "/setting", element: <UserManagementPage /> },
       { path: "/budget", element: <Budget /> },
       { path: "/debt", element: <DebtPage /> },
+      { path: "/category", element: <CategoryPage /> },
+      { path: "/partners", element: <PartnerPage /> },
     ],
   },
 ]);

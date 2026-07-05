@@ -5,7 +5,7 @@
  */
 
 import apiClient from './apiClient';
-import type { ReportRequest, ReportResponse, ReportFetchParams, ReportType } from '../features/transaction/reportTypes';
+import type { ReportRequest, ReportResponse, ReportFetchParams, ReportType } from '../features/reports/reportTypes';
 import type { ApiResponse, PagedResponse } from '../features/transaction/apiTypes';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';

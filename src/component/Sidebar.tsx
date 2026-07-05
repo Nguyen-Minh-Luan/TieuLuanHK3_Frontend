@@ -1,10 +1,12 @@
 import {
   BarChart3,
   Coins,
+  Handshake,
   LayoutDashboard,
   Plus,
   Receipt,
   Settings,
+  Tags,
   User,
   Wallet,
 } from "lucide-react";
@@ -17,6 +19,8 @@ const menuItems = [
   { icon: Coins, label: "Debt", path: "/debt" },
   { icon: BarChart3, label: "Reports", path: "/report" },
   { icon: Wallet, label: "Budgets", path: "/budget" },
+  { icon: Tags, label: "Categories", path: "/category" },
+  { icon: Handshake, label: "Partners", path: "/partners" },
   { icon: User, label: "Users", path: "/users" },
 ];
 const MotionLink = motion(Link);

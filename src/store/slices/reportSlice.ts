@@ -6,7 +6,7 @@
 
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import reportService from '../../services/reportService';
-import type { ReportRequest, ReportResponse, ReportFetchParams } from '../../features/transaction/reportTypes';
+import type { ReportRequest, ReportResponse, ReportFetchParams } from '../../features/reports/reportTypes';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 

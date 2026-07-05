@@ -1,66 +1,49 @@
-import React from 'react';
-import type { Debt } from './types';
+import type { DebtSummary } from './apiTypes';
 
 interface OverviewCardsProps {
-  debts: Debt[];
+  summary: DebtSummary | null;
 }
 
-export default function OverviewCards({ debts }: OverviewCardsProps) {
-  // 1. Calculate TỔNG NỢ HIỆN TẠI (All active/unpaid debt)
-  const unpaidDebts = debts.filter(d => d.status !== 'Paid');
-  const totalUnpaid = unpaidDebts.reduce((sum, d) => sum + d.amount, 0);
+const formatVND = (num: number) =>
+  new Intl.NumberFormat('vi-VN').format(num) + ' đ';
 
-  // 2. Calculate NỢ QUÁ HẠN (Strictly those marked 'Critical' or 'Warning' which represent overdue/risky ones)
-  const criticalDebts = debts.filter(d => d.status === 'Critical');
-  const totalCriticalAmount = criticalDebts.reduce((sum, d) => sum + d.amount, 0);
-  const criticalCount = criticalDebts.length;
-
-  // 3. Calculate SẮP ĐẾN HẠN (7 NGÀY) (We can sum up those marked 'Warning' or specified due within near term)
-  const warningDebts = debts.filter(d => d.status === 'Warning');
-  const totalWarningAmount = warningDebts.reduce((sum, d) => sum + d.amount, 0);
-
-  // 4. Calculate dynamic credit score based on ratio of paid vs total debts
-  const totalCount = debts.length;
-  const paidCount = debts.filter(d => d.status === 'Paid').length;
-  const rawRatio = totalCount > 0 ? paidCount / totalCount : 0.5;
-  // Map raw ratio to a realistic credit score between 650 and 850
-  // e.g. base score 720, adding up to 130 points
-  const baseScore = 780;
-  const calculatedCreditScore = Math.min(850, Math.round(baseScore + rawRatio * 70 - (criticalCount * 15)));
-
-  // Helper to format Vietnamese Dong
-  const formatVND = (num: number) => {
-    return new Intl.NumberFormat('vi-VN').format(num) + ' đ';
-  };
-
+export default function OverviewCards({ summary }: OverviewCardsProps) {
   return (
     <div id="overview-cards-row" className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans select-none">
       {/* CARD 1: TỔNG NỢ PHẢI THU */}
-      <div id="card-total-debt" className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,31,120,0.02)] transition-transform hover:translate-y-[-2px] duration-200">
+      <div id="card-total-receivable" className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,31,120,0.02)] transition-transform hover:translate-y-[-2px] duration-200">
         <p className="text-[10px] font-mono font-semibold text-[#64748b] tracking-wider uppercase mb-2">
-          TỔNG NỢ PHẢI THU
+          TỔNG NỢ PHẢI THU (còn lại)
         </p>
-        <p id="total-debt-value" className="text-2xl font-display font-extrabold text-[#003178] tracking-tight">
-          {formatVND(totalUnpaid)}
-        </p>
+        {summary == null ? (
+          <div className="h-8 w-40 bg-[#f1f5f9] rounded animate-pulse" />
+        ) : (
+          <p id="total-receivable-value" className="text-2xl font-display font-extrabold text-[#003178] tracking-tight">
+            {formatVND(summary.totalRemainingReceivable)}
+          </p>
+        )}
         <div className="flex items-center gap-1.5 mt-3">
           <span className="text-xs font-semibold text-[#10b981] bg-[#e6fbf3] px-2 py-0.5 rounded-md">
-            ↗ +12.5%
+            ↗ Phải thu
           </span>
-          <span className="text-[11px] text-[#64748b] font-medium">tháng này</span>
+          <span className="text-[11px] text-[#64748b] font-medium">từ khách hàng / đối tác</span>
         </div>
       </div>
 
       {/* CARD 2: TỔNG NỢ PHẢI CHI */}
-      <div id="card-overdue-debt" className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,31,120,0.02)] transition-transform hover:translate-y-[-2px] duration-200">
+      <div id="card-total-payable" className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,31,120,0.02)] transition-transform hover:translate-y-[-2px] duration-200">
         <p className="text-[10px] font-mono font-semibold text-[#64748b] tracking-wider uppercase mb-2">
-          TỔNG NỢ PHẢI CHI
+          TỔNG NỢ PHẢI CHI (còn lại)
         </p>
-        <p id="overdue-debt-value" className="text-2xl font-display font-extrabold text-[#d91c1c] tracking-tight">
-          {formatVND(totalCriticalAmount)}
-        </p>
+        {summary == null ? (
+          <div className="h-8 w-40 bg-[#f1f5f9] rounded animate-pulse" />
+        ) : (
+          <p id="total-payable-value" className="text-2xl font-display font-extrabold text-[#d91c1c] tracking-tight">
+            {formatVND(summary.totalRemainingPayable)}
+          </p>
+        )}
         <p className="text-xs font-medium text-[#d91c1c] mt-3 bg-[#fdf2f2] px-2.5 py-1 rounded-md inline-block">
-          {criticalCount} khoản cần xử lý ngay
+          {summary == null ? '...' : 'Cần thanh toán cho nhà cung cấp'}
         </p>
       </div>
     </div>
