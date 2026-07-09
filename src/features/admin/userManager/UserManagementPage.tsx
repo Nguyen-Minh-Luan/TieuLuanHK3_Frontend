@@ -166,7 +166,11 @@ export default function UserManagementPage() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
         {/* Top Navbar Header */}
-        <Header />
+        <Header
+          searchValue={localSearch}
+          onSearchChange={setLocalSearch}
+          searchPlaceholder="Tìm kiếm thành viên theo tên, email..."
+        />
 
         {/* Dynamic Content Switching */}
         <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">

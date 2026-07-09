@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Calendar,
   Clock,
@@ -11,12 +11,15 @@ import {
   ChevronDown,
   ArrowDown,
   ArrowUp,
-  Save
+  Save,
+  TrendingUp,
+  AlertTriangle
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import type { Transaction } from './types';
-import type { TransactionRequest } from './apiTypes';
+import type { TransactionRequest, SpendingWarning } from './apiTypes';
 import apiClient from '../../services/apiClient';
+import transactionService from '../../services/transactionService';
 import { fetchFunds } from '../../store/slices/fundSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
 
@@ -51,6 +54,11 @@ export default function TransactionModal({
   const funds = useAppSelector((state) => state.fund.items);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Real-time preview warning state
+  const [previewWarning, setPreviewWarning] = useState<SpendingWarning | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -105,6 +113,47 @@ export default function TransactionModal({
       setCategoryId(filteredCategories[0].id ?? null);
     }
   }, [filteredCategories, isOpen, editingTransaction, categoryId]);
+
+  // Debounced preview warning fetch for EXPENSE type
+  const fetchPreviewWarning = useCallback(async (catId: number, amt: number) => {
+    if (!catId || !amt || amt <= 0) { setPreviewWarning(null); return; }
+    setPreviewLoading(true);
+    try {
+      const result = await transactionService.getWarningByCategory(catId, amt);
+      setPreviewWarning(result);
+    } catch {
+      setPreviewWarning(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (type !== 'expense' || !categoryId) {
+      setPreviewWarning(null);
+      return;
+    }
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setPreviewWarning(null);
+      return;
+    }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      fetchPreviewWarning(categoryId, parsedAmount);
+    }, 600);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [type, categoryId, amount, fetchPreviewWarning]);
+
+  // Clear preview when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setPreviewWarning(null);
+      setPreviewLoading(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -349,14 +398,49 @@ export default function TransactionModal({
               />
             </div>
 
-            {/* Warning banner */}
-            {type === 'expense' && parseFloat(amount) >= 10000 && (
-              <div className="bg-red-50 text-red-800 border border-red-100 rounded-xl p-3 flex gap-2 w-full text-xs animate-fade-in">
-                <AlertCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold">Mức chi lớn: </span>
-                  Khoản chi vượt quá $10,000.00 sẽ tự động gắn nhãn <span className="font-bold uppercase text-red-600">Critical</span> trong hệ thống kiểm tra ngân sách.
-                </div>
+            {/* Real-time Preview Warning Banner */}
+            {type === 'expense' && categoryId && parseFloat(amount) > 0 && (
+              <div className="w-full">
+                {previewLoading && (
+                  <div className="flex items-center gap-2 text-xs text-slate-400 py-1">
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 border-t-primary animate-spin" />
+                    <span>Đang phân tích chi tiêu...</span>
+                  </div>
+                )}
+                {!previewLoading && previewWarning && previewWarning.hasWarning && (
+                  <div className={`rounded-xl p-3.5 border flex gap-3 animate-fade-in ${
+                    previewWarning.level === 'CRITICAL'
+                      ? 'bg-rose-50 border-rose-200 text-rose-800'
+                      : 'bg-amber-50 border-amber-200 text-amber-800'
+                  }`}>
+                    <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${
+                      previewWarning.level === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'
+                    }`} />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs">
+                          {previewWarning.level === 'CRITICAL' ? '🔴 Dự báo chi tiêu bất thường nghiêm trọng' : '🟡 Dự báo vượt mức chi tiêu'}
+                        </span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          previewWarning.level === 'CRITICAL' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        }`}>{previewWarning.level}</span>
+                      </div>
+                      <div className="flex gap-4 text-xs font-semibold">
+                        <span>TB lịch sử: <strong className="font-black">{previewWarning.historicalAverage?.toLocaleString('vi-VN')}</strong></span>
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
+                          Vượt <strong className="font-black">{previewWarning.overagePercent?.toFixed(1)}%</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {!previewLoading && previewWarning && !previewWarning.hasWarning && (
+                  <div className="rounded-xl p-3 border border-emerald-100 bg-emerald-50 text-emerald-700 text-xs flex items-center gap-2 animate-fade-in">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-semibold">Chi tiêu dự kiến trong mức bình thường ✓</span>
+                  </div>
+                )}
               </div>
             )}
 

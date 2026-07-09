@@ -21,6 +21,7 @@ export default function TransactionDetailPage() {
   const {
     selectedTransaction,
     relatedDebt,
+    spendingWarning,
     lookupsReady,
     detailLoading,
     detailError,
@@ -60,7 +61,7 @@ export default function TransactionDetailPage() {
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
 
         {/* Core Header stickiness */}
-        <Header />
+        <Header showSearch={false} />
 
         {/* Content viewport area */}
         <main className="p-6 md:p-10 max-w-7xl w-full mx-auto flex-1">
@@ -98,6 +99,7 @@ export default function TransactionDetailPage() {
               <TransactionDetails
                 transaction={selectedTransaction}
                 relatedDebt={relatedDebt}
+                spendingWarning={spendingWarning}
                 onUpdate={handleUpdate}
                 onCancel={handleCancel}
                 onPrintClick={() => setIsPrintVoucherOpen(true)}

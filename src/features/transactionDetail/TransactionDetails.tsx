@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Transaction, RelatedDebt } from './types';
+import type { SpendingWarning } from '../transaction/apiTypes';
 import { useAppSelector } from '../../hooks/useAppDispatch';
 import {
   Edit3,
@@ -19,12 +20,15 @@ import {
   User,
   Save,
   X,
-  BadgeCheck
+  BadgeCheck,
+  TrendingUp,
+  AlertTriangle
 } from 'lucide-react';
 
 interface TransactionDetailsProps {
   transaction: Transaction;
   relatedDebt?: RelatedDebt | null;
+  spendingWarning?: SpendingWarning | null;
   onUpdate: (updated: Transaction) => void;
   onCancel: (id: string) => void;
   onPrintClick: () => void;
@@ -33,6 +37,7 @@ interface TransactionDetailsProps {
 export default function TransactionDetails({
   transaction,
   relatedDebt,
+  spendingWarning,
   onUpdate,
   onCancel,
   onPrintClick
@@ -165,6 +170,45 @@ export default function TransactionDetails({
           </div>
         )}
       </div>
+
+      {/* Spending Warning Banner */}
+      {spendingWarning && spendingWarning.hasWarning && (
+        <div className={`rounded-xl p-5 border flex flex-col gap-3 mb-6 ${spendingWarning.level === 'CRITICAL' ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200'}`}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className={spendingWarning.level === 'CRITICAL' ? 'text-rose-600' : 'text-amber-600'} />
+            <span className={`font-extrabold text-sm ${spendingWarning.level === 'CRITICAL' ? 'text-rose-800' : 'text-amber-800'}`}>
+              {spendingWarning.level === 'CRITICAL' ? '🔴 Chi tiêu bất thường nghiêm trọng' : '🟡 Chi tiêu vượt mức cảnh báo'}
+            </span>
+            <span className={`ml-auto text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full ${spendingWarning.level === 'CRITICAL' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+              {spendingWarning.level}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className={`rounded-lg p-3 text-center ${spendingWarning.level === 'CRITICAL' ? 'bg-rose-100/60' : 'bg-amber-100/60'}`}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#737783] mb-1">Tháng này</p>
+              <p className={`font-black text-base tabular-nums ${spendingWarning.level === 'CRITICAL' ? 'text-rose-700' : 'text-amber-700'}`}>
+                {spendingWarning.currentMonthTotal?.toLocaleString('vi-VN') ?? '—'}
+              </p>
+            </div>
+            <div className="bg-white/70 rounded-lg p-3 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#737783] mb-1">Trung bình lịch sử</p>
+              <p className="font-black text-base tabular-nums text-[#434652]">
+                {spendingWarning.historicalAverage?.toLocaleString('vi-VN') ?? '—'}
+              </p>
+            </div>
+            <div className={`rounded-lg p-3 text-center ${spendingWarning.level === 'CRITICAL' ? 'bg-rose-100/60' : 'bg-amber-100/60'}`}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#737783] mb-1">Vượt mức</p>
+              <div className={`flex items-center justify-center gap-1 font-black text-base ${spendingWarning.level === 'CRITICAL' ? 'text-rose-700' : 'text-amber-700'}`}>
+                <TrendingUp size={14} />
+                <span>{spendingWarning.overagePercent?.toFixed(1) ?? '—'}%</span>
+              </div>
+            </div>
+          </div>
+          <p className={`text-xs leading-relaxed ${spendingWarning.level === 'CRITICAL' ? 'text-rose-700' : 'text-amber-700'}`}>
+            {spendingWarning.message}
+          </p>
+        </div>
+      )}
 
       {/* Main Detailed Workspace - Form / Bento Grid */}
       <form onSubmit={handleSave} className="space-y-6">

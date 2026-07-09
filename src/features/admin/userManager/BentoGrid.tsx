@@ -10,6 +10,11 @@ interface BentoGridProps {
   selectedStatus: string;
   onStatusChange: (status: string) => void;
   onResetFilters: () => void;
+  /**
+   * Hiển thị ô nhập tìm kiếm cục bộ trong BentoGrid hay không.
+   * Mặc định: false — tìm kiếm đã được đưa lên Header dùng chung.
+   */
+  showSearchInput?: boolean;
 }
 
 export default function BentoGrid({
@@ -20,7 +25,8 @@ export default function BentoGrid({
   onRoleChange,
   selectedStatus,
   onStatusChange,
-  onResetFilters
+  onResetFilters,
+  showSearchInput = false,
 }: BentoGridProps) {
   return (
     <div id="stats-filters-bento-grid" className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
@@ -49,23 +55,25 @@ export default function BentoGrid({
         </div>
       </div>
 
-      {/* Search & Filter Card (Right, spans 3 columns on large screens) */}
+      {/* Filter Card (Right, spans 3 columns on large screens) */}
       <div
         id="filters-control-panel"
         className="lg:col-span-3 bg-surface-container-low p-6 rounded-2xl flex flex-col md:flex-row items-center gap-4 border border-surface-container-high/20"
       >
-        {/* Input search */}
-        <div className="w-full md:flex-1 relative group">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-custom opacity-70 group-focus-within:text-primary-custom group-focus-within:opacity-100 transition-colors" />
-          <input
-            id="user-search-input"
-            type="text"
-            placeholder="Tìm tên, email hoặc mã nhân viên..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-surface-container-highest/20 rounded-xl pl-12 pr-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-primary-custom/15 transition-all font-sans text-on-surface-custom placeholder-on-surface-variant-custom/60"
-          />
-        </div>
+        {/* Ô tìm kiếm cục bộ — chỉ hiển thị nếu showSearchInput=true */}
+        {showSearchInput && (
+          <div className="w-full md:flex-1 relative group">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-outline-custom opacity-70 group-focus-within:text-primary-custom group-focus-within:opacity-100 transition-colors" />
+            <input
+              id="user-search-input"
+              type="text"
+              placeholder="Tìm tên, email hoặc mã nhân viên..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full bg-surface-container-lowest border border-surface-container-highest/20 rounded-xl pl-12 pr-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-primary-custom/15 transition-all font-sans text-on-surface-custom placeholder-on-surface-variant-custom/60"
+            />
+          </div>
+        )}
 
         {/* Dropdowns and Action Menu */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">

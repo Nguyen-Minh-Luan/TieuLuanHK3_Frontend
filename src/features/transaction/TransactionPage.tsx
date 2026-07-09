@@ -47,6 +47,7 @@ import BudgetsView from "./BudgetsView";
 import SettingsView from "./SettingsView";
 import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
+import SpendingWarningCheckModal from "./SpendingWarningCheckModal";
 
 export default function TransactionPage() {
   const navigate = useNavigate();
@@ -58,6 +59,11 @@ export default function TransactionPage() {
   // Delete confirmation dialog state
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetDesc, setDeleteTargetDesc] = useState<string>("");
+  // Warning check modal state
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+
+  // Search state — lifted from TransactionsView so Header can control it
+  const [localSearch, setLocalSearch] = useState("");
 
   // System parameters
   const [companyName, setCompanyName] = useState("Architectural Ledger");
@@ -144,14 +150,13 @@ export default function TransactionPage() {
       const amount = isExpense ? -Math.abs(tx.amount) : Math.abs(tx.amount);
 
       let overSpending: "Critical" | "Warning" | "Fine" = "Fine";
-      if (tx.hasWarning) {
+      if (tx.warningLevel === "CRITICAL") {
         overSpending = "Critical";
-      } else {
-        const mag = Math.abs(amount);
-        if (isExpense) {
-          if (mag >= 10000) overSpending = "Critical";
-          else if (mag >= 2000) overSpending = "Warning";
-        }
+      } else if (tx.warningLevel === "WARNING") {
+        overSpending = "Warning";
+      } else if (tx.hasWarning) {
+        // Fallback for old records that have hasWarning but no warningLevel
+        overSpending = "Critical";
       }
 
       let status: "Completed" | "Pending" | "Failed" = "Completed";
@@ -345,11 +350,14 @@ export default function TransactionPage() {
             onEditTransaction={handleEditIntent}
             onDeleteTransaction={handleDeleteIntent}
             onNewEntryClick={handleNewEntryIntent}
+            onCheckWarningClick={() => setIsWarningModalOpen(true)}
             params={params}
             setParams={setParams}
             totalPages={totalPages}
             totalElements={totalElements}
             status={status}
+            localSearch={localSearch}
+            setLocalSearch={setLocalSearch}
           />
         );
       case "Budgets":
@@ -368,11 +376,14 @@ export default function TransactionPage() {
             onEditTransaction={handleEditIntent}
             onDeleteTransaction={handleDeleteIntent}
             onNewEntryClick={handleNewEntryIntent}
+            onCheckWarningClick={() => setIsWarningModalOpen(true)}
             params={params}
             setParams={setParams}
             totalPages={totalPages}
             totalElements={totalElements}
             status={status}
+            localSearch={localSearch}
+            setLocalSearch={setLocalSearch}
           />
         );
     }
@@ -393,12 +404,22 @@ export default function TransactionPage() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTargetId(null)}
       />
+      {/* Spending Warning Check Modal */}
+      <SpendingWarningCheckModal
+        isOpen={isWarningModalOpen}
+        onClose={() => setIsWarningModalOpen(false)}
+      />
       {/* SideNavBar panel */}
       <Sidebar />
       {/* Main Canvas Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 relative pb-20 md:pb-8">
         {/* Sticky top desktop bar */}
-        <Header />
+        <Header
+          showSearch={currentView === "Transactions"}
+          searchValue={localSearch}
+          onSearchChange={setLocalSearch}
+          searchPlaceholder="Tìm kiếm giao dịch, danh mục, mã tham chiếu..."
+        />
 
         {/* Dynamic Nested Screen Component */}
         <div className="p-6 md:p-8 flex-1 w-full max-w-7xl mx-auto">

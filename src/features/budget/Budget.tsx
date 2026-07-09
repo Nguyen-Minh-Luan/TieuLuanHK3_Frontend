@@ -135,7 +135,7 @@ export default function Budget() {
       {/* Frame content zone */}
       <div className="flex-1 flex flex-col overflow-hidden" id="workspace-primary-frame">
         {/* Header bar utilities */}
-        <Header />
+        <Header showSearch={false} />
 
         {/* Tab switcher */}
         {currentTab === 'budgets' && (

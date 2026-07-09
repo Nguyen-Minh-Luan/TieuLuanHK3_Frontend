@@ -86,9 +86,10 @@ const transactionService = {
   },
 
   // Check warning by category
-  getWarningByCategory: async (categoryId: number) => {
+  getWarningByCategory: async (categoryId: number, amount?: number) => {
     const res = await apiClient.get<ApiResponse<SpendingWarning>>(
-      `/transactions/categories/${categoryId}`
+      `/transactions/categories/${categoryId}`,
+      { params: amount !== undefined ? { amount } : undefined }
     );
     return res.data.data;
   },

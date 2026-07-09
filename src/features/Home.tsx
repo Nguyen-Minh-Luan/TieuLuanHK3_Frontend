@@ -161,7 +161,7 @@ export default function Home() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header />
+        <Header showSearch={false} />
 
         <main className="flex-1 bg-brand-background p-8 overflow-y-auto">
           {status === "loading" ? (

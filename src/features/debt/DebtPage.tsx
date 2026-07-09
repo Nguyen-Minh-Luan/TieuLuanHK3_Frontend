@@ -18,15 +18,8 @@ import DebtTable from './DebtTable';
 import OptimizerCard from './OptimizerCard';
 import QuickReportCard from './QuickReportCard';
 import { Sidebar } from '../../component/Sidebar';
-import {
-  Search,
-  Bell,
-  HelpCircle,
-  PlusCircle,
-  CheckCircle2,
-  AlertCircle,
-  X,
-} from 'lucide-react';
+import Header from '../../component/Header';
+import { PlusCircle, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import type { DebtDTO, DebtRequest } from './apiTypes';
 
 export default function DebtPage() {
@@ -137,7 +130,7 @@ export default function DebtPage() {
   return (
     <div
       id="app-root-container"
-      className="flex min-h-screen bg-[#f8f9fb] text-[#0f172a] selection:bg-[#003178]/10 select-none font-sans relative antialiased"
+      className="flex min-h-screen bg-surface text-on-surface-custom selection:bg-primary/10 select-none font-sans relative antialiased"
     >
       {/* Visual Floating Toast system */}
       {toast && (
@@ -168,44 +161,15 @@ export default function DebtPage() {
       {/* Main content display Area - Right anchor */}
       <main
         id="app-main-content-well"
-        className="flex-1 min-h-screen bg-[#f8f9fb] px-8 py-8 space-y-8 overflow-y-auto"
+        className="flex-1 flex flex-col min-h-screen bg-surface overflow-hidden"
       >
-        {/* 1. Header Navigation Bar */}
-        <header id="dashboard-navbar" className="flex items-center justify-between gap-6">
-          {/* Left Search Bar */}
-          <div id="nav-search-bar" className="relative flex-1 max-w-lg">
-            <Search className="absolute left-4 top-3 h-4 w-4 text-[#94a3b8]" />
-            <input
-              id="nav-search-input"
-              type="text"
-              placeholder="Tìm kiếm theo tiêu đề nợ hoặc đối tác..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#f1f5f9] placeholder-[#94a3b8] text-sm text-[#0f172a] font-medium pl-11 pr-4 py-2.5 rounded-xl border border-transparent focus:border-[#003178]/20 focus:bg-white outline-none transition-all"
-            />
-          </div>
-
-          {/* Right side navigation utilities */}
-          <div id="nav-actions" className="flex items-center gap-6">
-            <div className="flex items-center gap-4">
-              <button
-                id="btn-nav-alert"
-                title="Thông báo"
-                className="p-2 bg-white hover:bg-[#f1f5f9] rounded-xl text-[#64748b] hover:text-[#0f172a] shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative transition-all"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#ef4444] rounded-full ring-2 ring-white" />
-              </button>
-              <button
-                id="btn-nav-faq"
-                title="Trợ giúp & Hỗ trợ"
-                className="p-2 bg-white hover:bg-[#f1f5f9] rounded-xl text-[#64748b] hover:text-[#0f172a] shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </header>
+        {/* Shared Header with search */}
+        <Header
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Tìm kiếm theo tiêu đề nợ hoặc đối tác..."
+        />
+        <div className="flex-1 px-8 py-8 space-y-8 overflow-y-auto">
 
         {/* 2. Page Title & Add Button */}
         <section id="system-headline-bar" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -259,6 +223,7 @@ export default function DebtPage() {
             <QuickReportCard debts={items} />
           </div>
         </section>
+        </div>
       </main>
 
       {/* Modal A: Create & Edit */}

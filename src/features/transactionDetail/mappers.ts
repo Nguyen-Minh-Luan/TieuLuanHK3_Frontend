@@ -56,8 +56,12 @@ export function mapTransactionResponseToUi(
   }
 
   let riskStatus = 'FINE (Ổn định)';
-  if (tx.hasWarning) {
-    riskStatus = 'RISK (Cảnh báo)';
+  if (tx.warningLevel === 'CRITICAL') {
+    riskStatus = 'RISK (Nguy cơ)';
+  } else if (tx.warningLevel === 'WARNING') {
+    riskStatus = 'WARNING (Cảnh báo)';
+  } else if (tx.hasWarning) {
+    riskStatus = 'RISK (Nguy cơ)';
   }
 
   const categoryName = categoriesMap[tx.categoryId] || `Danh mục #${tx.categoryId}`;

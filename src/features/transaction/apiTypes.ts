@@ -35,6 +35,7 @@ export interface TransactionResponse {
   transactionDate: string; // ISO string
   createdAt: string; // ISO string
   hasWarning: boolean;
+  warningLevel?: 'NORMAL' | 'WARNING' | 'CRITICAL';
   reason?: string;
   accompaniedBy?: string;
   originalDocuments?: string;

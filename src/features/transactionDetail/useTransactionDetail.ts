@@ -10,7 +10,7 @@ import partnerService from '../../services/partnerService';
 import categoryService from '../../services/categoryService';
 import fundService from '../../services/fundService';
 
-import type { TransactionResponse } from '../transaction/apiTypes';
+import type { TransactionResponse, SpendingWarning } from '../transaction/apiTypes';
 import type { Transaction, RelatedDebt } from './types';
 import { mapTransactionResponseToUi, mapUiToTransactionRequest } from './mappers';
 
@@ -34,6 +34,7 @@ export function useTransactionDetail(id?: string) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [rawSelectedTransaction, setRawSelectedTransaction] = useState<TransactionResponse | null>(null);
   const [relatedDebt, setRelatedDebt] = useState<RelatedDebt | null>(null);
+  const [spendingWarning, setSpendingWarning] = useState<SpendingWarning | null>(null);
 
   // Status states
   const [detailLoading, setDetailLoading] = useState(false);
@@ -115,6 +116,7 @@ export function useTransactionDetail(id?: string) {
       setSelectedTransaction(null);
       setRawSelectedTransaction(null);
       setRelatedDebt(null);
+      setSpendingWarning(null);
       return;
     }
 
@@ -127,6 +129,19 @@ export function useTransactionDetail(id?: string) {
       setRawSelectedTransaction(tx);
       const mappedUi = mapTransactionResponseToUi(tx, categoriesMap, partnersMap, fundsMap);
       setSelectedTransaction(mappedUi);
+
+      // Load spending warning detail if warningLevel is Warning or Critical
+      if (tx.warningLevel && tx.warningLevel !== 'NORMAL') {
+        try {
+          const warning = await transactionService.getWarningByCategory(tx.categoryId);
+          setSpendingWarning(warning);
+        } catch (warnErr) {
+          console.warn(`Could not load spending warning for category ID ${tx.categoryId}:`, warnErr);
+          setSpendingWarning(null);
+        }
+      } else {
+        setSpendingWarning(null);
+      }
 
       // If transaction has active debt link
       if (tx.debtId) {
@@ -154,6 +169,7 @@ export function useTransactionDetail(id?: string) {
       setDetailError(err?.response?.data?.message || err?.message || 'Không thể tải chi tiết giao dịch.');
       setSelectedTransaction(null);
       setRawSelectedTransaction(null);
+      setSpendingWarning(null);
     } finally {
       setDetailLoading(false);
     }
@@ -218,6 +234,7 @@ export function useTransactionDetail(id?: string) {
   return {
     selectedTransaction,
     relatedDebt,
+    spendingWarning,
     lookupsReady,
     detailLoading,
     debtLoading,

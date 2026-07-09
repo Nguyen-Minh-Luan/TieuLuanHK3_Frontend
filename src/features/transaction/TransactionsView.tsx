@@ -13,13 +13,13 @@ import {
   HelpCircle,
   MoreVertical,
   Calendar,
-  Search,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Trash2,
   Edit2,
   FileSpreadsheet,
+  Bell,
 } from "lucide-react";
 import type { Transaction } from "./types";
 import { useNavigate } from "react-router-dom";
@@ -34,11 +34,15 @@ interface TransactionsViewProps {
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string, description?: string) => void;
   onNewEntryClick: () => void;
+  onCheckWarningClick?: () => void;
   params: FetchParams;
   setParams: React.Dispatch<React.SetStateAction<FetchParams>>;
   totalPages: number;
   totalElements: number;
   status?: "idle" | "loading" | "succeeded" | "failed";
+  /** Search state lifted from parent (TransactionPage) and controlled by shared Header */
+  localSearch: string;
+  setLocalSearch: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function TransactionsView({
@@ -46,20 +50,23 @@ export default function TransactionsView({
   onEditTransaction,
   onDeleteTransaction,
   onNewEntryClick,
+  onCheckWarningClick,
   params,
   setParams,
   totalPages,
   totalElements,
   status,
+  localSearch,
+  setLocalSearch,
 }: TransactionsViewProps) {
   const navigate = useNavigate();
 
-  // Local state to keep the search textbox typing smooth
-  const [localSearch, setLocalSearch] = useState(params.keyword || "");
-
-  // Sync local search when params.keyword is updated externally
+  // Sync params.keyword back to parent's localSearch when changed externally
   useEffect(() => {
-    setLocalSearch(params.keyword || "");
+    if ((params.keyword || "") !== localSearch) {
+      setLocalSearch(params.keyword || "");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.keyword]);
 
   const debouncedKeyword = useDebounce(localSearch, 300);
@@ -219,51 +226,33 @@ export default function TransactionsView({
             Monitor and audit all enterprise-level financial movements.
           </p>
         </div>
-        <button
-          id="transactions-new-entry-cta"
-          onClick={onNewEntryClick}
-          className="flex items-center bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-95 group transition-all duration-200 cursor-pointer text-center"
-        >
-          <span className="mr-2 text-md font-bold group-hover:rotate-90 transition-transform duration-300">
-            +
-          </span>
-          Tạo Giao dịch
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            id="transactions-check-warning-cta"
+            onClick={onCheckWarningClick}
+            title="Kiểm tra cảnh báo chi tiêu theo danh mục"
+            className="flex items-center gap-2 bg-white border border-slate-200 hover:border-amber-300 hover:bg-amber-50 text-slate-600 hover:text-amber-700 px-4 py-2.5 rounded-xl font-bold text-sm shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            <Bell className="h-4 w-4" />
+            Kiểm tra cảnh báo
+          </button>
+          <button
+            id="transactions-new-entry-cta"
+            onClick={onNewEntryClick}
+            className="flex items-center bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-95 group transition-all duration-200 cursor-pointer text-center"
+          >
+            <span className="mr-2 text-md font-bold group-hover:rotate-90 transition-transform duration-300">
+              +
+            </span>
+            Tạo Giao dịch
+          </button>
+        </div>
       </div>
 
       {/* Bento-style filters section */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 w-full">
-        {/* Search input field */}
-        <div className="md:col-span-5 bg-surface-container-lowest rounded-xl p-1 shadow-xs border border-slate-200/50 flex items-center group focus-within:border-primary/40 transition-colors focus-within:ring-2 focus-within:ring-primary/10">
-          <Search className="ml-3 h-5 w-5 text-slate-400 shrink-0" />
-          <input
-            type="text"
-            value={localSearch}
-            onChange={(e) => {
-              setLocalSearch(e.target.value);
-            }}
-            placeholder="Search by description, reference ID, or category..."
-            className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-800 placeholder:text-slate-400 font-medium"
-          />
-          {localSearch && (
-            <button
-              onClick={() => {
-                setLocalSearch("");
-                setParams((prev) => ({
-                  ...prev,
-                  keyword: undefined,
-                  page: 1,
-                }));
-              }}
-              className="mr-2 py-1 px-2 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
         {/* Category breakdown filter */}
-        <div className="md:col-span-2 bg-surface-container-lowest rounded-xl p-1 shadow-xs border border-slate-200/50 flex items-center justify-between group transition-colors">
+        <div className="md:col-span-4 bg-surface-container-lowest rounded-xl p-1 shadow-xs border border-slate-200/50 flex items-center justify-between group transition-colors">
           <div className="relative w-full flex items-center justify-between">
             <select
               value={params.categoryId || ""}
@@ -431,11 +420,17 @@ export default function TransactionsView({
                 paginatedTransactions.map((tx) => {
                   const iconStyle = getIconComponent(tx.icon, tx.category);
                   return (
-                    <tr
+                  <tr
                       key={tx.id}
                       id={`tx-row-${tx.id}`}
                       onClick={() => navigate(`/transactions/${tx.id}`)}
-                      className="hover:bg-slate-50/50 transition-colors group align-middle cursor-pointer"
+                      className={`hover:bg-slate-50/80 transition-colors group align-middle cursor-pointer ${
+                        tx.overSpending === 'Critical'
+                          ? 'bg-rose-50/40 dark:bg-rose-950/10'
+                          : tx.overSpending === 'Warning'
+                          ? 'bg-amber-50/40 dark:bg-amber-950/10'
+                          : ''
+                      }`}
                     >
                       {/* Date details */}
                       <td className="px-6 py-4.5 whitespace-nowrap">
