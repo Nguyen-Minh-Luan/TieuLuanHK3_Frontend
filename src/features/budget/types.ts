@@ -4,7 +4,7 @@ export interface Fund {
   type: 'Nội bộ' | 'Tài trợ' | 'Vốn vay' | 'Khác';
   totalCapital: number;
   availableBalance: number;
-  status: 'HOẠT ĐỘNG' | 'GẦN GIỚI HẠN' | 'CHỜ KÍCH HOẠT';
+  status: 'ACTIVE' | 'INACTIVE';
   code: string;
   note: string;
   updatedAt: string;

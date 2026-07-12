@@ -12,6 +12,7 @@ import CategoryPage from "./features/category/CategoryPage";
 import PartnerPage from "./features/partner/PartnerPage";
 import ReconciliationPage from "./features/reconciliation/ReconciliationPage";
 import ReconciliationDetailPage from "./features/reconciliation/ReconciliationDetailPage";
+import FundTransferPage from "./features/fundTransfer/FundTransferPage";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: "/partners", element: <PartnerPage /> },
       { path: "/reconciliation", element: <ReconciliationPage /> },
       { path: "/reconciliation/:id", element: <ReconciliationDetailPage /> },
+      { path: "/fund-transfer", element: <FundTransferPage /> },
     ],
   },
 ]);

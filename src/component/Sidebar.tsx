@@ -23,6 +23,7 @@ const menuItems = [
   { icon: Tags, label: "Categories", path: "/category" },
   { icon: Handshake, label: "Partners", path: "/partners" },
   { icon: FileText, label: "Reconciliation", path: "/reconciliation" },
+  { icon: FileText, label: "Fund Transfer", path: "/fund-transfer" },
   { icon: User, label: "Users", path: "/users" },
 ];
 const MotionLink = motion(Link);
