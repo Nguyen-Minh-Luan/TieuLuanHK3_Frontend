@@ -20,6 +20,7 @@ import type { Transaction } from './types';
 import type { TransactionRequest, SpendingWarning } from './apiTypes';
 import apiClient from '../../services/apiClient';
 import transactionService from '../../services/transactionService';
+import reconciliationService from '../../services/reconciliationService';
 import { fetchFunds } from '../../store/slices/fundSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
 
@@ -58,6 +59,11 @@ export default function TransactionModal({
   // Real-time preview warning state
   const [previewWarning, setPreviewWarning] = useState<SpendingWarning | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  
+  // Lock checking state
+  const [isLocked, setIsLocked] = useState(false);
+  const [checkingLock, setCheckingLock] = useState(false);
+  
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -147,6 +153,26 @@ export default function TransactionModal({
     };
   }, [type, categoryId, amount, fetchPreviewWarning]);
 
+  // Check lock status when fundId or date changes
+  useEffect(() => {
+    if (!fundId || !date) {
+      setIsLocked(false);
+      return;
+    }
+    const checkLockStatus = async () => {
+      setCheckingLock(true);
+      try {
+        const locked = await reconciliationService.checkLock(fundId, date);
+        setIsLocked(locked);
+      } catch (error) {
+        console.error("Failed to check lock status", error);
+      } finally {
+        setCheckingLock(false);
+      }
+    };
+    checkLockStatus();
+  }, [fundId, date]);
+
   // Clear preview when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -159,6 +185,10 @@ export default function TransactionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) {
+      setFormError('Ngày giao dịch này thuộc kỳ kiểm kê đã chốt, không thể thực hiện giao dịch!');
+      return;
+    }
     if (!fundId || !categoryId || !amount || isNaN(parseFloat(amount))) {
       setFormError('Vui lòng chọn nguồn tiền, danh mục và điền số tiền hợp lệ!');
       return;
@@ -451,6 +481,14 @@ export default function TransactionModal({
               </div>
             )}
 
+            {/* Lock Warning */}
+            {isLocked && !checkingLock && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-3 flex gap-2 w-full text-xs animate-fade-in items-center">
+                <AlertCircle className="h-4.5 w-4.5 text-red-600 shrink-0" />
+                <span className="font-semibold text-red-700">Giao dịch thuộc kỳ kiểm kê đã khóa. Bạn không thể thêm/sửa giao dịch vào thời gian này.</span>
+              </div>
+            )}
+
             {/* Buttons aligned bottom right inside form container */}
             <div className="flex gap-4 items-center justify-end pt-5 border-t border-slate-100">
               <button
@@ -463,11 +501,13 @@ export default function TransactionModal({
               </button>
               <button
                 type="submit"
-                disabled={submitting}
-                className="py-3.5 px-8 bg-[#003178] hover:bg-[#002150] disabled:opacity-50 text-white rounded-xl text-sm font-extrabold shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                disabled={submitting || isLocked || checkingLock}
+                className={`py-3.5 px-8 rounded-xl text-sm font-extrabold shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer ${
+                  isLocked ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none" : "bg-[#003178] hover:bg-[#002150] text-white"
+                }`}
               >
-                <Save className="h-4.5 w-4.5" />
-                {submitting ? 'Đang lưu...' : 'Lưu Giao Dịch'}
+                {checkingLock ? <AlertCircle className="h-4.5 w-4.5 animate-pulse" /> : <Save className="h-4.5 w-4.5" />}
+                {submitting ? 'Đang lưu...' : checkingLock ? 'Đang kiểm tra...' : 'Lưu Giao Dịch'}
               </button>
             </div>
 

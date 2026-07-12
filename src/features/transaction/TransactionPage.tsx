@@ -224,6 +224,7 @@ export default function TransactionPage() {
         debtId: tx.debtId,
         rawNote: tx.note,
         rawType: tx.type,
+        rawDate: tx.transactionDate,
       } as any;
     },
     [categoriesMap],
@@ -302,9 +303,22 @@ export default function TransactionPage() {
   };
 
   // Called from TransactionsView — opens confirm dialog instead of native confirm()
-  const handleDeleteIntent = (id: string, description?: string) => {
-    setDeleteTargetId(id);
-    setDeleteTargetDesc(description || `ID: ${id}`);
+  const handleDeleteIntent = async (tx: Transaction) => {
+    const ext = tx as any;
+    if (ext.fundId && ext.rawDate) {
+      try {
+        const { default: reconciliationService } = await import("../../services/reconciliationService");
+        const isLocked = await reconciliationService.checkLock(ext.fundId, ext.rawDate);
+        if (isLocked) {
+          toast.error("Giao dịch thuộc kỳ kiểm kê đã khóa. Không thể hủy giao dịch!");
+          return;
+        }
+      } catch (e) {
+        console.error("Lock check failed", e);
+      }
+    }
+    setDeleteTargetId(tx.id);
+    setDeleteTargetDesc(tx.description || `ID: ${tx.id}`);
   };
 
   const handleDeleteConfirm = async () => {

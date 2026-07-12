@@ -10,6 +10,8 @@ import DebtPage from "./features/debt/DebtPage";
 import ReportsView from "./features/reports/ReportsView";
 import CategoryPage from "./features/category/CategoryPage";
 import PartnerPage from "./features/partner/PartnerPage";
+import ReconciliationPage from "./features/reconciliation/ReconciliationPage";
+import ReconciliationDetailPage from "./features/reconciliation/ReconciliationDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +37,8 @@ const router = createBrowserRouter([
       { path: "/debt", element: <DebtPage /> },
       { path: "/category", element: <CategoryPage /> },
       { path: "/partners", element: <PartnerPage /> },
+      { path: "/reconciliation", element: <ReconciliationPage /> },
+      { path: "/reconciliation/:id", element: <ReconciliationDetailPage /> },
     ],
   },
 ]);

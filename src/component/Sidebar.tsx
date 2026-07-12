@@ -9,6 +9,7 @@ import {
   Tags,
   User,
   Wallet,
+  FileText,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
@@ -21,6 +22,7 @@ const menuItems = [
   { icon: Wallet, label: "Budgets", path: "/budget" },
   { icon: Tags, label: "Categories", path: "/category" },
   { icon: Handshake, label: "Partners", path: "/partners" },
+  { icon: FileText, label: "Reconciliation", path: "/reconciliation" },
   { icon: User, label: "Users", path: "/users" },
 ];
 const MotionLink = motion(Link);

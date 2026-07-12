@@ -32,7 +32,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 interface TransactionsViewProps {
   transactions: Transaction[];
   onEditTransaction: (tx: Transaction) => void;
-  onDeleteTransaction: (id: string, description?: string) => void;
+  onDeleteTransaction: (tx: Transaction) => void;
   onNewEntryClick: () => void;
   onCheckWarningClick?: () => void;
   params: FetchParams;
@@ -548,7 +548,7 @@ export default function TransactionsView({
                                 </button>
                                 <button
                                   onClick={() => {
-                                    onDeleteTransaction(tx.id, tx.description);
+                                    onDeleteTransaction(tx);
                                     setActiveMenuId(null);
                                   }}
                                   className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors text-left gap-2 cursor-pointer"
