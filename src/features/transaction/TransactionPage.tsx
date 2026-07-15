@@ -49,6 +49,7 @@ import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
 import SpendingWarningCheckModal from "./SpendingWarningCheckModal";
 
+
 export default function TransactionPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -83,6 +84,10 @@ export default function TransactionPage() {
     });
     return map;
   }, [categories]);
+  // Auth — role & userId cho RBAC
+  const currentUserRole = useAppSelector((state) => state.auth.role);
+  const currentUserId   = useAppSelector((state) => state.auth.id);
+
   const {
     items: rawTransactions,
     totalPages,
@@ -121,9 +126,15 @@ export default function TransactionPage() {
   // Reactive fetch when status or params change
   useEffect(() => {
     if (status === "idle") {
-      dispatch(fetchTransactions(params));
+      // Kế toán Thu Chi (role=2): luôn lọc theo userId của mình,
+      // bỏ qua bất kỳ userId nào khác để tránh xem phiếu người khác.
+      const effectiveParams =
+        currentUserRole === 2 && currentUserId
+          ? { ...params, userId: currentUserId }
+          : params;
+      dispatch(fetchTransactions(effectiveParams));
     }
-  }, [status, params, dispatch]);
+  }, [status, params, dispatch, currentUserRole, currentUserId]);
 
   // Dynamically change request limit size based on active view tab
   useEffect(() => {
@@ -372,6 +383,8 @@ export default function TransactionPage() {
             status={status}
             localSearch={localSearch}
             setLocalSearch={setLocalSearch}
+            currentUserRole={currentUserRole}
+            currentUserId={currentUserId}
           />
         );
       case "Budgets":
@@ -398,6 +411,8 @@ export default function TransactionPage() {
             status={status}
             localSearch={localSearch}
             setLocalSearch={setLocalSearch}
+            currentUserRole={currentUserRole}
+            currentUserId={currentUserId}
           />
         );
     }

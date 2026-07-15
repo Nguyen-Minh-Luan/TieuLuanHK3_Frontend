@@ -1,5 +1,10 @@
-import { Search, Bell, Settings } from "lucide-react";
-import { useAppSelector } from "../hooks/useAppDispatch";
+import { useState, useRef, useEffect } from "react";
+import { Search, Bell, Settings, LogOut } from "lucide-react";
+import { useAppSelector, useAppDispatch } from "../hooks/useAppDispatch";
+import { logout } from "../store/slices/authSlice";
+import { useNavigate } from "react-router-dom";
+import ConfirmDialog from "./ConfirmDialog";
+import apiClient from "../services/apiClient";
 
 // --- Helper: lấy 2 chữ cái đầu của tên ---
 function getInitials(name: string): string {
@@ -54,6 +59,37 @@ export default function Header({
   showSearch = true,
 }: HeaderProps) {
   const { fullName, username, role, id } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogoutClick = () => {
+    setIsMenuOpen(false);
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (e) {
+      // Ignore API error
+    }
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   const displayName = fullName || username || "Người dùng";
   const initials = getInitials(displayName);
@@ -123,9 +159,10 @@ export default function Header({
           </div>
 
           {/* Avatar initials */}
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <div
               id="profile-avatar-executive"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`w-9 h-9 rounded-full ${avatarBg} text-white flex items-center justify-center font-bold text-sm cursor-pointer ring-2 ring-primary/10 hover:ring-primary/30 transition-all`}
               title={displayName}
             >
@@ -133,9 +170,39 @@ export default function Header({
             </div>
             {/* Online indicator */}
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+            
+            {/* Dropdown Menu */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-2 animate-fade-in z-50">
+                <div className="px-4 py-2 border-b border-slate-100">
+                  <p className="text-sm font-bold text-slate-800 truncate">{displayName}</p>
+                  <p className="text-xs text-slate-500 truncate">{roleLabel}</p>
+                </div>
+                <div className="py-1">
+                  <button
+                    onClick={handleLogoutClick}
+                    className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isLogoutConfirmOpen}
+        title="Đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+        confirmLabel="Đăng xuất"
+        cancelLabel="Hủy"
+        variant="danger"
+        onConfirm={confirmLogout}
+        onCancel={() => setIsLogoutConfirmOpen(false)}
+      />
     </header>
   );
 }

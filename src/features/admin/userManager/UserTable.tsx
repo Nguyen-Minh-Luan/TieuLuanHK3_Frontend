@@ -29,7 +29,9 @@ export default function UserTable({
     switch (role) {
       case UserRole.ADMIN:
         return "bg-[#d9e2ff] text-[#001945]";
-      case UserRole.ACCOUNTANT:
+      case UserRole.KETOAN_THU_CHI:
+      case UserRole.KE_TOAN_QUY:
+      case UserRole.TONGHOP:
         return "bg-secondary-fixed text-on-secondary-fixed-custom";
       case UserRole.VIEWER:
       default:

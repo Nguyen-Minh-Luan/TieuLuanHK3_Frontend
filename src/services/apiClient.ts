@@ -4,15 +4,16 @@
  */
 
 import axios from "axios";
+import { clearAuthStorage } from "../utils/authStorage";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080",
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach JWT token to each request (supporting both "token" and "jwt_token" keys)
+// Attach JWT token to each request
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token") || localStorage.getItem("jwt_token");
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,11 +25,10 @@ apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("jwt_token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("username");
-      localStorage.removeItem("fullName");
+      // Trước đây chỉ xóa 4/6 key (thiếu "email" và "role"), khiến sau khi
+      // reload trang, authSlice khôi phục nhầm role/email cũ dù token đã mất.
+      // Dùng chung helper với authSlice.logout() để đảm bảo xóa đủ và nhất quán.
+      clearAuthStorage();
       window.location.href = "/login";
     }
     return Promise.reject(error);

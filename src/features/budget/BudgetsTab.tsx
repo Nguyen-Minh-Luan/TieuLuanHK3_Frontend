@@ -10,6 +10,8 @@ interface BudgetsTabProps {
   onOpenEditFund: (fund: Fund) => void;
   onDeleteFund: (id: string) => void;
   searchText: string;
+  /** Chỉ Admin (role=1) mới được tạo/sửa/xóa quỹ */
+  isAdmin?: boolean;
 }
 
 export default function BudgetsTab({
@@ -19,7 +21,8 @@ export default function BudgetsTab({
   onOpenAddFund,
   onOpenEditFund,
   onDeleteFund,
-  searchText: globalSearchText
+  searchText: globalSearchText,
+  isAdmin = false,
 }: BudgetsTabProps) {
   const [localSearchText, setLocalSearchText] = useState('');
 
@@ -52,15 +55,17 @@ export default function BudgetsTab({
           </p>
         </div>
 
-        {/* Thêm Nguồn tiền Mới CTA Button with exact branding */}
-        <button
-          id="btn-add-fund-main"
-          onClick={onOpenAddFund}
-          className="bg-brand-primary hover:bg-brand-primary-light text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2.5 transition-all duration-300 shadow-[0_4px_12px_rgba(0,49,120,0.12)] hover:shadow-[0_6px_16px_rgba(0,49,120,0.2)] cursor-pointer text-sm font-heading"
-        >
-          <PlusCircle className="w-5 h-5 text-white" />
-          <span>Thêm Nguồn tiền Mới</span>
-        </button>
+        {/* Thêm Nguồn tiền Mới CTA Button — chỉ Admin */}
+        {isAdmin && (
+          <button
+            id="btn-add-fund-main"
+            onClick={onOpenAddFund}
+            className="bg-brand-primary hover:bg-brand-primary-light text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2.5 transition-all duration-300 shadow-[0_4px_12px_rgba(0,49,120,0.12)] hover:shadow-[0_6px_16px_rgba(0,49,120,0.2)] cursor-pointer text-sm font-heading"
+          >
+            <PlusCircle className="w-5 h-5 text-white" />
+            <span>Thêm Nguồn tiền Mới</span>
+          </button>
+        )}
       </div>
 
       {/* Main Budget Card - The "No border" rule applied. Soft background shifts. */}
@@ -109,119 +114,118 @@ export default function BudgetsTab({
 
           {/* Table — chỉ hiển thị khi không loading và không có lỗi */}
           {!isLoading && !error && (
-          <table className="w-full text-left border-collapse" id="budgets-table">
-            <thead>
-              <tr className="bg-slate-50/70 border-b border-transparent text-[11px] font-bold text-slate-400 tracking-wider font-heading uppercase" id="budgets-table-head">
-                <th className="py-4 px-6 w-[35%]">Tên nguồn tiền</th>
-                <th className="py-4 px-4 w-[12%] text-center">Loại</th>
-                <th className="py-4 px-4 w-[15%] text-right">Tổng vốn</th>
-                <th className="py-4 px-4 w-[15%] text-right">Số dư khả dụng</th>
-                <th className="py-4 px-4 w-[15%] text-center">Trạng thái</th>
-                <th className="py-4 px-6 w-[8%] text-center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100/50" id="budgets-table-body">
-              {filteredFunds.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 px-6 text-center text-slate-400 font-medium text-sm">
-                    Không tìm thấy nguồn tiền nào phù hợp với điều kiện tìm kiếm.
-                  </td>
+            <table className="w-full text-left border-collapse" id="budgets-table">
+              <thead>
+                <tr className="bg-slate-50/70 border-b border-transparent text-[11px] font-bold text-slate-400 tracking-wider font-heading uppercase" id="budgets-table-head">
+                  <th className="py-4 px-6 w-[35%]">Tên nguồn tiền</th>
+                  <th className="py-4 px-4 w-[12%] text-center">Loại</th>
+                  <th className="py-4 px-4 w-[15%] text-right">Tổng vốn</th>
+                  <th className="py-4 px-4 w-[15%] text-right">Số dư khả dụng</th>
+                  <th className="py-4 px-4 w-[15%] text-center">Trạng thái</th>
+                  <th className="py-4 px-6 w-[8%] text-center">Hành động</th>
                 </tr>
-              ) : (
-                filteredFunds.map((fund) => {
-                  // Class and badge rendering parameters based on exact status colors in image
-                  let statusStyles = '';
-                  let balanceColor = 'text-brand-primary-light';
+              </thead>
+              <tbody className="divide-y divide-slate-100/50" id="budgets-table-body">
+                {filteredFunds.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 px-6 text-center text-slate-400 font-medium text-sm">
+                      Không tìm thấy nguồn tiền nào phù hợp với điều kiện tìm kiếm.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredFunds.map((fund) => {
+                    // Class and badge rendering parameters based on exact status colors in image
+                    let statusStyles = '';
+                    let balanceColor = 'text-brand-primary-light';
 
-                  if (fund.status === 'HOẠT ĐỘNG') {
-                    statusStyles = 'bg-cyan-50/50 text-cyan-600';
-                  } else if (fund.status === 'GẦN GIỚI HẠN') {
-                    statusStyles = 'bg-rose-50 text-rose-500 font-bold';
-                    balanceColor = 'text-rose-500 font-bold'; // HSBC outstanding balance is colored in red text
-                  } else {
-                    statusStyles = 'bg-slate-100 text-slate-500';
-                  }
+                    if (fund.status === 'ACTIVE') {
+                      statusStyles = 'bg-cyan-50/50 text-cyan-600';
+                    } else if (fund.status === 'INACTIVE') {
+                      statusStyles = 'bg-rose-50 text-rose-500 font-bold';
+                      balanceColor = 'text-rose-500 font-bold'; // HSBC outstanding balance is colored in red text
+                    } else {
+                      statusStyles = 'bg-slate-100 text-slate-500';
+                    }
 
-                  return (
-                    <tr
-                      key={fund.id}
-                      className="hover:bg-slate-50/40 transition-colors"
-                      id={`fund-row-${fund.id}`}
-                    >
-                      {/* Name of Fund with Code below */}
-                      <td className="py-5 px-6">
-                        <div className="flex flex-col gap-0.5" id={`fund-info-${fund.id}`}>
-                          <span className="text-sm font-bold text-slate-800 transition-colors hover:text-brand-primary">
-                            {fund.name}
+                    return (
+                      <tr
+                        key={fund.id}
+                        className="hover:bg-slate-50/40 transition-colors"
+                        id={`fund-row-${fund.id}`}
+                      >
+                        {/* Name of Fund with Code below */}
+                        <td className="py-5 px-6">
+                          <div className="flex flex-col gap-0.5" id={`fund-info-${fund.id}`}>
+                            <span className="text-sm font-bold text-slate-800 transition-colors hover:text-brand-primary">
+                              {fund.name}
+                            </span>
+                            <span className="text-[10px] font-mono tracking-wider text-slate-400 font-medium uppercase">
+                              {fund.code}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Type of Fund with pretty badge representation */}
+                        <td className="py-5 px-4 text-center">
+                          <span className="text-xs text-slate-600 font-medium">
+                            {fund.type}
                           </span>
-                          <span className="text-[10px] font-mono tracking-wider text-slate-400 font-medium uppercase">
-                            {fund.code}
+                        </td>
+
+                        {/* Total Capital */}
+                        <td className="py-5 px-4 text-right">
+                          <span className="text-sm font-semibold text-slate-700 font-mono">
+                            {formatValue(fund.totalCapital)}
                           </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Type of Fund with pretty badge representation */}
-                      <td className="py-5 px-4 text-center">
-                        <span className="text-xs text-slate-600 font-medium">
-                          {fund.type}
-                        </span>
-                      </td>
+                        {/* Available Balance with responsive styling */}
+                        <td className="py-5 px-4 text-right">
+                          <span className={`text-sm font-bold font-mono ${balanceColor}`}>
+                            {formatValue(fund.availableBalance)}
+                          </span>
+                        </td>
 
-                      {/* Total Capital */}
-                      <td className="py-5 px-4 text-right">
-                        <span className="text-sm font-semibold text-slate-700 font-mono">
-                          {formatValue(fund.totalCapital)}
-                        </span>
-                      </td>
+                        {/* Status Tag exactly styled like the screenshot badges */}
+                        <td className="py-5 px-4 text-center">
+                          <span className={`inline-block px-3 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase ${statusStyles}`}>
+                            {fund.status}
+                          </span>
+                        </td>
 
-                      {/* Available Balance with responsive styling */}
-                      <td className="py-5 px-4 text-right">
-                        <span className={`text-sm font-bold font-mono ${balanceColor}`}>
-                          {formatValue(fund.availableBalance)}
-                        </span>
-                      </td>
-
-                      {/* Status Tag exactly styled like the screenshot badges */}
-                      <td className="py-5 px-4 text-center">
-                        <span className={`inline-block px-3 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase ${statusStyles}`}>
-                          {fund.status}
-                        </span>
-                      </td>
-
-                      {/* Action buttons (Edit & Delete) */}
-                      <td className="py-5 px-6 table-cell">
-                        <div className="flex items-center justify-center gap-3" id={`actions-group-${fund.id}`}>
-                          {/* Edit Pencil Icon */}
-                          <button
-                            id={`btn-edit-${fund.id}`}
-                            onClick={() => onOpenEditFund(fund)}
-                            title="Chỉnh sửa nguồn vốn"
-                            className="p-1.5 text-slate-400 hover:text-brand-primary bg-slate-50 hover:bg-[#e8f1fd] rounded-lg transition-all cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Delete Trash Action */}
-                          <button
-                            id={`btn-delete-${fund.id}`}
-                            onClick={() => {
-                              if (window.confirm(`Xoá nguồn tiền "${fund.name}"? Thao tác này không thể hoàn tác.`)) {
-                                onDeleteFund(fund.id);
-                              }
-                            }}
-                            title="Xóa nguồn tiền"
-                            className="p-1.5 text-slate-300 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        {/* Action buttons — chỉ Admin mới thấy Edit & Delete */}
+                        {isAdmin && (
+                          <td className="py-5 px-6 table-cell">
+                            <div className="flex items-center justify-center gap-3" id={`actions-group-${fund.id}`}>
+                              <button
+                                id={`btn-edit-${fund.id}`}
+                                onClick={() => onOpenEditFund(fund)}
+                                title="Chỉnh sửa nguồn vốn"
+                                className="p-1.5 text-slate-400 hover:text-brand-primary bg-slate-50 hover:bg-[#e8f1fd] rounded-lg transition-all cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                id={`btn-delete-${fund.id}`}
+                                onClick={() => {
+                                  if (window.confirm(`Xoá nguồn tiền "${fund.name}"? Thao tác này không thể hoàn tác.`)) {
+                                    onDeleteFund(fund.id);
+                                  }
+                                }}
+                                title="Xóa nguồn tiền"
+                                className="p-1.5 text-slate-300 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

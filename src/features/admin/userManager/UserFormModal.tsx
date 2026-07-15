@@ -25,7 +25,7 @@ export default function UserFormModal({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>(UserRole.VIEWER);
+  const [role, setRole] = useState<UserRole>(UserRole.KETOAN_THU_CHI);
   const [status, setStatus] = useState<UserStatus>(UserStatus.ACTIVE);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +42,7 @@ export default function UserFormModal({
       setName("");
       setEmail("");
       setPassword("");
-      setRole(UserRole.VIEWER);
+      setRole(UserRole.KETOAN_THU_CHI);
       setStatus(UserStatus.ACTIVE);
       setErrorMsg("");
     }
@@ -182,7 +182,9 @@ export default function UserFormModal({
               className="w-full bg-surface-container-low border border-surface-container-highest/20 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-custom/15 outline-none cursor-pointer font-sans font-medium text-on-surface-custom"
             >
               <option value={UserRole.ADMIN}>{UserRole.ADMIN}</option>
-              <option value={UserRole.ACCOUNTANT}>{UserRole.ACCOUNTANT}</option>
+              <option value={UserRole.KETOAN_THU_CHI}>{UserRole.KETOAN_THU_CHI}</option>
+              <option value={UserRole.KE_TOAN_QUY}>{UserRole.KE_TOAN_QUY}</option>
+              <option value={UserRole.TONGHOP}>{UserRole.TONGHOP}</option>
               <option value={UserRole.VIEWER}>{UserRole.VIEWER}</option>
             </select>
           </div>

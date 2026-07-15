@@ -87,7 +87,7 @@ export default function BentoGrid({
             >
               <option value="">Tất cả Vai trò</option>
               <option value={UserRole.ADMIN}>{UserRole.ADMIN}</option>
-              <option value={UserRole.ACCOUNTANT}>{UserRole.ACCOUNTANT}</option>
+              <option value={UserRole.KETOAN_THU_CHI}>{UserRole.KETOAN_THU_CHI}</option>
               <option value={UserRole.VIEWER}>{UserRole.VIEWER}</option>
             </select>
             <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-outline-custom opacity-80" />

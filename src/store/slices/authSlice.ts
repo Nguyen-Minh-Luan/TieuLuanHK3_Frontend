@@ -1,5 +1,6 @@
 // src/store/slices/authSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { clearAuthStorage } from "../../utils/authStorage";
 
 // --- Helper: giải mã JWT payload (không xác thực chữ ký — chỉ đọc claims) ---
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -99,12 +100,11 @@ const authSlice = createSlice({
       state.token = null;
       state.status = "idle";
       state.error = null;
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("username");
-      localStorage.removeItem("fullName");
-      localStorage.removeItem("email");
-      localStorage.removeItem("role");
+      // Dùng chung helper để đảm bảo xóa ĐỦ và ĐÚNG các key,
+      // đồng bộ với apiClient.ts (interceptor 401 auto-logout).
+      clearAuthStorage();
+      // Lưu ý: action "auth/logout" còn được rootReducer (store/index.ts)
+      // bắt riêng để reset TOÀN BỘ store (mọi slice khác), không chỉ authSlice.
     },
     clearError(state) {
       state.error = null;

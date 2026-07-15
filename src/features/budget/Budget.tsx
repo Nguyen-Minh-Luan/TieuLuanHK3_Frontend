@@ -22,6 +22,9 @@ import { mapFundToRequest } from './apiTypes';
 export default function Budget() {
   const dispatch = useDispatch<AppDispatch>();
   const { items: funds, status, submitStatus, error } = useSelector((state: RootState) => state.fund);
+  // RBAC: chỉ Admin (role=1) mới quản lý được quỹ
+  const currentRole = useSelector((state: RootState) => state.auth.role);
+  const isAdmin = currentRole === 1;
 
   const [currentTab, setCurrentTab] = useState<string>('budgets'); // Matches screenshot default view "Budgets" active state
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
@@ -61,7 +64,7 @@ export default function Budget() {
     // Low balance warnings
     funds.forEach(f => {
       const ratio = f.totalCapital > 0 ? (f.availableBalance / f.totalCapital) : 0;
-      if (ratio < 0.1 && f.status === 'GẦN GIỚI HẠN') {
+      if (ratio < 0.1 && f.status === 'INACTIVE') {
         list.push({
           id: `notif-limit-${f.id}`,
           title: `⚠️ Hạn mức rủi ro chạm biên`,
@@ -74,7 +77,7 @@ export default function Budget() {
 
     // Strategy pending confirmations
     funds.forEach(f => {
-      if (f.status === 'CHỜ KÍCH HOẠT') {
+      if (f.status === 'PENDING') {
         list.push({
           id: `notif-pending-${f.id}`,
           title: `🕒 Chờ kích hoạt đối tác`,
@@ -150,6 +153,7 @@ export default function Budget() {
             onOpenEditFund={handleOpenEditFund}
             onDeleteFund={handleDeleteFund}
             searchText={searchText}
+            isAdmin={isAdmin}
           />
         )}
       </div>

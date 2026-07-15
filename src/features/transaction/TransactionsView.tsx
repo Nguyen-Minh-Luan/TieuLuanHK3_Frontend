@@ -28,6 +28,7 @@ import type { FetchParams } from "../../services/transactionService";
 import { useEffect } from "react";
 import { useAppSelector } from "../../hooks/useAppDispatch";
 import { useDebounce } from "../../hooks/useDebounce";
+import { canCreateTransaction, canEditTransaction } from "../../lib/permissions";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -43,6 +44,10 @@ interface TransactionsViewProps {
   /** Search state lifted from parent (TransactionPage) and controlled by shared Header */
   localSearch: string;
   setLocalSearch: React.Dispatch<React.SetStateAction<string>>;
+  /** Role của user hiện tại (từ Redux store) — dùng cho RBAC UI */
+  currentUserRole?: number | null;
+  /** ID của user hiện tại — dùng kiểm tra ownership phiếu */
+  currentUserId?: number | null;
 }
 
 export default function TransactionsView({
@@ -58,8 +63,13 @@ export default function TransactionsView({
   status,
   localSearch,
   setLocalSearch,
+  currentUserRole,
+  currentUserId,
 }: TransactionsViewProps) {
   const navigate = useNavigate();
+
+  // RBAC: tính quyền tạo phiếu
+  const showCreateButton = canCreateTransaction(currentUserRole ?? null);
 
   // Sync params.keyword back to parent's localSearch when changed externally
   useEffect(() => {
@@ -236,6 +246,7 @@ export default function TransactionsView({
             <Bell className="h-4 w-4" />
             Kiểm tra cảnh báo
           </button>
+          {showCreateButton && (
           <button
             id="transactions-new-entry-cta"
             onClick={onNewEntryClick}
@@ -246,6 +257,7 @@ export default function TransactionsView({
             </span>
             Tạo Giao dịch
           </button>
+          )}
         </div>
       </div>
 
@@ -514,7 +526,13 @@ export default function TransactionsView({
                         {getStatusComponent(tx.status)}
                       </td>
 
-                      {/* Actions Popover menu */}
+                      {/* Actions Popover menu — chỉ hiện nếu có ít nhất 1 action khả dụng */}
+                      {(() => {
+                        const txUserId = (tx as any).userId as number | undefined;
+                        const canEdit   = canEditTransaction(currentUserRole ?? null, txUserId, currentUserId ?? null);
+                        const canDelete = canEditTransaction(currentUserRole ?? null, txUserId, currentUserId ?? null);
+                        if (!canEdit && !canDelete) return null;
+                        return (
                       <td className="px-6 py-4.5 text-center whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-block text-left">
                           <button
@@ -536,6 +554,7 @@ export default function TransactionsView({
                                 className="fixed inset-0 z-10"
                               />
                               <div className="absolute right-12 top-0 mt-2 w-36 rounded-xl bg-white border border-slate-100 shadow-xl ring-2 ring-black/5 z-20 overflow-hidden divide-y divide-slate-50">
+                                {canEdit && (
                                 <button
                                   onClick={() => {
                                     onEditTransaction(tx);
@@ -546,6 +565,8 @@ export default function TransactionsView({
                                   <Edit2 className="h-4 w-4 text-blue-600" />
                                   Edit Record
                                 </button>
+                                )}
+                                {canDelete && (
                                 <button
                                   onClick={() => {
                                     onDeleteTransaction(tx);
@@ -556,11 +577,14 @@ export default function TransactionsView({
                                   <Trash2 className="h-4 w-4 text-red-600" />
                                   Hủy giao dịch
                                 </button>
+                                )}
                               </div>
                             </>
                           )}
                         </div>
                       </td>
+                        );
+                      })()}
                     </tr>
                   );
                 })

@@ -6,6 +6,7 @@ import TransactionDetailPage from "./features/transactionDetail/TransactionDetai
 import UserManagementPage from "./features/admin/userManager/UserManagementPage";
 import Budget from "./features/budget/Budget";
 import ProtectedRoute from "./router/ProtectedRoute";
+import RoleGuard from "./router/RoleGuard";
 import DebtPage from "./features/debt/DebtPage";
 import ReportsView from "./features/reports/ReportsView";
 import CategoryPage from "./features/category/CategoryPage";
@@ -14,36 +15,73 @@ import ReconciliationPage from "./features/reconciliation/ReconciliationPage";
 import ReconciliationDetailPage from "./features/reconciliation/ReconciliationDetailPage";
 import FundTransferPage from "./features/fundTransfer/FundTransferPage";
 
+/**
+ * Route structure:
+ *   /login, /               → public (Login page)
+ *   <ProtectedRoute>        → bất kỳ user đã đăng nhập (check token)
+ *     <RoleGuard roles=[x]> → kiểm tra role cụ thể
+ *
+ * Role codes: 0=VIEWER, 1=ADMIN, 2=KETOAN_THU_CHI, 3=KE_TOAN_QUY, 4=TONGHOP
+ */
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Login />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  // Tất cả route dưới đây cần đăng nhập
+  { path: "/",      element: <Login /> },
+  { path: "/login", element: <Login /> },
+
+  // ── Tất cả route cần đăng nhập ──
   {
     element: <ProtectedRoute />,
     children: [
-      { path: "/home", element: <Home /> },
-      { path: "/transaction", element: <TransactionPage /> },
+
+      // Routes không hạn chế role (tất cả user đã login)
+      { path: "/home",       element: <Home /> },
+      { path: "/budget",     element: <Budget /> },
+
+      // Transactions — tất cả role có thể truy cập trang,
+      // nhưng nút hành động được ẩn/hiện theo role trong component
+      { path: "/transaction",     element: <TransactionPage /> },
       { path: "/transactions/:id", element: <TransactionDetailPage /> },
-      { path: "/report", element: <ReportsView /> },
-      { path: "/users", element: <UserManagementPage /> },
-      { path: "/admin/userManager", element: <UserManagementPage /> },
-      { path: "/setting", element: <UserManagementPage /> },
-      { path: "/budget", element: <Budget /> },
-      { path: "/debt", element: <DebtPage /> },
-      { path: "/category", element: <CategoryPage /> },
-      { path: "/partners", element: <PartnerPage /> },
-      { path: "/reconciliation", element: <ReconciliationPage /> },
-      { path: "/reconciliation/:id", element: <ReconciliationDetailPage /> },
-      { path: "/fund-transfer", element: <FundTransferPage /> },
+
+      // Debt & Category & Partners — tất cả role
+      { path: "/debt",      element: <DebtPage /> },
+      { path: "/category",  element: <CategoryPage /> },
+      { path: "/partners",  element: <PartnerPage /> },
+
+      // ── Reconciliation: ADMIN(1), Kế toán Quỹ(3), Tổng hợp(4) ──
+      {
+        element: <RoleGuard allowedRoles={[1, 3, 4]} />,
+        children: [
+          { path: "/reconciliation",     element: <ReconciliationPage /> },
+          { path: "/reconciliation/:id", element: <ReconciliationDetailPage /> },
+        ],
+      },
+
+      // ── Fund Transfer: ADMIN(1), Kế toán Quỹ(3), Tổng hợp(4) ──
+      {
+        element: <RoleGuard allowedRoles={[1, 3, 4]} />,
+        children: [
+          { path: "/fund-transfer", element: <FundTransferPage /> },
+        ],
+      },
+
+      // ── Báo cáo: ADMIN(1), Tổng hợp(4) ──
+      {
+        element: <RoleGuard allowedRoles={[1, 4]} />,
+        children: [
+          { path: "/report", element: <ReportsView /> },
+        ],
+      },
+
+      // ── Quản lý người dùng: chỉ ADMIN(1) ──
+      {
+        element: <RoleGuard allowedRoles={[1]} />,
+        children: [
+          { path: "/users",              element: <UserManagementPage /> },
+          { path: "/admin/userManager",  element: <UserManagementPage /> },
+          { path: "/setting",            element: <UserManagementPage /> },
+        ],
+      },
     ],
   },
 ]);
 
 export default router;
-

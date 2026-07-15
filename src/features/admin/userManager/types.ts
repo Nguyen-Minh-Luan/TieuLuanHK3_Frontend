@@ -1,7 +1,9 @@
 // Thay enum bằng Object kèm theo 'as const'
 export const UserRole = {
   ADMIN: "Quản trị viên",
-  ACCOUNTANT: "Kế toán viên",
+  KETOAN_THU_CHI: "Kế toán Thu Chi",
+  KE_TOAN_QUY: "Kế toán Quỹ",
+  TONGHOP: "Kế toán Tổng hợp",
   VIEWER: "Người xem"
 } as const;
 

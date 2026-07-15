@@ -5,7 +5,7 @@ export interface UserDTO {
   username: string;
   fullName: string;
   email: string;
-  role: number; // 0 = VIEWER, 1 = ADMIN, 2 = ACCOUNTANT
+  role: number; // 0 = VIEWER, 1 = ADMIN, 2 = KETOAN_THU_CHI, 3 = KE_TOAN_QUY, 4 = TONGHOP
   status?: string; // "ACTIVE" | "INACTIVE"
   token?: string;
   message?: string;
@@ -22,13 +22,17 @@ export interface UserRequest {
 
 export function mapRoleToLabel(role: number): UserRole {
   if (role === 1) return UserRole.ADMIN;
-  if (role === 2) return UserRole.ACCOUNTANT;
+  if (role === 2) return UserRole.KETOAN_THU_CHI;
+  if (role === 3) return UserRole.KE_TOAN_QUY;
+  if (role === 4) return UserRole.TONGHOP;
   return UserRole.VIEWER;
 }
 
 export function mapLabelToRole(label: UserRole): number {
   if (label === UserRole.ADMIN) return 1;
-  if (label === UserRole.ACCOUNTANT) return 2;
+  if (label === UserRole.KETOAN_THU_CHI) return 2;
+  if (label === UserRole.KE_TOAN_QUY) return 3;
+  if (label === UserRole.TONGHOP) return 4;
   return 0;
 }
 

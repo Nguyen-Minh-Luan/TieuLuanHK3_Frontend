@@ -30,7 +30,7 @@ export default function FundTransferPage() {
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Quyền: 1 = Admin, 3 = Thủ quỹ -> được tạo lệnh chuyển. Kế toán (2) chỉ xem.
+  // Quyền: 1 = Admin, 3 = Thủ quỹ -> được tạo lệnh chuyển. Tổng hợp (4) chỉ xem.
   const canManage = role === 1 || role === 3;
 
   useEffect(() => {
