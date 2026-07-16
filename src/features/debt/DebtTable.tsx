@@ -175,16 +175,16 @@ export default function DebtTable({
         <table id="debt-data-table" className="w-full text-left border-collapse table-fixed">
           <thead>
             <tr className="bg-[#f8f9fb] text-[10px] font-mono tracking-widest text-[#64748b] uppercase border-b border-[#eaecf0]">
-              {/* Cột mở rộng — chevron */}
               <th className="w-[4%] py-4 px-2 font-semibold text-center" aria-label="Mở rộng" />
-              <th className="w-[11%] py-4 px-4 font-semibold text-center">NGÀY TẠO</th>
-              <th className="w-[17%] py-4 px-4 font-semibold text-center">TIÊU ĐỀ</th>
-              <th className="w-[15%] py-4 px-4 font-semibold text-center">ĐỐI TÁC</th>
-              <th className="w-[12%] py-4 px-4 font-semibold text-center">CÒN LẠI</th>
-              <th className="w-[12%] py-4 px-4 font-semibold text-center">TỔNG NỢ</th>
-              <th className="w-[11%] py-4 px-4 font-semibold text-center">LOẠI NỢ</th>
-              <th className="w-[12%] py-4 px-4 font-semibold text-center">TRẠNG THÁI</th>
-              <th className="w-[12%] py-4 px-4 font-semibold text-center">THAO TÁC</th>
+              <th className="w-[10%] py-4 px-4 font-semibold text-center">NGÀY TẠO</th>
+              <th className="w-[10%] py-4 px-4 font-semibold text-center text-[#d91c1c]">HẠN CHÓT</th>
+              <th className="w-[14%] py-4 px-4 font-semibold text-center">TIÊU ĐỀ</th>
+              <th className="w-[12%] py-4 px-4 font-semibold text-center">ĐỐI TÁC</th>
+              <th className="w-[11%] py-4 px-4 font-semibold text-center">CÒN LẠI</th>
+              <th className="w-[11%] py-4 px-4 font-semibold text-center">TỔNG NỢ</th>
+              <th className="w-[10%] py-4 px-4 font-semibold text-center">LOẠI NỢ</th>
+              <th className="w-[10%] py-4 px-4 font-semibold text-center">TRẠNG THÁI</th>
+              <th className="w-[8%] py-4 px-4 font-semibold text-center">THAO TÁC</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#f1f5f9]">
@@ -223,6 +223,13 @@ export default function DebtTable({
                       <td className="py-4 px-4 text-center">
                         <span className="text-[13px] font-medium text-[#64748b]">
                           {formatDate(debt.debtDate)}
+                        </span>
+                      </td>
+
+                      {/* Hạn chót */}
+                      <td className="py-4 px-4 text-center">
+                        <span className={`text-[13px] font-bold ${debt.dueDate ? (new Date(debt.dueDate) < new Date() && !debt.isPaid ? 'text-[#d91c1c]' : 'text-[#64748b]') : 'text-[#94a3b8]'}`}>
+                          {debt.dueDate ? formatDate(debt.dueDate) : '—'}
                         </span>
                       </td>
 
@@ -312,7 +319,7 @@ export default function DebtTable({
                         id={`subrow-payments-${debt.id}`}
                         className="bg-gradient-to-r from-[#f0f4ff]/80 to-[#f8f9ff]/60"
                       >
-                        <td colSpan={9} className="px-6 pb-4 pt-3">
+                        <td colSpan={10} className="px-6 pb-4 pt-3">
                           {/* Header */}
                           <div className="flex items-center gap-2 mb-2">
                             <ReceiptText className="w-3.5 h-3.5 text-[#003178]" />
@@ -337,7 +344,7 @@ export default function DebtTable({
               })
             ) : (
               <tr>
-                <td colSpan={9} className="py-12 text-center">
+                <td colSpan={10} className="py-12 text-center">
                   <p className="text-sm text-[#94a3b8] font-medium">Không tìm thấy khoản nợ nào.</p>
                 </td>
               </tr>

@@ -17,6 +17,7 @@ import type { TransactionResponse } from '../transaction/apiTypes';
 export interface DebtResponse {
   id?: number;
   debtDate: string;              // ISO date (yyyy-MM-dd)
+  dueDate?: string;              // ISO date (yyyy-MM-dd)
   debtType: 'RECEIVABLE' | 'PAYABLE';
   totalAmount: number;
   paidAmount?: number;           // server tự tính / tự cập nhật
@@ -50,6 +51,7 @@ export type DebtDTO = DebtResponse;
 
 export interface DebtRequest {
   debtDate: string;              // ISO date (yyyy-MM-dd). Bắt buộc.
+  dueDate?: string;              // ISO date (yyyy-MM-dd).
   debtType: 'RECEIVABLE' | 'PAYABLE'; // Bắt buộc.
   totalAmount: number;           // Bắt buộc; > 0.
   partnerId: number;             // Bắt buộc.

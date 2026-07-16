@@ -7,7 +7,7 @@ export const INITIAL_FUNDS: Fund[] = [
     type: 'Nội bộ',
     totalCapital: 1500000,
     availableBalance: 300000,
-    status: 'HOẠT ĐỘNG',
+    status: 'ACTIVE',
     code: 'INT-A1-RES',
     note: 'Dự phòng rủi ro thanh khoản nội bộ và dự án khẩn cấp cấp độ 1.',
     updatedAt: '2026-05-28'
@@ -18,7 +18,7 @@ export const INITIAL_FUNDS: Fund[] = [
     type: 'Tài trợ',
     totalCapital: 2000000,
     availableBalance: 1500000,
-    status: 'HOẠT ĐỘNG',
+    status: 'ACTIVE',
     code: 'GOV-INNOV-88',
     note: 'Ngân sách hỗ trợ phát triển sản phẩm công nghệ lõi AI.',
     updatedAt: '2026-05-25'
@@ -29,7 +29,7 @@ export const INITIAL_FUNDS: Fund[] = [
     type: 'Vốn vay',
     totalCapital: 5000000,
     availableBalance: 150000,
-    status: 'GẦN GIỚI HẠN',
+    status: 'PENDING',
     code: 'LOAN-HSBC-EXP',
     note: 'Nguồn vốn tín dụng lãi suất ưu đãi giải ngân cho văn phòng mới.',
     updatedAt: '2026-05-29'
@@ -40,7 +40,7 @@ export const INITIAL_FUNDS: Fund[] = [
     type: 'Tài trợ',
     totalCapital: 800000,
     availableBalance: 800000,
-    status: 'CHỜ KÍCH HOẠT',
+    status: 'INACTIVE',
     code: 'PARTNER-24-STR',
     note: 'Góp vốn liên danh phát triển thị trường Đông Nam Á.',
     updatedAt: '2026-05-12'

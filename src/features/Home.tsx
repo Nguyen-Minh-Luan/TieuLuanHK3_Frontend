@@ -4,6 +4,7 @@ import { KPICards } from "../component/KPICards";
 import { CashFlowChart } from "../component/CashFlowChart";
 import { Sidebar } from "../component/Sidebar";
 import Header from "../component/Header";
+import { AIInsightPanel } from "./reports/AIInsightPanel";
 import { TransactionsData } from "../component/TransactionsData";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import {
@@ -198,6 +199,11 @@ export default function Home() {
                     Generate Report
                   </button>
                 </div>
+              </div>
+
+              {/* AI Financial Insight Panel */}
+              <div className="w-full">
+                <AIInsightPanel />
               </div>
 
               {/* Content Bento Grid */}

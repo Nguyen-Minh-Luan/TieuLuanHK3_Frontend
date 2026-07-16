@@ -14,7 +14,7 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
   const [type, setType] = useState<'Nội bộ' | 'Tài trợ' | 'Vốn vay' | 'Khác'>('Nội bộ');
   const [totalCapital, setTotalCapital] = useState(100000);
   const [availableBalance, setAvailableBalance] = useState(100000);
-  const [status, setStatus] = useState<'HOẠT ĐỘNG' | 'GẦN GIỚI HẠN' | 'CHỜ KÍCH HOẠT'>('HOẠT ĐỘNG');
+  const [status, setStatus] = useState<'ACTIVE' | 'PENDING' | 'INACTIVE'>('ACTIVE');
   const [code, setCode] = useState('');
   const [note, setNote] = useState('');
 
@@ -34,7 +34,7 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
       setType('Nội bộ');
       setTotalCapital(1000000);
       setAvailableBalance(1000000);
-      setStatus('HOẠT ĐỘNG');
+      setStatus('ACTIVE');
       setCode('');
       setNote('');
     }

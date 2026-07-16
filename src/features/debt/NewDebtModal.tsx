@@ -42,6 +42,7 @@ export default function NewDebtModal({
   const [title, setTitle] = useState('');
   const [debtType, setDebtType] = useState<'RECEIVABLE' | 'PAYABLE'>('PAYABLE');
   const [debtDate, setDebtDate] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [partnerId, setPartnerId] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('');
@@ -85,6 +86,7 @@ export default function NewDebtModal({
         setTitle(editDebtData.title || '');
         setDebtType(editDebtData.debtType);
         setDebtDate(editDebtData.debtDate ? editDebtData.debtDate.split('T')[0] : '');
+        setDueDate(editDebtData.dueDate ? editDebtData.dueDate.split('T')[0] : '');
         setTotalAmount(editDebtData.totalAmount);
         setPartnerId(editDebtData.partnerId ? String(editDebtData.partnerId) : '');
         setCategoryId(editDebtData.categoryId ? String(editDebtData.categoryId) : '');
@@ -94,6 +96,7 @@ export default function NewDebtModal({
         setDebtType('PAYABLE');
         // Default to today
         setDebtDate(new Date().toISOString().split('T')[0]);
+        setDueDate('');
         setTotalAmount(0);
         setPartnerId('');
         setCategoryId('');
@@ -133,6 +136,7 @@ export default function NewDebtModal({
       title: title.trim(),
       debtType,
       debtDate,
+      dueDate: dueDate || undefined,
       totalAmount,
       partnerId: Number(partnerId),
       categoryId: categoryId ? Number(categoryId) : undefined,
@@ -222,6 +226,20 @@ export default function NewDebtModal({
               {errors.debtDate && (
                 <span className="text-xs font-medium text-[#ef4444] mt-1.5 block">{errors.debtDate}</span>
               )}
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
+                Hạn chót (Tùy chọn)
+              </label>
+              <input
+                id="input-due-date"
+                type="date"
+                value={dueDate}
+                min={debtDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none"
+              />
             </div>
           </div>
 
