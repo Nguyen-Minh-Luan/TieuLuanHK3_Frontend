@@ -117,7 +117,7 @@ export default function TransactionDetailPage() {
       {selectedTransaction && (
         <PrintVoucherModal
           isOpen={isPrintVoucherOpen}
-          transaction={selectedTransaction}
+          transactionId={selectedTransaction.apiId ?? selectedTransaction.id}
           onClose={() => setIsPrintVoucherOpen(false)}
         />
       )}

@@ -4,6 +4,7 @@ import type { RootState } from "../index";
 
 // --- Types ---
 export interface TransactionDTO {
+  id: number;
   parentId?: number | null;
   fundId?: number | null;
   categoryId?: number | null;

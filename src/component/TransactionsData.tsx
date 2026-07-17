@@ -1,7 +1,9 @@
-import { ShoppingCart, Banknote, Plane, Utensils, Landmark, Filter } from "lucide-react";
+import { ShoppingCart, Banknote, Plane, Utensils, Landmark, Filter, Printer, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useVoucherExport } from "../features/transactionDetail/useVoucherExport";
 
 interface TransactionDTO {
+  id: number;
   parentId?: number | null;
   fundId?: number | null;
   categoryId?: number | null;
@@ -22,6 +24,8 @@ interface TransactionsDataProps {
 }
 
 export function TransactionsData({ transactions, categoriesMap }: TransactionsDataProps) {
+  const { downloadVoucher, loadingId } = useVoucherExport();
+
   const getCategoryIcon = (categoryName: string, type: string) => {
     const name = categoryName.toLowerCase();
     if (type === "INCOME") {
@@ -109,13 +113,14 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
               <th className="px-8 py-4">Category</th>
               <th className="px-8 py-4 text-right">Amount</th>
               <th className="px-8 py-4">Status</th>
+              <th className="px-8 py-4 text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {transactions.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="text-center py-8 text-slate-400 text-sm font-medium"
                 >
                   Không có giao dịch gần đây
@@ -191,6 +196,25 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
                           {statusLabel}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-8 py-5 text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (t.id) {
+                            downloadVoucher(t.id);
+                          }
+                        }}
+                        disabled={loadingId === t.id}
+                        className="p-2 text-slate-400 hover:text-[#003178] hover:bg-[#eceef0] rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                        title="In phiếu"
+                      >
+                        {loadingId === t.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Printer size={16} />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 );
