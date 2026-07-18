@@ -13,7 +13,10 @@ import {
   ArrowUp,
   Save,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  User,
+  Link2,
+  FileText
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import type { Transaction } from './types';
@@ -23,6 +26,14 @@ import transactionService from '../../services/transactionService';
 import reconciliationService from '../../services/reconciliationService';
 import { fetchFunds } from '../../store/slices/fundSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
+
+interface DebtOption {
+  id: number;
+  title: string;
+  partnerName: string;
+  remainingAmount: number;
+  debtType: string;
+}
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -46,10 +57,28 @@ export default function TransactionModal({
   const [time, setTime] = useState('');
   const [note, setNote] = useState('');
 
+  // === MỚI: Chứng từ gốc ===
+  const [originalDocuments, setOriginalDocuments] = useState('');
+  const [accompaniedBy, setAccompaniedBy] = useState('');
+
+  // === MỚI: Khoản nợ liên kết ===
+  const [debtId, setDebtId] = useState<number | null>(null);
+  const [debts, setDebts] = useState<DebtOption[]>([]);
+  const [loadingDebts, setLoadingDebts] = useState(false);
+
   // Fetch partners list dynamically from backend
   const [partners, setPartners] = useState<{ id: number; name: string }[]>([]);
 
-  const userId = useAppSelector((state) => state.auth.id) || Number(localStorage.getItem("userId")) || 1;
+  // === Người tạo từ Redux (read-only — BE sẽ ép từ JWT) ===
+  const currentUserName = useAppSelector(
+    (state) =>
+      (state.auth as any).name ||
+      (state.auth as any).fullName ||
+      (state.auth as any).username ||
+      (state.auth as any).email ||
+      'Người dùng đang đăng nhập'
+  );
+
   const dispatch = useAppDispatch();
   const categories = useAppSelector((state) => state.category.items);
   const funds = useAppSelector((state) => state.fund.items);
@@ -76,6 +105,33 @@ export default function TransactionModal({
     }
   }, [isOpen, dispatch]);
 
+  // === MỚI: Load danh sách khoản nợ theo type ===
+  useEffect(() => {
+    if (!isOpen) return;
+    // Chỉ load nếu đang TẠO MỚI (không phải sửa) — khi sửa, debtId đã gắn sẵn
+    if (editingTransaction) return;
+
+    const debtType = type === 'income' ? 'RECEIVABLE' : 'PAYABLE';
+    setLoadingDebts(true);
+    setDebtId(null); // reset khi đổi type
+    apiClient
+      .get(`/debts?debtType=${debtType}&isPaid=false&size=100`)
+      .then((res) => {
+        const items = res.data.data?.content || res.data.data || [];
+        setDebts(
+          items.map((d: any) => ({
+            id: d.id,
+            title: d.title || d.note || `Khoản nợ #${d.id}`,
+            partnerName: d.partnerName || 'Không rõ đối tác',
+            remainingAmount: d.remainingAmount ?? (d.totalAmount - (d.paidAmount || 0)),
+            debtType: d.debtType,
+          }))
+        );
+      })
+      .catch(() => setDebts([]))
+      .finally(() => setLoadingDebts(false));
+  }, [isOpen, type, editingTransaction]);
+
   // Initializer and reset logic
   useEffect(() => {
     setFormError(null);
@@ -88,6 +144,11 @@ export default function TransactionModal({
       setFundId(ext.fundId || null);
       setPartnerId(ext.partnerId || null);
       setNote(ext.rawNote || '');
+      // === MỚI: nạp lại chứng từ gốc khi edit ===
+      setOriginalDocuments(ext.originalDocuments || '');
+      setAccompaniedBy(ext.accompaniedBy || '');
+      // debtId khi edit giữ nguyên (không cho đổi nợ đã gắn)
+      setDebtId(ext.debtId || null);
       
       const d = ext.rawDate ? new Date(ext.rawDate) : new Date();
       if (!isNaN(d.getTime())) {
@@ -101,6 +162,9 @@ export default function TransactionModal({
       setFundId(null);
       setPartnerId(null);
       setNote('');
+      setOriginalDocuments('');
+      setAccompaniedBy('');
+      setDebtId(null);
 
       const now = new Date();
       setDate(now.toISOString().split('T')[0]);
@@ -181,6 +245,19 @@ export default function TransactionModal({
     }
   }, [isOpen]);
 
+  // === MỚI: Khi chọn khoản nợ, auto-fill amount và partnerId ===
+  const handleDebtSelect = (selectedDebtId: number | null) => {
+    setDebtId(selectedDebtId);
+    if (!selectedDebtId) return;
+    const selected = debts.find((d) => d.id === selectedDebtId);
+    if (selected) {
+      // Gợi ý điền số tiền = phần còn nợ
+      if (selected.remainingAmount > 0) {
+        setAmount(selected.remainingAmount.toString());
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -207,12 +284,14 @@ export default function TransactionModal({
       fundId: Number(fundId),
       categoryId: Number(categoryId),
       partnerId: partnerId ? Number(partnerId) : undefined,
-      userId,
+      // userId KHÔNG gửi lên — BE sẽ luôn lấy từ JWT để đảm bảo bảo mật
       type: type === 'income' ? 'INCOME' : 'EXPENSE',
       amount: parseFloat(amount),
       note: note.trim() || undefined,
       transactionDate: isoDate,
-      debtId: (editingTransaction as any)?.debtId || undefined,
+      debtId: debtId || undefined,
+      originalDocuments: originalDocuments.trim() || undefined,
+      accompaniedBy: accompaniedBy.trim() || undefined,
     };
 
     try {
@@ -226,6 +305,9 @@ export default function TransactionModal({
       setSubmitting(false);
     }
   };
+
+  // Tìm khoản nợ đang được chọn để hiển thị thông tin
+  const selectedDebt = debts.find((d) => d.id === debtId);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-100/95 p-4 md:p-12 flex justify-center items-start md:items-center">
@@ -253,6 +335,20 @@ export default function TransactionModal({
         {/* Form panel card */}
         <div className="bg-white rounded-[32px] p-6 md:p-10 shadow-xl border border-slate-200/40">
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* === MỚI: Người tạo phiếu (read-only) === */}
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 select-none">
+              <div className="w-8 h-8 rounded-full bg-[#003178]/10 flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 text-[#003178]" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Người tạo phiếu</p>
+                <p className="text-sm font-bold text-slate-800">{currentUserName}</p>
+              </div>
+              <span className="ml-auto text-[9px] font-black uppercase tracking-wider px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                Xác thực JWT
+              </span>
+            </div>
 
             {/* 2-Column fields grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
@@ -415,6 +511,61 @@ export default function TransactionModal({
 
             </div>
 
+            {/* === MỚI: Liên kết khoản nợ === */}
+            {!editingTransaction && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-slate-500" />
+                  <label className="text-sm font-bold text-slate-800 font-headline">
+                    Liên kết khoản nợ
+                    <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Không bắt buộc)</span>
+                  </label>
+                </div>
+                <div className="relative">
+                  <select
+                    value={debtId || ""}
+                    onChange={(e) => handleDebtSelect(e.target.value ? Number(e.target.value) : null)}
+                    disabled={loadingDebts}
+                    className="w-full bg-[#f4f6f8] hover:bg-[#ebedf1] disabled:opacity-60 border border-transparent rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:bg-white focus:border-primary transition-all text-slate-800 cursor-pointer appearance-none pr-10"
+                  >
+                    <option value="">
+                      {loadingDebts
+                        ? 'Đang tải danh sách khoản nợ...'
+                        : `Chọn khoản nợ ${type === 'income' ? 'RECEIVABLE' : 'PAYABLE'} cần thanh toán`}
+                    </option>
+                    {debts.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.partnerName} — {d.title} — Còn nợ:{' '}
+                        {d.remainingAmount.toLocaleString('vi-VN')} VNĐ
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+                </div>
+                {/* Hiển thị thông tin khoản nợ đã chọn */}
+                {selectedDebt && (
+                  <div className="rounded-xl p-3 bg-blue-50 border border-blue-100 text-blue-800 text-xs flex gap-3 animate-fade-in">
+                    <Link2 className="h-4 w-4 shrink-0 mt-0.5 text-blue-500" />
+                    <div className="space-y-0.5">
+                      <p className="font-bold">{selectedDebt.partnerName} — {selectedDebt.title}</p>
+                      <p className="font-semibold">
+                        Số tiền còn nợ:{' '}
+                        <strong className="text-blue-900">
+                          {selectedDebt.remainingAmount.toLocaleString('vi-VN')} VNĐ
+                        </strong>
+                        {' '}(đã tự điền vào ô số tiền — bạn có thể điều chỉnh)
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!loadingDebts && debts.length === 0 && (
+                  <p className="text-xs text-slate-400 font-semibold pl-1">
+                    Không có khoản nợ {type === 'income' ? 'phải thu (RECEIVABLE)' : 'phải trả (PAYABLE)'} nào chưa thanh toán.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Ghi chú chi tiết */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-800 block font-headline">
@@ -424,8 +575,42 @@ export default function TransactionModal({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Nhập lý do giao dịch hoặc chi tiết hợp đồng liên quan..."
-                className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-2xl p-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800 min-h-[120px] resize-none"
+                className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-2xl p-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800 min-h-[100px] resize-none"
               />
+            </div>
+
+            {/* === MỚI: Chứng từ gốc === */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-500" />
+                  <label className="text-sm font-bold text-slate-800 font-headline">
+                    Chứng từ gốc kèm theo
+                    <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Không bắt buộc)</span>
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  value={originalDocuments}
+                  onChange={(e) => setOriginalDocuments(e.target.value)}
+                  placeholder="Vd: Hóa đơn VAT số 0012345, Hợp đồng ABC..."
+                  className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-800 block font-headline">
+                  Kèm theo (số lượng chứng từ)
+                  <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Không bắt buộc)</span>
+                </label>
+                <input
+                  type="text"
+                  value={accompaniedBy}
+                  onChange={(e) => setAccompaniedBy(e.target.value)}
+                  placeholder="Vd: 01 bản hóa đơn, 02 bản hợp đồng..."
+                  className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
+                />
+              </div>
             </div>
 
             {/* Real-time Preview Warning Banner */}

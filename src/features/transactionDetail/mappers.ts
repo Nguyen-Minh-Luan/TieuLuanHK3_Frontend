@@ -102,13 +102,13 @@ export function mapTransactionResponseToUi(
       logoUrl: undefined,
     },
     creator: {
-      name: 'Alex Nguyễn',
-      role: 'Phó phòng Kế toán',
+      name: tx.userName || `User #${tx.userId}`,
+      role: '',
       avatarUrl: undefined,
     },
     date: formatDate(tx.transactionDate),
     createdAt: formatTime(tx.createdAt || tx.transactionDate),
-    notes: tx.note || tx.reason || 'Không có ghi chú',
+    notes: tx.note || 'Không có ghi chú',
   };
 }
 
@@ -141,7 +141,6 @@ export function mapUiToTransactionRequest(
     amount: ui.amount,
     note: ui.notes,
     transactionDate,
-    reason: originalTx.reason,
     accompaniedBy: originalTx.accompaniedBy,
     originalDocuments: originalTx.originalDocuments,
     debtId: ui.debtId

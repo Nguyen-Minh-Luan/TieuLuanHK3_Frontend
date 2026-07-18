@@ -8,12 +8,11 @@ export interface TransactionRequest {
   fundId: number;
   categoryId: number;
   partnerId?: number;
-  userId: number;
+  userId?: number; // optional: BE luôn ghi đè từ JWT khi tạo mới
   type: "INCOME" | "EXPENSE";
   amount: number;
   note?: string;
   transactionDate: string; // ISO date string (yyyy-MM-dd)
-  reason?: string;
   accompaniedBy?: string;
   originalDocuments?: string;
   debtId?: number;
@@ -36,7 +35,7 @@ export interface TransactionResponse {
   createdAt: string; // ISO string
   hasWarning: boolean;
   warningLevel?: 'NORMAL' | 'WARNING' | 'CRITICAL';
-  reason?: string;
+  userName?: string; // tên người tạo phữu, được populate từ BE
   accompaniedBy?: string;
   originalDocuments?: string;
   debtId?: number;
