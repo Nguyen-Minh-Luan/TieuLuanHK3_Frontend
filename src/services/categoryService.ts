@@ -18,6 +18,8 @@ export interface CategoryDTO {
   tax?: number;         // % thuế
   parentId?: number;    // null = danh mục gốc
   parentName?: string;  // response only
+  accountCode?: string;
+  accountName?: string; // response only
 }
 
 /** Node trong cây cha–con trả về từ GET /categories/tree */

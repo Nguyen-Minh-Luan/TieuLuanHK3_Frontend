@@ -8,6 +8,7 @@ export interface Fund {
   code: string;
   note: string;
   updatedAt: string;
+  accountCode?: string;
 }
 
 export interface Transaction {

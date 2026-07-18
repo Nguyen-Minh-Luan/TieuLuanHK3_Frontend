@@ -57,6 +57,7 @@ export default function CategoryTable({
               <th className="py-4 px-5 font-semibold">DANH MỤC CHA</th>
               <th className="py-4 px-5 font-semibold text-right">HẠN MỨC NGÂN SÁCH</th>
               <th className="py-4 px-5 font-semibold text-center">THUẾ</th>
+              <th className="py-4 px-5 font-semibold text-center">MÃ TK</th>
               <th className="py-4 px-5 font-semibold text-center">THAO TÁC</th>
             </tr>
           </thead>
@@ -76,6 +77,9 @@ export default function CategoryTable({
                   </td>
                   <td className="py-4 px-5">
                     <div className="h-4 bg-[#f1f5f9] rounded w-24 ml-auto" />
+                  </td>
+                  <td className="py-4 px-5 text-center">
+                    <div className="h-4 bg-[#f1f5f9] rounded w-10 mx-auto" />
                   </td>
                   <td className="py-4 px-5 text-center">
                     <div className="h-4 bg-[#f1f5f9] rounded w-10 mx-auto" />
@@ -137,6 +141,13 @@ export default function CategoryTable({
                     </span>
                   </td>
 
+                  {/* Mã TK */}
+                  <td className="py-4 px-5 text-center">
+                    <span className="text-sm font-semibold text-[#475569]">
+                      {cat.accountCode ? cat.accountCode : '—'}
+                    </span>
+                  </td>
+
                   {/* Thao tác */}
                   <td className="py-4 px-5 text-center">
                     <div className="flex items-center justify-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
@@ -162,7 +173,7 @@ export default function CategoryTable({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-16 text-center">
+                <td colSpan={7} className="py-16 text-center">
                   <FolderOpen className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3" />
                   <p className="text-sm text-[#94a3b8] font-medium">Không tìm thấy danh mục nào.</p>
                   <p className="text-xs text-[#cbd5e1] mt-1">Thử thay đổi bộ lọc hoặc thêm danh mục mới.</p>

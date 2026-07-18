@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Landmark, FileText, CheckCircle2, ChevronRight } from 'lucide-react';
 import type { Fund } from './types';
+import { chartOfAccountService, type ChartOfAccount } from '../../services/chartOfAccountService';
 
 interface FundModalProps {
   isOpen: boolean;
@@ -17,6 +18,14 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
   const [status, setStatus] = useState<'ACTIVE' | 'PENDING' | 'INACTIVE'>('ACTIVE');
   const [code, setCode] = useState('');
   const [note, setNote] = useState('');
+  const [accountCode, setAccountCode] = useState('');
+  const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      chartOfAccountService.getAll('ASSET').then(setAccounts).catch(console.error);
+    }
+  }, [isOpen]);
 
   // When editingFund changes, load its data
   useEffect(() => {
@@ -28,6 +37,7 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
       setStatus(editingFund.status);
       setCode(editingFund.code);
       setNote(editingFund.note);
+      setAccountCode(editingFund.accountCode || '');
     } else {
       // Defaults
       setName('');
@@ -37,6 +47,7 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
       setStatus('ACTIVE');
       setCode('');
       setNote('');
+      setAccountCode('');
     }
   }, [editingFund, isOpen]);
 
@@ -66,6 +77,7 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
       status,
       code: code.toUpperCase(),
       note,
+      accountCode,
     });
     onClose();
   };
@@ -140,6 +152,26 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
                 className="w-full bg-[#f8fafc] text-sm text-[#0f172a] p-3 rounded-lg border border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-all placeholder:text-slate-400 font-mono"
               />
             </div>
+          </div>
+
+          {/* Row 1.5: Account Code */}
+          <div className="flex flex-col gap-1.5" id="form-row-account">
+            <label id="lbl-account" className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-heading">
+              Mã tài khoản (Kế toán)
+            </label>
+            <select
+              id="select-account"
+              value={accountCode}
+              onChange={(e) => setAccountCode(e.target.value)}
+              className="w-full bg-[#f8fafc] text-sm text-[#0f172a] p-3 rounded-lg border-r-[12px] border-r-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-all font-medium"
+            >
+              <option value="">— Không chọn —</option>
+              {accounts.map((opt) => (
+                <option key={opt.code} value={opt.code}>
+                  {opt.code} - {opt.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Row 2: Type and Status */}

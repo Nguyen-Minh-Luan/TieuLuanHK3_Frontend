@@ -3,6 +3,7 @@ import { X, Save } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import { fetchCategoryTree, resetSubmitStatus, createCategory, updateCategory } from '../../store/slices/categorySlice';
 import type { CategoryDTO, CategoryTreeNode } from '../../services/categoryService';
+import { chartOfAccountService, type ChartOfAccount } from '../../services/chartOfAccountService';
 
 interface CategoryFormModalProps {
   isOpen: boolean;
@@ -47,12 +48,15 @@ export default function CategoryFormModal({
   const [budgeting, setBudgeting] = useState<string>('');
   const [tax, setTax] = useState<string>('');
   const [parentId, setParentId] = useState<string>('');
+  const [accountCode, setAccountCode] = useState<string>('');
+  const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Load tree khi mở modal
   useEffect(() => {
     if (isOpen) {
       dispatch(fetchCategoryTree());
+      chartOfAccountService.getAll().then(setAccounts).catch(console.error);
     }
   }, [isOpen, dispatch]);
 
@@ -66,6 +70,7 @@ export default function CategoryFormModal({
         setBudgeting(editData.budgeting != null ? String(editData.budgeting) : '');
         setTax(editData.tax != null ? String(editData.tax) : '');
         setParentId(editData.parentId != null ? String(editData.parentId) : '');
+        setAccountCode(editData.accountCode ?? '');
       } else {
         setName('');
         setType('EXPENSE');
@@ -73,6 +78,7 @@ export default function CategoryFormModal({
         setBudgeting('');
         setTax('');
         setParentId('');
+        setAccountCode('');
       }
       setErrors({});
     }
@@ -112,6 +118,7 @@ export default function CategoryFormModal({
       budgeting: budgeting ? Number(budgeting) : undefined,
       tax: tax ? Number(tax) : undefined,
       parentId: parentId ? Number(parentId) : undefined,
+      accountCode: accountCode || undefined,
     };
 
     try {
@@ -268,7 +275,27 @@ export default function CategoryFormModal({
             />
           </div>
 
-
+          {/* Mã tài khoản */}
+          <div>
+            <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
+              Mã tài khoản (Kế toán)
+            </label>
+            <select
+              id="input-category-account"
+              value={accountCode}
+              onChange={(e) => setAccountCode(e.target.value)}
+              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer"
+            >
+              <option value="">— Không chọn —</option>
+              {accounts
+                .filter(a => type === 'INCOME' ? ['REVENUE', 'OTHER_INCOME'].includes(a.group) : ['EXPENSE', 'OTHER_EXPENSE'].includes(a.group))
+                .map((opt) => (
+                  <option key={opt.code} value={opt.code}>
+                    {opt.code} - {opt.name}
+                  </option>
+                ))}
+            </select>
+          </div>
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#f1f5f9]">

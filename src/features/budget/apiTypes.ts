@@ -19,6 +19,7 @@ export interface FundDTO {
   code?: string;
   note?: string;
   updatedAt?: string;       // ISO 8601 LocalDateTime string
+  accountCode?: string;
 }
 
 // ─── Kiểu dữ liệu gửi lên khi tạo / cập nhật quỹ ────────────────────────────
@@ -31,6 +32,7 @@ export interface FundRequest {
   currentBalance?: number;
   code?: string;
   note?: string;
+  accountCode?: string;
 }
 
 // ─── Hàm mapping: API DTO → Frontend Fund type ───────────────────────────────
@@ -46,6 +48,7 @@ export function mapFundDTOToFund(dto: FundDTO): Fund {
     code: dto.code ?? '',
     note: dto.note ?? '',
     updatedAt: dto.updatedAt ? dto.updatedAt.split('T')[0] : '',
+    accountCode: dto.accountCode,
   };
 }
 
@@ -60,5 +63,6 @@ export function mapFundToRequest(fund: Omit<Fund, 'id' | 'updatedAt'>): FundRequ
     currentBalance: fund.availableBalance,
     code: fund.code,
     note: fund.note,
+    accountCode: fund.accountCode,
   };
 }
