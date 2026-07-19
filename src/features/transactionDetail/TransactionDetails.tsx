@@ -107,9 +107,12 @@ export default function TransactionDetails({
             Chi tiết Giao dịch
           </h2>
           <div className="mt-4 flex items-center gap-3">
-            <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest shadow-sm transition-all uppercase ${transaction.status === 'ACTIVE'
-              ? 'bg-[#003178] text-white'
-              : 'bg-[#ffdad6] text-[#93000a]'
+            <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest shadow-sm transition-all uppercase ${
+              transaction.status === 'ACTIVE'
+                ? 'bg-[#003178] text-white'
+                : transaction.status === 'UPDATED'
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-[#ffdad6] text-[#93000a]'
               }`}>
               {transaction.status}
             </span>
@@ -225,9 +228,12 @@ export default function TransactionDetails({
                   <span className="px-3 py-1 rounded-lg bg-[#cde5ff] text-[#001d32] text-xs font-bold uppercase tracking-wider">
                     {transaction.type}
                   </span>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${transaction.status === 'ACTIVE'
-                    ? 'bg-[#d9e2ff] text-[#001945]'
-                    : 'bg-[#ffdad6] text-[#93000a]'
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
+                    transaction.status === 'ACTIVE'
+                      ? 'bg-[#d9e2ff] text-[#001945]'
+                      : transaction.status === 'UPDATED'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-[#ffdad6] text-[#93000a]'
                     }`}>
                     {transaction.status}
                   </span>

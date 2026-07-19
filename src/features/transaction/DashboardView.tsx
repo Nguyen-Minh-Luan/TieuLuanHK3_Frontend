@@ -36,7 +36,7 @@ export default function DashboardView({
     let warningCount = 0;
 
     transactions.forEach((tx) => {
-      if (tx.status !== "Failed") {
+      if (tx.status !== "CANCELLED") {
         if (tx.amount >= 0) {
           totalRevenue += tx.amount;
         } else {
@@ -70,7 +70,7 @@ export default function DashboardView({
     let totalSpent = 0;
 
     transactions.forEach((t) => {
-      if (t.amount < 0 && t.status !== "Failed") {
+      if (t.amount < 0 && t.status !== "CANCELLED") {
         const amt = Math.abs(t.amount);
         sums[t.category] = (sums[t.category] || 0) + amt;
         totalSpent += amt;

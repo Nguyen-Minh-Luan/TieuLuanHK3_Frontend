@@ -14,7 +14,7 @@ export const CATEGORIES = [
   "HR & Payroll",
 ];
 
-export const STATUSES = ["All Status", "Completed", "Pending", "Failed"];
+export const STATUSES = ["Tất cả trạng thái", "ACTIVE", "CANCELLED", "UPDATED"];
 
 export const INITIAL_BUDGET_DATA: Budget[] = [
   {

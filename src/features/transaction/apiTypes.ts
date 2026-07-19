@@ -27,7 +27,7 @@ export interface TransactionResponse {
   partnerId?: number;
   userId: number;
   type: string;
-  status: string; // "ACTIVE" | "UPDATED" | "CANCELLED"
+  status: 'ACTIVE' | 'UPDATED' | 'CANCELLED';
   amount: number;
   note?: string;
   transactionCode: string;

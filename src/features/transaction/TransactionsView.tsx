@@ -76,7 +76,7 @@ export default function TransactionsView({
     if ((params.keyword || "") !== localSearch) {
       setLocalSearch(params.keyword || "");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.keyword]);
 
   const debouncedKeyword = useDebounce(localSearch, 300);
@@ -166,37 +166,39 @@ export default function TransactionsView({
   const getOverspendingTheme = (os: Transaction["overSpending"]) => {
     switch (os) {
       case "Critical":
-        return "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
+        return " text-rose-700  dark:text-rose-600";
       case "Warning":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/25 dark:text-amber-300";
+        return " text-amber-800  dark:text-amber-600";
       case "Fine":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-300";
+        return " text-emerald-800 dark:text-emerald-600";
     }
   };
 
   const getStatusComponent = (st: Transaction["status"]) => {
     switch (st) {
-      case "Completed":
+      case "ACTIVE":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold  text-emerald-800  dark:text-emerald-600">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-            Completed
+            Hoạt động
           </span>
         );
-      case "Pending":
+      case "UPDATED":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold text-amber-800 dark:text-amber-600">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
-            Pending
+            Đã cập nhật
           </span>
         );
-      case "Failed":
+      case "CANCELLED":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/20 dark:text-rose-300">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold text-rose-800 dark:text-rose-600">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
-            Failed
+            Đã hủy
           </span>
         );
+      default:
+        return null;
     }
   };
 
@@ -247,16 +249,16 @@ export default function TransactionsView({
             Kiểm tra cảnh báo
           </button>
           {showCreateButton && (
-          <button
-            id="transactions-new-entry-cta"
-            onClick={onNewEntryClick}
-            className="flex items-center bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-95 group transition-all duration-200 cursor-pointer text-center"
-          >
-            <span className="mr-2 text-md font-bold group-hover:rotate-90 transition-transform duration-300">
-              +
-            </span>
-            Tạo Giao dịch
-          </button>
+            <button
+              id="transactions-new-entry-cta"
+              onClick={onNewEntryClick}
+              className="flex items-center bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-95 group transition-all duration-200 cursor-pointer text-center"
+            >
+              <span className="mr-2 text-md font-bold group-hover:rotate-90 transition-transform duration-300">
+                +
+              </span>
+              Tạo Giao dịch
+            </button>
           )}
         </div>
       </div>
@@ -304,10 +306,10 @@ export default function TransactionsView({
               }}
               className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-700 font-bold appearance-none cursor-pointer pr-8"
             >
-              <option value="">All Status</option>
-              <option value="ACTIVE">Completed</option>
-              <option value="UPDATED">Pending</option>
-              <option value="CANCELLED">Failed</option>
+              <option value="">Tất cả trạng thái</option>
+              <option value="ACTIVE">Hoạt động</option>
+              <option value="UPDATED">Đã cập nhật</option>
+              <option value="CANCELLED">Đã hủy</option>
             </select>
             <ChevronDown className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
           </div>
@@ -432,17 +434,16 @@ export default function TransactionsView({
                 paginatedTransactions.map((tx) => {
                   const iconStyle = getIconComponent(tx.icon, tx.category);
                   return (
-                  <tr
+                    <tr
                       key={tx.id}
                       id={`tx-row-${tx.id}`}
                       onClick={() => navigate(`/transactions/${tx.id}`)}
-                      className={`hover:bg-slate-50/80 transition-colors group align-middle cursor-pointer ${
-                        tx.overSpending === 'Critical'
-                          ? 'bg-rose-50/40 dark:bg-rose-950/10'
-                          : tx.overSpending === 'Warning'
+                      className={`hover:bg-slate-50/80 transition-colors group align-middle cursor-pointer ${tx.overSpending === 'Critical'
+                        ? 'bg-rose-50/40 dark:bg-rose-950/10'
+                        : tx.overSpending === 'Warning'
                           ? 'bg-amber-50/40 dark:bg-amber-950/10'
                           : ''
-                      }`}
+                        }`}
                     >
                       {/* Date details */}
                       <td className="px-6 py-4.5 whitespace-nowrap">
@@ -490,9 +491,8 @@ export default function TransactionsView({
                       {/* Financial Amount Value (color-flagged) */}
                       <td className="px-6 py-4.5 text-right whitespace-nowrap font-mono">
                         <span
-                          className={`text-sm font-bold inline-flex items-center gap-1 ${
-                            tx.amount < 0 ? "text-red-500" : "text-emerald-600"
-                          }`}
+                          className={`text-sm font-bold inline-flex items-center gap-1 ${tx.amount < 0 ? "text-red-500" : "text-emerald-600"
+                            }`}
                         >
                           {tx.amount < 0 ? (
                             <>
@@ -529,60 +529,60 @@ export default function TransactionsView({
                       {/* Actions Popover menu — chỉ hiện nếu có ít nhất 1 action khả dụng */}
                       {(() => {
                         const txUserId = (tx as any).userId as number | undefined;
-                        const canEdit   = canEditTransaction(currentUserRole ?? null, txUserId, currentUserId ?? null);
+                        const canEdit = canEditTransaction(currentUserRole ?? null, txUserId, currentUserId ?? null);
                         const canDelete = canEditTransaction(currentUserRole ?? null, txUserId, currentUserId ?? null);
                         if (!canEdit && !canDelete) return null;
                         return (
-                      <td className="px-6 py-4.5 text-center whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
-                        <div className="inline-block text-left">
-                          <button
-                            onClick={() =>
-                              setActiveMenuId(
-                                activeMenuId === tx.id ? null : tx.id,
-                              )
-                            }
-                            className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                          >
-                            <MoreVertical className="h-5 w-5" />
-                          </button>
+                          <td className="px-6 py-4.5 text-center whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
+                            <div className="inline-block text-left">
+                              <button
+                                onClick={() =>
+                                  setActiveMenuId(
+                                    activeMenuId === tx.id ? null : tx.id,
+                                  )
+                                }
+                                className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                              >
+                                <MoreVertical className="h-5 w-5" />
+                              </button>
 
-                          {/* Floating items action dropdown */}
-                          {activeMenuId === tx.id && (
-                            <>
-                              <div
-                                onClick={() => setActiveMenuId(null)}
-                                className="fixed inset-0 z-10"
-                              />
-                              <div className="absolute right-12 top-0 mt-2 w-36 rounded-xl bg-white border border-slate-100 shadow-xl ring-2 ring-black/5 z-20 overflow-hidden divide-y divide-slate-50">
-                                {canEdit && (
-                                <button
-                                  onClick={() => {
-                                    onEditTransaction(tx);
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left gap-2 cursor-pointer"
-                                >
-                                  <Edit2 className="h-4 w-4 text-blue-600" />
-                                  Edit Record
-                                </button>
-                                )}
-                                {canDelete && (
-                                <button
-                                  onClick={() => {
-                                    onDeleteTransaction(tx);
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors text-left gap-2 cursor-pointer"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                  Hủy giao dịch
-                                </button>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </td>
+                              {/* Floating items action dropdown */}
+                              {activeMenuId === tx.id && (
+                                <>
+                                  <div
+                                    onClick={() => setActiveMenuId(null)}
+                                    className="fixed inset-0 z-10"
+                                  />
+                                  <div className="absolute right-12 top-0 mt-2 w-36 rounded-xl bg-white border border-slate-100 shadow-xl ring-2 ring-black/5 z-20 overflow-hidden divide-y divide-slate-50">
+                                    {canEdit && (
+                                      <button
+                                        onClick={() => {
+                                          onEditTransaction(tx);
+                                          setActiveMenuId(null);
+                                        }}
+                                        className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left gap-2 cursor-pointer"
+                                      >
+                                        <Edit2 className="h-4 w-4 text-blue-600" />
+                                        Edit Record
+                                      </button>
+                                    )}
+                                    {canDelete && (
+                                      <button
+                                        onClick={() => {
+                                          onDeleteTransaction(tx);
+                                          setActiveMenuId(null);
+                                        }}
+                                        className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors text-left gap-2 cursor-pointer"
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-600" />
+                                        Hủy giao dịch
+                                      </button>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </td>
                         );
                       })()}
                     </tr>

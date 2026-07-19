@@ -46,13 +46,13 @@ export function mapTransactionResponseToUi(
   const isVoucherChi = tx.type === 'EXPENSE' || tx.type === 'EXPENSE_DEBT';
   const type = isVoucherChi ? 'PHIẾU CHI' : 'PHIẾU THU';
 
-  let status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' = 'ACTIVE';
-  if (tx.status === 'ACTIVE' || tx.status === 'UPDATED') {
+  let status: 'ACTIVE' | 'CANCELLED' | 'UPDATED' = 'ACTIVE';
+  if (tx.status === 'ACTIVE') {
     status = 'ACTIVE';
+  } else if (tx.status === 'UPDATED') {
+    status = 'UPDATED';
   } else if (tx.status === 'CANCELLED') {
     status = 'CANCELLED';
-  } else {
-    status = 'INACTIVE';
   }
 
   let riskStatus = 'FINE (Ổn định)';

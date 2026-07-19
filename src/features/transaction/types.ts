@@ -12,8 +12,16 @@ export interface Transaction {
   category: string;
   amount: number; // Negative for expense, positive for revenue
   overSpending: "Critical" | "Warning" | "Fine";
-  status: "Completed" | "Pending" | "Failed";
+  status: 'ACTIVE' | 'CANCELLED' | 'UPDATED';
   icon: "building" | "payment" | "maintenance" | "cloud" | "payroll" | "other";
+  // Metadata fields for edit mode pre-fill
+  categoryId?: number;
+  fundId?: number;
+  partnerId?: number;
+  debtId?: number;
+  rawNote?: string;
+  rawType?: string;
+  rawDate?: string;
 }
 
 export interface Budget {

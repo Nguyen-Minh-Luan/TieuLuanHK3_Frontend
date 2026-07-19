@@ -20,7 +20,7 @@ export interface Transaction {
   apiId?: number; // Backend database ID (optional for mock compatibility)
   debtId?: number; // Backend debt ID if linked
   type: 'PHIẾU CHI' | 'PHIẾU THU';
-  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED';
+  status: 'ACTIVE' | 'CANCELLED' | 'UPDATED';
   riskStatus: string; // e.g. "FINE (Ổn định)" or "WARNING (Cảnh báo)" or "RISK (Nguy cơ)"
   sourceOfFunds: string;
   category: string;

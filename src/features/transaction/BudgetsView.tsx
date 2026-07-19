@@ -31,7 +31,7 @@ export default function BudgetsView({ transactions }: BudgetsViewProps) {
     // Map of categories and values
     const actualSpent: Record<string, number> = {};
     transactions.forEach((tx) => {
-      if (tx.amount < 0 && tx.status !== "Failed") {
+      if (tx.amount < 0 && tx.status !== "CANCELLED") {
         const cat = tx.category;
         actualSpent[cat] = (actualSpent[cat] || 0) + Math.abs(tx.amount);
       }

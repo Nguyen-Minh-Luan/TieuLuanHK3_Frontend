@@ -132,7 +132,9 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
                   ? categoriesMap[t.categoryId] || "Other"
                   : "Other";
                 const amountVal = t.type === "INCOME" ? t.amount : -t.amount;
-                const statusLabel = t.status === "ACTIVE" ? "Completed" : "Pending";
+                let statusLabel = "Hoạt động";
+                if (t.status === "UPDATED") statusLabel = "Đã cập nhật";
+                else if (t.status === "CANCELLED") statusLabel = "Đã hủy";
                 const { icon: IconComponent, color: iconColor } = getCategoryIcon(
                   categoryName,
                   t.type
@@ -180,16 +182,24 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
                         <div
                           className={cn(
                             "w-2 h-2 rounded-full",
-                            statusLabel === "Completed"
+                            statusLabel === "Hoạt động"
                               ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                              : statusLabel === "Đã cập nhật"
+                              ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                              : statusLabel === "Đã hủy"
+                              ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]"
                               : "bg-slate-300"
                           )}
                         />
                         <span
                           className={cn(
                             "text-xs font-bold",
-                            statusLabel === "Completed"
+                            statusLabel === "Hoạt động"
                               ? "text-emerald-600"
+                              : statusLabel === "Đã cập nhật"
+                              ? "text-amber-600"
+                              : statusLabel === "Đã hủy"
+                              ? "text-rose-600"
                               : "text-slate-400"
                           )}
                         >

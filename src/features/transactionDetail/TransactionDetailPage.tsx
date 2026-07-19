@@ -64,8 +64,8 @@ export default function TransactionDetailPage() {
         <Header showSearch={false} />
 
         {/* Content viewport area */}
-        <main className="p-6 md:p-10 max-w-7xl w-full mx-auto flex-1">
-          
+        <main className="flex-1 px-8 py-8 overflow-y-auto">
+
           {/* Tối giản Header của trang chi tiết */}
           <div className="mb-6 flex items-center gap-4">
             <button

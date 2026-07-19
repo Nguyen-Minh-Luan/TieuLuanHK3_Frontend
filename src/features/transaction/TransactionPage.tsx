@@ -170,11 +170,6 @@ export default function TransactionPage() {
         overSpending = "Critical";
       }
 
-      let status: "Completed" | "Pending" | "Failed" = "Completed";
-      if (tx.status === "ACTIVE") status = "Completed";
-      else if (tx.status === "UPDATED") status = "Pending";
-      else if (tx.status === "CANCELLED") status = "Failed";
-
       let icon: Transaction["icon"] = "other";
       const catUpper = categoryName.toUpperCase();
       if (catUpper.includes("PROCUR")) icon = "building";
@@ -226,7 +221,7 @@ export default function TransactionPage() {
         category: categoryName,
         amount,
         overSpending,
-        status,
+        status: tx.status,
         icon,
         // Metadata fields for edit mode pre-fill
         categoryId: tx.categoryId,
@@ -236,7 +231,7 @@ export default function TransactionPage() {
         rawNote: tx.note,
         rawType: tx.type,
         rawDate: tx.transactionDate,
-      } as any;
+      };
     },
     [categoriesMap],
   );
@@ -451,7 +446,7 @@ export default function TransactionPage() {
         />
 
         {/* Dynamic Nested Screen Component */}
-        <div className="p-6 md:p-8 flex-1 w-full max-w-7xl mx-auto">
+        <div className="flex-1 px-8 py-8 space-y-8 overflow-y-auto">
           {renderCurrentViewContents()}
         </div>
 
