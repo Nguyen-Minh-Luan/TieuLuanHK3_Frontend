@@ -14,6 +14,7 @@ import PartnerPage from "./features/partner/PartnerPage";
 import ReconciliationPage from "./features/reconciliation/ReconciliationPage";
 import ReconciliationDetailPage from "./features/reconciliation/ReconciliationDetailPage";
 import FundTransferPage from "./features/fundTransfer/FundTransferPage";
+import DocumentPage from "./features/document/DocumentPage";
 
 /**
  * Route structure:
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
       { path: "/debt",      element: <DebtPage /> },
       { path: "/category",  element: <CategoryPage /> },
       { path: "/partners",  element: <PartnerPage /> },
+      { path: "/documents", element: <DocumentPage /> },
 
       // ── Reconciliation: ADMIN(1), Kế toán Quỹ(3), Tổng hợp(4) ──
       {

@@ -48,12 +48,37 @@ const transactionService = {
   },
 
   // Create a new transaction (returns transaction and optional spending warning)
-  create: async (data: TransactionRequest) => {
-    const res = await apiClient.post<ApiResponse<TransactionWithWarning>>(
-      "/transactions",
-      data
-    );
-    return res.data;
+  create: async (data: TransactionRequest, files?: File[], descriptions?: string[]) => {
+    if (files && files.length > 0) {
+      const formData = new FormData();
+      formData.append(
+        "transaction",
+        new Blob([JSON.stringify(data)], { type: "application/json" })
+      );
+      
+      files.forEach((file, index) => {
+        formData.append("files", file);
+        const desc = (descriptions && descriptions.length > index) ? descriptions[index] : "";
+        formData.append("descriptions", desc);
+      });
+
+      const res = await apiClient.post<ApiResponse<TransactionWithWarning>>(
+        "/transactions/with-documents",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return res.data;
+    } else {
+      const res = await apiClient.post<ApiResponse<TransactionWithWarning>>(
+        "/transactions",
+        data
+      );
+      return res.data;
+    }
   },
 
   // Update an existing transaction

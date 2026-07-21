@@ -273,7 +273,7 @@ export default function TransactionPage() {
     );
   };
 
-  const handleCreateOrUpdateTx = async (formData: any) => {
+  const handleCreateOrUpdateTx = async (formData: any, files?: File[], descriptions?: string[]) => {
     try {
       if (editingTransaction) {
         await dispatch(
@@ -285,7 +285,7 @@ export default function TransactionPage() {
         toast.success("Đã cập nhật giao dịch thành công!");
       } else {
         const result = await dispatch(
-          createTransaction(formData as TransactionRequest),
+          createTransaction({ data: formData as TransactionRequest, files, descriptions }),
         ).unwrap();
         const warning = result.data?.warning;
         if (warning && warning.hasWarning) {

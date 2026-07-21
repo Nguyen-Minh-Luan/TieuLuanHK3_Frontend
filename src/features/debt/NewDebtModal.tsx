@@ -5,6 +5,7 @@ import { fetchCategoryTree } from '../../store/slices/categorySlice';
 import partnerService, { type PartnerDTO } from '../../services/partnerService';
 import type { DebtDTO, DebtRequest } from './apiTypes';
 import type { CategoryTreeNode } from '../../services/categoryService';
+import { toLocalDateInputValue } from '../transactionDetail/mappers';
 
 interface NewDebtModalProps {
   isOpen: boolean;
@@ -85,8 +86,8 @@ export default function NewDebtModal({
       if (editDebtData) {
         setTitle(editDebtData.title || '');
         setDebtType(editDebtData.debtType);
-        setDebtDate(editDebtData.debtDate ? editDebtData.debtDate.split('T')[0] : '');
-        setDueDate(editDebtData.dueDate ? editDebtData.dueDate.split('T')[0] : '');
+        setDebtDate(editDebtData.debtDate ? toLocalDateInputValue(editDebtData.debtDate) : '');
+        setDueDate(editDebtData.dueDate ? toLocalDateInputValue(editDebtData.dueDate) : '');
         setTotalAmount(editDebtData.totalAmount);
         setPartnerId(editDebtData.partnerId ? String(editDebtData.partnerId) : '');
         setCategoryId(editDebtData.categoryId ? String(editDebtData.categoryId) : '');
@@ -95,7 +96,7 @@ export default function NewDebtModal({
         setTitle('');
         setDebtType('PAYABLE');
         // Default to today
-        setDebtDate(new Date().toISOString().split('T')[0]);
+        setDebtDate(toLocalDateInputValue(new Date()));
         setDueDate('');
         setTotalAmount(0);
         setPartnerId('');

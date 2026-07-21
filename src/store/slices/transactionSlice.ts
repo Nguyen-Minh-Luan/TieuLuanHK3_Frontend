@@ -53,9 +53,12 @@ export const fetchTransactions = createAsyncThunk(
 /** POST /transactions — create a new transaction */
 export const createTransaction = createAsyncThunk(
   "transaction/create",
-  async (data: TransactionRequest, { rejectWithValue }) => {
+  async (
+    payload: { data: TransactionRequest; files?: File[]; descriptions?: string[] },
+    { rejectWithValue }
+  ) => {
     try {
-      return await transactionService.create(data);
+      return await transactionService.create(payload.data, payload.files, payload.descriptions);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message ?? "Tạo giao dịch thất bại");
     }

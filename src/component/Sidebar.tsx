@@ -27,6 +27,7 @@ const ALL_MENU_ITEMS = [
   { icon: Handshake,       label: "Partners",       path: "/partners" },
   { icon: FileText,        label: "Reconciliation", path: "/reconciliation" },
   { icon: FileText,        label: "Fund Transfer",  path: "/fund-transfer" },
+  { icon: FileText,        label: "Documents",      path: "/documents" },
   { icon: User,            label: "Users",          path: "/users" },
 ];
 

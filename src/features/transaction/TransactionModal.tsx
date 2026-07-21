@@ -26,6 +26,7 @@ import transactionService from '../../services/transactionService';
 import reconciliationService from '../../services/reconciliationService';
 import { fetchFunds } from '../../store/slices/fundSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
+import { toLocalDateInputValue } from '../transactionDetail/mappers';
 
 interface DebtOption {
   id: number;
@@ -38,7 +39,7 @@ interface DebtOption {
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: TransactionRequest) => Promise<void> | void;
+  onSave: (payload: TransactionRequest, files?: File[], descriptions?: string[]) => Promise<void> | void;
   editingTransaction: Transaction | null;
 }
 
@@ -60,6 +61,8 @@ export default function TransactionModal({
   // === MỚI: Chứng từ gốc ===
   const [originalDocuments, setOriginalDocuments] = useState('');
   const [accompaniedBy, setAccompaniedBy] = useState('');
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [documentDescriptions, setDocumentDescriptions] = useState<string[]>([]);
 
   // === MỚI: Khoản nợ liên kết ===
   const [debtId, setDebtId] = useState<number | null>(null);
@@ -152,7 +155,7 @@ export default function TransactionModal({
       
       const d = ext.rawDate ? new Date(ext.rawDate) : new Date();
       if (!isNaN(d.getTime())) {
-        setDate(d.toISOString().split('T')[0]);
+        setDate(toLocalDateInputValue(d));
         setTime(d.toTimeString().split(' ')[0].substring(0, 5));
       }
     } else if (isOpen) {
@@ -165,9 +168,11 @@ export default function TransactionModal({
       setOriginalDocuments('');
       setAccompaniedBy('');
       setDebtId(null);
+      setDocumentFiles([]);
+      setDocumentDescriptions([]);
 
       const now = new Date();
-      setDate(now.toISOString().split('T')[0]);
+      setDate(toLocalDateInputValue(now));
       setTime(now.toTimeString().split(' ')[0].substring(0, 5));
     }
   }, [editingTransaction, isOpen]);
@@ -297,7 +302,24 @@ export default function TransactionModal({
     try {
       setSubmitting(true);
       setFormError(null);
-      await onSave(payload);
+      
+      // FE validation for files
+      if (!editingTransaction && documentFiles.length > 0) {
+        for (let f of documentFiles) {
+          if (f.size > 5 * 1024 * 1024) {
+            setFormError(`Kích thước file ${f.name} vượt quá 5MB`);
+            setSubmitting(false);
+            return;
+          }
+          if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+            setFormError(`File ${f.name} không đúng định dạng (chỉ nhận jpeg, png, webp)`);
+            setSubmitting(false);
+            return;
+          }
+        }
+      }
+
+      await onSave(payload, documentFiles, documentDescriptions);
       onClose();
     } catch (err: any) {
       setFormError(err?.message || err || 'Lưu giao dịch thất bại!');
@@ -585,33 +607,74 @@ export default function TransactionModal({
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-slate-500" />
                   <label className="text-sm font-bold text-slate-800 font-headline">
-                    Chứng từ gốc kèm theo
-                    <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Không bắt buộc)</span>
+                    Chứng từ gốc (Mã / Chi tiết cũ)
                   </label>
                 </div>
                 <input
                   type="text"
                   value={originalDocuments}
-                  onChange={(e) => setOriginalDocuments(e.target.value)}
-                  placeholder="Vd: Hóa đơn VAT số 0012345, Hợp đồng ABC..."
-                  className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
+                  readOnly
+                  placeholder="Sẽ được tự động sinh khi có file đính kèm..."
+                  className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent rounded-xl py-3.5 px-4 text-sm font-semibold text-slate-500 cursor-not-allowed"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-800 block font-headline">
-                  Kèm theo (số lượng chứng từ)
-                  <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Không bắt buộc)</span>
-                </label>
-                <input
-                  type="text"
-                  value={accompaniedBy}
-                  onChange={(e) => setAccompaniedBy(e.target.value)}
-                  placeholder="Vd: 01 bản hóa đơn, 02 bản hợp đồng..."
-                  className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
-                />
-              </div>
+              {!editingTransaction ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-800 block font-headline">
+                    Tải lên ảnh chứng từ
+                    <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Tối đa 5MB/ảnh)</span>
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg, image/png, image/webp"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const files = Array.from(e.target.files);
+                        setDocumentFiles(files);
+                        setDocumentDescriptions(files.map(() => ""));
+                      }
+                    }}
+                    className="w-full bg-[#f4f6f8] border border-transparent focus:border-primary rounded-xl py-2 px-3 text-sm font-semibold transition-all text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#003178]/10 file:text-[#003178] hover:file:bg-[#003178]/20"
+                  />
+                  {documentFiles.length > 0 && (
+                    <p className="text-xs text-[#003178] font-bold mt-1">Đã chọn {documentFiles.length} tệp đính kèm.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-800 block font-headline">
+                    Kèm theo (số lượng chứng từ)
+                  </label>
+                  <input
+                    type="text"
+                    value={accompaniedBy}
+                    onChange={(e) => setAccompaniedBy(e.target.value)}
+                    placeholder="Vd: 01 bản hóa đơn..."
+                    className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
+                  />
+                </div>
+              )}
             </div>
+            
+            {!editingTransaction && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                <div></div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-800 block font-headline">
+                    Kèm theo (số lượng chứng từ)
+                  </label>
+                  <input
+                    type="text"
+                    value={accompaniedBy}
+                    onChange={(e) => setAccompaniedBy(e.target.value)}
+                    placeholder="Vd: 01 bản hóa đơn..."
+                    className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Real-time Preview Warning Banner */}
             {type === 'expense' && categoryId && parseFloat(amount) > 0 && (

@@ -37,6 +37,15 @@ export const formatTime = (isoStr?: string): string => {
   }
 };
 
+export const toLocalDateInputValue = (d: Date | string): string => {
+  const dateObj = typeof d === 'string' ? new Date(d) : d;
+  if (isNaN(dateObj.getTime())) return '';
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export function mapTransactionResponseToUi(
   tx: TransactionResponse,
   categoriesMap: Record<number, string>,
@@ -124,7 +133,7 @@ export function mapUiToTransactionRequest(
   const partner = partners.find(p => p.name === ui.counterparty.name);
 
   // Parse DD/MM/YYYY to YYYY-MM-DD
-  let transactionDate = originalTx.transactionDate.split('T')[0];
+  let transactionDate = toLocalDateInputValue(originalTx.transactionDate);
   if (ui.date) {
     const parts = ui.date.split('/');
     if (parts.length === 3) {

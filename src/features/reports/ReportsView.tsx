@@ -32,7 +32,12 @@ const fmtDate = (d?: string) => {
 
 const toInputDate = (d?: string) => {
   if (!d) return "";
-  return new Date(d).toISOString().split("T")[0];
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "";
+  const year = dt.getFullYear();
+  const month = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────

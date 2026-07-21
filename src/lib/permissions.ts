@@ -26,6 +26,7 @@ export const ROLE_MENU_KEYS: Record<number, string[]> = {
     "Reconciliation",
     "Fund Transfer",
     "Users",
+    "Documents",
   ],
   2: [
     "Dashboard",
@@ -34,6 +35,7 @@ export const ROLE_MENU_KEYS: Record<number, string[]> = {
     "Budgets",
     "Categories",
     "Partners",
+    "Documents",
   ],
   3: [
     "Dashboard",
@@ -41,6 +43,7 @@ export const ROLE_MENU_KEYS: Record<number, string[]> = {
     "Budgets",
     "Reconciliation",
     "Fund Transfer",
+    "Documents",
   ],
   4: [
     "Dashboard",
@@ -49,6 +52,7 @@ export const ROLE_MENU_KEYS: Record<number, string[]> = {
     "Reports",
     "Reconciliation",
     "Fund Transfer",
+    "Documents",
   ],
 };
 
@@ -69,6 +73,7 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
     "/partners",
     "/reconciliation",
     "/fund-transfer",
+    "/documents",
   ],
   2: [
     "/home",
@@ -78,6 +83,7 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
     "/debt",
     "/category",
     "/partners",
+    "/documents",
   ],
   3: [
     "/home",
@@ -86,6 +92,7 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
     "/budget",
     "/reconciliation",
     "/fund-transfer",
+    "/documents",
   ],
   4: [
     "/home",
@@ -95,6 +102,7 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
     "/report",
     "/reconciliation",
     "/fund-transfer",
+    "/documents",
   ],
 };
 

@@ -11,6 +11,7 @@ import debtReducer from "./slices/debtSlice";
 import partnerReducer from "./slices/partnerSlice";
 import reconciliationReducer from "./slices/reconciliationSlice";
 import aiInsightReducer from "./slices/aiInsightSlice";
+import documentReducer from "./slices/documentSlice";
 
 const appReducer = combineReducers({
   auth: authReducer,
@@ -24,6 +25,7 @@ const appReducer = combineReducers({
   partner: partnerReducer,
   reconciliation: reconciliationReducer,
   aiInsight: aiInsightReducer,
+  document: documentReducer,
 });
 
 export type AppState = ReturnType<typeof appReducer>;
