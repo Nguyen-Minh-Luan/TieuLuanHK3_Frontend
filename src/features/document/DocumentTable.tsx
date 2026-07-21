@@ -17,7 +17,7 @@ interface DocumentTableProps {
   onLink: (doc: OriginalDocumentDTO) => void;
   onUnlink: (doc: OriginalDocumentDTO) => void;
   isLoading: boolean;
-  canModify: boolean;
+  userRole: number | null; // 1=Admin, 2=KeToan, 3=ThuQuy, 4=TongHop, ...
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -34,10 +34,13 @@ export default function DocumentTable({
   onLink,
   onUnlink,
   isLoading,
-  canModify,
+  userRole,
 }: DocumentTableProps) {
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalElements);
+
+  // Chỉ Admin (role=1) mới có quyền xóa, gỡ, gắn chứng từ
+  const isAdmin = userRole === 1;
 
   return (
     <div id="document-table-wrapper" className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,31,120,0.02)] overflow-hidden font-sans">
@@ -131,19 +134,23 @@ export default function DocumentTable({
 
                   <td className="py-4 px-5 text-center">
                     <div className="flex items-center justify-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                      {/* Xem ảnh — tất cả role đã đăng nhập */}
                       <button
                         title="Xem ảnh"
+                        id={`btn-preview-doc-${doc.id}`}
                         onClick={() => onPreview(doc)}
                         className="p-1.5 hover:bg-[#eff6ff] rounded-lg text-[#3b82f6] hover:text-[#1d4ed8] transition-all cursor-pointer"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
 
-                      {canModify && (
+                      {/* Các thao tác ghi — chỉ ROLE_ADMIN (role=1) */}
+                      {isAdmin && (
                         <>
                           {doc.transactionId ? (
                             <button
                               title="Gỡ giao dịch"
+                              id={`btn-unlink-doc-${doc.id}`}
                               onClick={() => onUnlink(doc)}
                               className="p-1.5 hover:bg-[#fff7ed] rounded-lg text-[#ea580c] hover:text-[#c2410c] transition-all cursor-pointer"
                             >
@@ -152,6 +159,7 @@ export default function DocumentTable({
                           ) : (
                             <button
                               title="Gắn giao dịch"
+                              id={`btn-link-doc-${doc.id}`}
                               onClick={() => onLink(doc)}
                               className="p-1.5 hover:bg-[#f0fdf4] rounded-lg text-[#16a34a] hover:text-[#15803d] transition-all cursor-pointer"
                             >
@@ -160,6 +168,7 @@ export default function DocumentTable({
                           )}
                           <button
                             title="Xóa"
+                            id={`btn-delete-doc-${doc.id}`}
                             onClick={() => onDelete(doc)}
                             className="p-1.5 hover:bg-[#fee2e2] rounded-lg text-[#ef4444] hover:text-[#b91c1c] transition-all cursor-pointer"
                           >
@@ -176,7 +185,7 @@ export default function DocumentTable({
                 <td colSpan={5} className="py-16 text-center">
                   <FileImage className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3" />
                   <p className="text-sm text-[#94a3b8] font-medium">Không tìm thấy chứng từ nào.</p>
-                  <p className="text-xs text-[#cbd5e1] mt-1">Thử thay đổi bộ lọc hoặc tải lên chứng từ mới.</p>
+                  <p className="text-xs text-[#cbd5e1] mt-1">Thử thay đổi bộ lọc hoặc tìm kiếm theo mã chứng từ.</p>
                 </td>
               </tr>
             )}

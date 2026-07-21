@@ -1,6 +1,7 @@
 import { X, Calendar, ClipboardList, ShieldAlert, Coins, Tag } from 'lucide-react';
 import type { DebtDTO } from './apiTypes';
 import DebtPaymentsList from './DebtPaymentsList';
+import { formatVND } from '../../utils/formatCurrency';
 
 interface DebtDetailsModalProps {
   debt: DebtDTO | null;
@@ -8,10 +9,6 @@ interface DebtDetailsModalProps {
   onMarkAsPaid: (id: number) => void;
 }
 
-const formatVND = (num?: number) => {
-  if (num == null) return '0 đ';
-  return new Intl.NumberFormat('vi-VN').format(num) + ' đ';
-};
 
 const formatDate = (isoDate?: string) => {
   if (!isoDate) return '—';

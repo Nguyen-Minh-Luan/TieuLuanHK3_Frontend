@@ -1,11 +1,11 @@
 import type { DebtSummary } from './apiTypes';
+import { formatVND } from '../../utils/formatCurrency';
 
 interface OverviewCardsProps {
   summary: DebtSummary | null;
 }
 
-const formatVND = (num: number) =>
-  new Intl.NumberFormat('vi-VN').format(num) + ' đ';
+
 
 export default function OverviewCards({ summary }: OverviewCardsProps) {
   return (

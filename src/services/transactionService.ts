@@ -90,6 +90,22 @@ const transactionService = {
     return res.data.data;
   },
 
+  // Attach new documents to an existing transaction (PATCH multipart)
+  addDocuments: async (id: number, files: File[], descriptions?: string[]) => {
+    const formData = new FormData();
+    files.forEach((file, index) => {
+      formData.append("files", file);
+      const desc = (descriptions && descriptions.length > index) ? descriptions[index] : "";
+      formData.append("descriptions", desc);
+    });
+    const res = await apiClient.patch<ApiResponse<any[]>>(
+      `/transactions/${id}/documents`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return res.data.data;
+  },
+
   // Cancel/Delete a transaction (soft delete & refund)
   cancel: async (id: number) => {
     const res = await apiClient.delete<ApiResponse<void>>(

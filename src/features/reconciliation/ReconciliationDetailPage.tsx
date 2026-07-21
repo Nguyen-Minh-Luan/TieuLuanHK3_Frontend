@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { formatVND } from "../../utils/formatCurrency";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "motion/react";
 import {
@@ -40,10 +41,6 @@ function formatDateTime(iso?: string) {
   return new Date(iso).toLocaleString("vi-VN");
 }
 
-function formatCurrency(amount?: number) {
-  if (amount === undefined || amount === null) return "—";
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
-}
 
 export default function ReconciliationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -287,7 +284,7 @@ export default function ReconciliationDetailPage() {
             <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
               <div className="text-sm font-semibold text-slate-500 mb-1">Số dư theo hệ thống</div>
               <div className="text-3xl font-mono font-bold text-slate-800">
-                {formatCurrency(item.closingBalanceSystem)}
+                {formatVND(item.closingBalanceSystem)}
               </div>
               <div className="text-xs text-slate-400 mt-2">
                 Tính toán dựa trên các giao dịch đến hết ngày {formatDate(item.periodEnd)}
@@ -306,7 +303,7 @@ export default function ReconciliationDetailPage() {
                 />
               ) : (
                 <div className="text-3xl font-mono font-bold text-slate-800">
-                  {formatCurrency(item.actualBalance)}
+                  {formatVND(item.actualBalance)}
                 </div>
               )}
             </div>
@@ -320,7 +317,7 @@ export default function ReconciliationDetailPage() {
             <div className="text-3xl font-mono font-bold">
               {diff !== undefined && diff !== null ? (
                 <span className={diff === 0 ? "text-emerald-600" : diff > 0 ? "text-blue-600" : "text-red-500"}>
-                  {diff > 0 ? "+" : ""}{formatCurrency(diff)}
+                  {diff > 0 ? "+" : ""}{formatVND(diff)}
                 </span>
               ) : (
                 <span className="text-slate-300">—</span>

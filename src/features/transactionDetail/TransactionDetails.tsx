@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Transaction, RelatedDebt } from './types';
 import type { SpendingWarning } from '../transaction/apiTypes';
 import { useAppSelector } from '../../hooks/useAppDispatch';
+import { formatVND } from '../../utils/formatCurrency';
 import {
   Edit3,
   Printer,
@@ -62,12 +63,7 @@ export default function TransactionDetails({
     setIsEditing(false);
   };
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(val);
-  };
+
 
   const getRiskColorClass = (risk: string) => {
     if (risk.toUpperCase().includes('FINE') || risk.toUpperCase().includes('ỔN ĐỊNH')) {
@@ -107,8 +103,7 @@ export default function TransactionDetails({
             Chi tiết Giao dịch
           </h2>
           <div className="mt-4 flex items-center gap-3">
-            <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest shadow-sm transition-all uppercase ${
-              transaction.status === 'ACTIVE'
+            <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest shadow-sm transition-all uppercase ${transaction.status === 'ACTIVE'
                 ? 'bg-[#003178] text-white'
                 : transaction.status === 'UPDATED'
                   ? 'bg-amber-500 text-white'
@@ -190,13 +185,13 @@ export default function TransactionDetails({
             <div className={`rounded-lg p-3 text-center ${spendingWarning.level === 'CRITICAL' ? 'bg-rose-100/60' : 'bg-amber-100/60'}`}>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#737783] mb-1">Tháng này</p>
               <p className={`font-black text-base tabular-nums ${spendingWarning.level === 'CRITICAL' ? 'text-rose-700' : 'text-amber-700'}`}>
-                {spendingWarning.currentMonthTotal?.toLocaleString('vi-VN') ?? '—'}
+                {spendingWarning.currentMonthTotal ? formatVND(spendingWarning.currentMonthTotal) : '—'}
               </p>
             </div>
             <div className="bg-white/70 rounded-lg p-3 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#737783] mb-1">Trung bình lịch sử</p>
               <p className="font-black text-base tabular-nums text-[#434652]">
-                {spendingWarning.historicalAverage?.toLocaleString('vi-VN') ?? '—'}
+                {spendingWarning.historicalAverage ? formatVND(spendingWarning.historicalAverage) : '—'}
               </p>
             </div>
             <div className={`rounded-lg p-3 text-center ${spendingWarning.level === 'CRITICAL' ? 'bg-rose-100/60' : 'bg-amber-100/60'}`}>
@@ -228,8 +223,7 @@ export default function TransactionDetails({
                   <span className="px-3 py-1 rounded-lg bg-[#cde5ff] text-[#001d32] text-xs font-bold uppercase tracking-wider">
                     {transaction.type}
                   </span>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                    transaction.status === 'ACTIVE'
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${transaction.status === 'ACTIVE'
                       ? 'bg-[#d9e2ff] text-[#001945]'
                       : transaction.status === 'UPDATED'
                         ? 'bg-amber-100 text-amber-800'
@@ -337,7 +331,7 @@ export default function TransactionDetails({
                     ) : (
                       <>
                         <span className="font-headline text-4xl lg:text-5xl font-black tracking-tighter text-white">
-                          {formatCurrency(transaction.amount)}
+                          {formatVND(transaction.amount)}
                         </span>
                         <span className="text-[#b0c6ff] font-bold text-lg uppercase tracking-tighter">
                           {transaction.currency}
@@ -458,16 +452,14 @@ export default function TransactionDetails({
                   {relatedDebt ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-black tracking-wider ${
-                          relatedDebt.debtType === 'PAYABLE' 
-                            ? 'bg-amber-100 text-amber-800' 
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-black tracking-wider ${relatedDebt.debtType === 'PAYABLE'
+                            ? 'bg-amber-100 text-amber-800'
                             : 'bg-emerald-100 text-emerald-800'
-                        }`}>
+                          }`}>
                           {relatedDebt.debtType === 'PAYABLE' ? 'Đang trả nợ' : 'Đang thu nợ'}
                         </span>
-                        <span className={`text-[9px] font-bold uppercase ${
-                          relatedDebt.isPaid ? 'text-emerald-600' : 'text-amber-600'
-                        }`}>
+                        <span className={`text-[9px] font-bold uppercase ${relatedDebt.isPaid ? 'text-emerald-600' : 'text-amber-600'
+                          }`}>
                           {relatedDebt.isPaid ? 'Đã hoàn tất' : 'Chưa hoàn tất'}
                         </span>
                       </div>
@@ -478,15 +470,15 @@ export default function TransactionDetails({
                       <div className="grid grid-cols-3 gap-1 pt-2 border-t border-[#f2f4f6] text-center">
                         <div>
                           <p className="text-[8px] font-bold text-[#737783] uppercase">Tổng nợ</p>
-                          <p className="text-[9px] font-black text-[#191c1e] truncate">{formatCurrency(relatedDebt.totalAmount)}</p>
+                          <p className="text-[9px] font-black text-[#191c1e] truncate">{formatVND(relatedDebt.totalAmount)}</p>
                         </div>
                         <div>
                           <p className="text-[8px] font-bold text-[#737783] uppercase">Đã trả</p>
-                          <p className="text-[9px] font-black text-emerald-600 truncate">{formatCurrency(relatedDebt.paidAmount)}</p>
+                          <p className="text-[9px] font-black text-emerald-600 truncate">{formatVND(relatedDebt.paidAmount)}</p>
                         </div>
                         <div>
                           <p className="text-[8px] font-bold text-[#737783] uppercase">Còn lại</p>
-                          <p className="text-[9px] font-black text-rose-600 truncate">{formatCurrency(relatedDebt.remainingAmount)}</p>
+                          <p className="text-sm font-semibold font-mono text-amber-700">{formatVND(relatedDebt.remainingAmount)}</p>
                         </div>
                       </div>
                     </div>

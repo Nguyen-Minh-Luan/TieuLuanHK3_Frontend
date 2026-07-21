@@ -6,6 +6,7 @@ import {
   Percent,
   BarChartHorizontal,
 } from "lucide-react";
+import { formatVND } from "../utils/formatCurrency";
 
 interface KPICardsProps {
   totalBalance: number | null;
@@ -20,15 +21,7 @@ export function KPICards({
   totalExpense,
   netProfitMargin,
 }: KPICardsProps) {
-  const formatCurrency = (val: number | null) => {
-    if (val === null || val === undefined) return "$0.00";
-    return val.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
+
 
   const formatPercentage = (val: number | null) => {
     if (val === null || val === undefined) return "0.0%";
@@ -55,7 +48,7 @@ export function KPICards({
           Total Balance
         </div>
         <div className="text-4xl font-black text-brand-text font-display">
-          {formatCurrency(totalBalance)}
+          {formatVND(totalBalance)}
         </div>
       </motion.div>
 
@@ -75,7 +68,7 @@ export function KPICards({
           Income
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
-          {formatCurrency(totalIncome)}
+          {formatVND(totalIncome)}
         </div>
         <div className="text-[10px] text-slate-400 mt-2 italic flex items-center gap-1">
           Inflow total
@@ -98,7 +91,7 @@ export function KPICards({
           Expenses
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
-          {formatCurrency(totalExpense)}
+          {formatVND(totalExpense)}
         </div>
         <div className="text-[10px] text-red-600 mt-2 font-bold flex items-center gap-1">
           Outflow total

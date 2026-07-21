@@ -29,6 +29,7 @@ import { useEffect } from "react";
 import { useAppSelector } from "../../hooks/useAppDispatch";
 import { useDebounce } from "../../hooks/useDebounce";
 import { canCreateTransaction, canEditTransaction } from "../../lib/permissions";
+import { formatVND } from "../../utils/formatCurrency";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -498,14 +499,14 @@ export default function TransactionsView({
                             <>
                               <span>▼</span>
                               <span>
-                                -${Math.abs(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                -{formatVND(Math.abs(tx.amount))}
                               </span>
                             </>
                           ) : (
                             <>
                               <span>▲</span>
                               <span>
-                                +${tx.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                +{formatVND(tx.amount)}
                               </span>
                             </>
                           )}

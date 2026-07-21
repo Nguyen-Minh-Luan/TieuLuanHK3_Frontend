@@ -18,6 +18,7 @@ import type { DebtDTO } from './apiTypes';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import { fetchDebtPayments } from '../../store/slices/debtSlice';
 import DebtPaymentsList from './DebtPaymentsList';
+import { formatVND } from '../../utils/formatCurrency';
 
 interface DebtTableProps {
   debts: DebtDTO[];
@@ -31,10 +32,6 @@ interface DebtTableProps {
   onViewDetails: (debt: DebtDTO) => void;
 }
 
-const formatVND = (num?: number) => {
-  if (num == null) return '—';
-  return new Intl.NumberFormat('vi-VN').format(num) + ' đ';
-};
 
 const formatDate = (isoDate?: string) => {
   if (!isoDate) return '—';

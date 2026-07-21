@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PlusCircle, Search, Edit2, ShieldAlert, CheckCircle2, AlertTriangle, Clock, HelpCircle, Trash2 } from 'lucide-react';
 import type { Fund } from './types';
+import { formatVND } from '../../utils/formatCurrency';
 
 interface BudgetsTabProps {
   funds: Fund[];
@@ -26,10 +27,7 @@ export default function BudgetsTab({
 }: BudgetsTabProps) {
   const [localSearchText, setLocalSearchText] = useState('');
 
-  // Format currency with de-DE locale to get dots, and append '$' to match the screenshot "1.500.000$"
-  const formatValue = (val: number) => {
-    return val.toLocaleString('de-DE') + '$';
-  };
+
 
   // Combine global search with local tab search
   const query = (localSearchText || globalSearchText || '').trim().toLowerCase();
@@ -175,14 +173,14 @@ export default function BudgetsTab({
                         {/* Total Capital */}
                         <td className="py-5 px-4 text-right">
                           <span className="text-sm font-semibold text-slate-700 font-mono">
-                            {formatValue(fund.totalCapital)}
+                            {formatVND(fund.totalCapital)}
                           </span>
                         </td>
 
                         {/* Available Balance with responsive styling */}
                         <td className="py-5 px-4 text-right">
                           <span className={`text-sm font-bold font-mono ${balanceColor}`}>
-                            {formatValue(fund.availableBalance)}
+                            {formatVND(fund.availableBalance)}
                           </span>
                         </td>
 

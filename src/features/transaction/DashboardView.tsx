@@ -18,6 +18,7 @@ import {
   Play,
 } from "lucide-react";
 import type { Transaction } from "./types";
+import { formatVND } from "../../utils/formatCurrency";
 
 interface DashboardViewProps {
   transactions: Transaction[];
@@ -180,11 +181,7 @@ export default function DashboardView({
             <span
               className={`text-2xl font-black font-headline tracking-tight ${stats.netAssets >= 0 ? "text-blue-950" : "text-red-500"}`}
             >
-              {stats.netAssets >= 0 ? "" : "-"}$
-              {Math.abs(stats.netAssets).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {stats.netAssets >= 0 ? "" : "-"}{formatVND(Math.abs(stats.netAssets))}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
@@ -207,11 +204,7 @@ export default function DashboardView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-800 font-headline tracking-tight">
-              +$
-              {stats.totalRevenue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              +{formatVND(stats.totalRevenue)}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
@@ -234,11 +227,7 @@ export default function DashboardView({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-rose-600 font-headline tracking-tight">
-              -$
-              {stats.totalExpenses.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              -{formatVND(stats.totalExpenses)}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
@@ -445,10 +434,7 @@ export default function DashboardView({
                       />
                     </div>
                     <span className="text-[10px] text-slate-400 inline-block font-mono">
-                      Spent: $
-                      {item.value.toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })}
+                      Chi: {formatVND(item.value)}
                     </span>
                   </div>
                 );
@@ -508,11 +494,7 @@ export default function DashboardView({
                 <span
                   className={`text-sm font-extrabold ${tx.amount < 0 ? "text-red-500" : "text-emerald-600"}`}
                 >
-                  {tx.amount < 0 ? "-" : "+"}$
-                  {Math.abs(tx.amount).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {tx.amount < 0 ? "-" : "+"}{formatVND(Math.abs(tx.amount))}
                 </span>
                 <span className="text-[10px] text-slate-400 block font-mono uppercase">
                   {tx.status}

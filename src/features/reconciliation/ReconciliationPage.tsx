@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatVND } from "../../utils/formatCurrency";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -40,10 +41,6 @@ function formatDate(iso?: string) {
   return new Date(iso).toLocaleDateString("vi-VN");
 }
 
-function formatCurrency(amount?: number) {
-  if (amount === undefined || amount === null) return "—";
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -228,15 +225,15 @@ export default function ReconciliationPage() {
                           {formatDate(item.periodStart)} → {formatDate(item.periodEnd)}
                         </td>
                         <td className="px-5 py-4 text-right font-mono text-slate-700">
-                          {formatCurrency(item.closingBalanceSystem)}
+                          {formatVND(item.closingBalanceSystem)}
                         </td>
                         <td className="px-5 py-4 text-right font-mono text-slate-700">
-                          {formatCurrency(item.actualBalance)}
+                          {formatVND(item.actualBalance)}
                         </td>
                         <td className="px-5 py-4 text-right font-mono font-semibold">
                           {diff !== undefined && diff !== null ? (
                             <span className={diff === 0 ? "text-emerald-600" : diff > 0 ? "text-blue-600" : "text-red-500"}>
-                              {diff > 0 ? "+" : ""}{formatCurrency(diff)}
+                              {diff > 0 ? "+" : ""}{formatVND(diff)}
                             </span>
                           ) : "—"}
                         </td>

@@ -93,6 +93,21 @@ export const cancelTransaction = createAsyncThunk(
   }
 );
 
+/** PATCH /transactions/:id/documents — attach new documents to existing transaction */
+export const addDocumentsToTransaction = createAsyncThunk(
+  "transaction/addDocuments",
+  async (
+    { id, files, descriptions }: { id: number; files: File[]; descriptions?: string[] },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await transactionService.addDocuments(id, files, descriptions);
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message ?? "Thêm chứng từ thất bại");
+    }
+  }
+);
+
 // ─── Slice ────────────────────────────────────────────────────────────────────
 
 const transactionSlice = createSlice({
@@ -164,6 +179,19 @@ const transactionSlice = createSlice({
       .addCase(cancelTransaction.fulfilled, (state) => {
         // Set state to idle to trigger refetch for sync
         state.status = "idle";
+      })
+
+      // addDocumentsToTransaction
+      .addCase(addDocumentsToTransaction.pending, (state) => {
+        state.submitStatus = "loading";
+        state.error = null;
+      })
+      .addCase(addDocumentsToTransaction.fulfilled, (state) => {
+        state.submitStatus = "succeeded";
+      })
+      .addCase(addDocumentsToTransaction.rejected, (state, action) => {
+        state.submitStatus = "failed";
+        state.error = action.payload as string;
       });
   },
 });

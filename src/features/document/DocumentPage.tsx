@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { FileText, CheckCircle2, AlertCircle, X, Search } from 'lucide-react';
 import { Sidebar } from '../../component/Sidebar';
 import Header from '../../component/Header';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
@@ -12,7 +12,6 @@ import {
 } from '../../store/slices/documentSlice';
 import { useDebounce } from '../../hooks/useDebounce';
 import DocumentTable from './DocumentTable';
-import DocumentUploadModal from './DocumentUploadModal';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import type { OriginalDocumentDTO } from '../../services/documentService';
 
@@ -31,13 +30,11 @@ export default function DocumentPage() {
   const { items, totalElements, totalPages, params, status, error } = useAppSelector(
     (s) => s.document
   );
-  const role = useAppSelector((state) => state.auth.role);
-  const canModify = role === 1 || role === 2;
+  const userRole = useAppSelector((state) => state.auth.role) as number | null;
 
   // ─── Local UI state ─────────────────────────────────────────────────────────
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<FilterType>('ALL');
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<OriginalDocumentDTO | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -180,7 +177,7 @@ export default function DocumentPage() {
           searchPlaceholder="Tìm kiếm theo mã chứng từ..."
         />
         <div className="flex-1 px-8 py-8 space-y-8 overflow-y-auto">
-          {/* Page Title & Controls */}
+          {/* Page Title */}
           <section id="document-headline-bar" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -192,18 +189,16 @@ export default function DocumentPage() {
                 </h2>
               </div>
               <p className="text-xs font-medium text-[#64748b] mt-1.5">
-                Quản lý hình ảnh chứng từ, hóa đơn gốc và liên kết với giao dịch.
+                Tra cứu chứng từ đã đính kèm theo từng giao dịch. Để thêm chứng từ, vui lòng thực hiện qua form tạo / chỉnh sửa giao dịch.
               </p>
             </div>
-            {canModify && (
-              <button
-                id="btn-upload-document"
-                onClick={() => setIsUploadModalOpen(true)}
-                className="bg-[#003178] hover:bg-[#00255a] text-white py-3 px-6 rounded-xl flex items-center gap-2 font-display text-xs font-bold transition-all shadow-md hover:shadow-indigo-900/10 active:scale-[0.98]"
-              >
-                <UploadCloud className="w-4 h-4" />
-                <span>Tải lên chứng từ</span>
-              </button>
+
+            {/* Chỉ Admin thấy badge thông tin phân quyền */}
+            {userRole === 1 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-[#003178]/5 rounded-xl border border-[#003178]/10 text-xs font-semibold text-[#003178]">
+                <Search className="w-3.5 h-3.5" />
+                <span>Chế độ Quản trị: Gắn · Gỡ · Xóa khả dụng</span>
+              </div>
             )}
           </section>
 
@@ -217,6 +212,11 @@ export default function DocumentPage() {
                 className={tabClass(tab.value)}
               >
                 {tab.label}
+                {tab.value === 'UNLINKED' && (
+                  <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+                    Tồn đọng
+                  </span>
+                )}
               </button>
             ))}
             {error && status === 'failed' && (
@@ -238,20 +238,11 @@ export default function DocumentPage() {
               onLink={handleLink}
               onUnlink={handleUnlink}
               isLoading={status === 'loading'}
-              canModify={canModify}
+              userRole={userRole}
             />
           </section>
         </div>
       </main>
-
-      {/* Upload Modal */}
-      {isUploadModalOpen && (
-        <DocumentUploadModal
-          onClose={() => setIsUploadModalOpen(false)}
-          onSuccess={(msg) => triggerToast(msg, 'success')}
-          onError={(msg) => triggerToast(msg, 'error')}
-        />
-      )}
 
       {/* Preview Modal */}
       {previewDoc && (

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Transaction, Budget } from "./types";
 import { INITIAL_BUDGET_DATA } from "./data";
+import { formatVND } from "../../utils/formatCurrency";
 
 interface BudgetsViewProps {
   transactions: Transaction[];
@@ -217,13 +218,13 @@ export default function BudgetsView({ transactions }: BudgetsViewProps) {
                     <strong
                       className={overspent ? "text-rose-500" : "text-slate-700"}
                     >
-                      ${item.spent.toLocaleString("en-US")}
+                      {formatVND(item.spent)}
                     </strong>
                   </span>
                   <span>
                     Limit:{" "}
                     <strong className="text-slate-700">
-                      ${item.allocated.toLocaleString("en-US")}
+                      {formatVND(item.allocated)}
                     </strong>
                   </span>
                 </div>

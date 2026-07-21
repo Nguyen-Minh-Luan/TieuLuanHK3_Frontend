@@ -11,13 +11,10 @@
 
 import { Loader2, AlertCircle, ReceiptText, RefreshCw } from 'lucide-react';
 import type { TransactionResponse } from '../transaction/apiTypes';
+import { formatVND } from '../../utils/formatCurrency';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatVND = (num?: number) => {
-  if (num == null) return '—';
-  return new Intl.NumberFormat('vi-VN').format(num) + ' đ';
-};
 
 const formatDate = (isoDate?: string) => {
   if (!isoDate) return '—';

@@ -18,6 +18,7 @@ import {
   resetSubmitStatus,
 } from '../../store/slices/fundSlice';
 import { mapFundToRequest } from './apiTypes';
+import { formatVND } from '../../utils/formatCurrency';
 
 export default function Budget() {
   const dispatch = useDispatch<AppDispatch>();
@@ -68,7 +69,7 @@ export default function Budget() {
         list.push({
           id: `notif-limit-${f.id}`,
           title: `⚠️ Hạn mức rủi ro chạm biên`,
-          message: `Nguồn quỹ "${f.name}" chỉ còn khả dụng ${(ratio * 100).toFixed(1)}% (${f.availableBalance.toLocaleString('de-DE')}$)`,
+          message: `Nguồn quỹ "${f.name}" chỉ còn khả dụng ${(ratio * 100).toFixed(1)}% (${formatVND(f.availableBalance)})`,
           date: new Date().toISOString(),
           type: 'warning'
         });

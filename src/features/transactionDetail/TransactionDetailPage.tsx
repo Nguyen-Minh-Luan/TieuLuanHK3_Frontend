@@ -66,25 +66,6 @@ export default function TransactionDetailPage() {
         {/* Content viewport area */}
         <main className="flex-1 px-8 py-8 overflow-y-auto">
 
-          {/* Tối giản Header của trang chi tiết */}
-          <div className="mb-6 flex items-center gap-4">
-            <button
-              onClick={() => navigate('/transaction')}
-              className="p-2 text-[#737783] hover:text-[#003178] hover:bg-[#eceef0] rounded-xl transition-colors cursor-pointer"
-              title="Quay lại danh sách"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div>
-              <h1 className="text-xl font-extrabold text-[#003178] tracking-tight">
-                Chi tiết giao dịch
-              </h1>
-              <p className="text-xs text-[#737783]">
-                Xem thông tin, chỉnh sửa hoặc hủy phiếu giao dịch này.
-              </p>
-            </div>
-          </div>
-
           {/* Core Details Display */}
           <div className="w-full">
             {!lookupsReady || detailLoading ? (

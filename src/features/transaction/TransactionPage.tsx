@@ -30,6 +30,7 @@ import {
   fetchTransactions,
   createTransaction,
   updateTransaction,
+  addDocumentsToTransaction,
   cancelTransaction,
   setParams as setParamsAction,
   clearWarning,
@@ -48,6 +49,7 @@ import SettingsView from "./SettingsView";
 import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
 import SpendingWarningCheckModal from "./SpendingWarningCheckModal";
+import { formatVND } from "../../utils/formatCurrency";
 
 
 export default function TransactionPage() {
@@ -265,7 +267,7 @@ export default function TransactionPage() {
           </div>
           <p className="text-xs font-semibold opacity-90">{warning.message}</p>
           <p className="text-[10px] opacity-75 font-mono whitespace-pre-line mt-1 border-t border-slate-200/40 pt-1">
-            {`Tháng này: ${warning.currentMonthTotal.toLocaleString()} đ\nTB lịch sử: ${warning.historicalAverage.toLocaleString()} đ\nVượt: +${warning.overagePercent.toFixed(1)}%`}
+            {`Tháng này: ${formatVND(warning.currentMonthTotal)}\nTB lịch sử: ${formatVND(warning.historicalAverage)}\nVượt: +${warning.overagePercent.toFixed(1)}%`}
           </p>
         </div>
       ),
@@ -276,13 +278,27 @@ export default function TransactionPage() {
   const handleCreateOrUpdateTx = async (formData: any, files?: File[], descriptions?: string[]) => {
     try {
       if (editingTransaction) {
+        // Bước 1: Cập nhật metadata giao dịch (PUT JSON)
         await dispatch(
           updateTransaction({
             id: Number(editingTransaction.id),
             data: formData as TransactionRequest,
           }),
         ).unwrap();
-        toast.success("Đã cập nhật giao dịch thành công!");
+
+        // Bước 2: Nếu có file mới, đính kèm chứng từ (PATCH multipart)
+        if (files && files.length > 0) {
+          await dispatch(
+            addDocumentsToTransaction({
+              id: Number(editingTransaction.id),
+              files,
+              descriptions,
+            })
+          ).unwrap();
+          toast.success(`Đã cập nhật giao dịch và đính kèm ${files.length} chứng từ mới!`);
+        } else {
+          toast.success("Đã cập nhật giao dịch thành công!");
+        }
       } else {
         const result = await dispatch(
           createTransaction({ data: formData as TransactionRequest, files, descriptions }),

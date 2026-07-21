@@ -304,7 +304,7 @@ export default function TransactionModal({
       setFormError(null);
       
       // FE validation for files
-      if (!editingTransaction && documentFiles.length > 0) {
+      if (documentFiles.length > 0) {
         for (let f of documentFiles) {
           if (f.size > 5 * 1024 * 1024) {
             setFormError(`Kích thước file ${f.name} vượt quá 5MB`);
@@ -601,7 +601,7 @@ export default function TransactionModal({
               />
             </div>
 
-            {/* === MỚI: Chứng từ gốc === */}
+            {/* === CHỨNG TỪ GỐC === */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -619,62 +619,56 @@ export default function TransactionModal({
                 />
               </div>
 
-              {!editingTransaction ? (
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-800 block font-headline">
-                    Tải lên ảnh chứng từ
-                    <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Tối đa 5MB/ảnh)</span>
-                  </label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/jpeg, image/png, image/webp"
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        const files = Array.from(e.target.files);
-                        setDocumentFiles(files);
-                        setDocumentDescriptions(files.map(() => ""));
-                      }
-                    }}
-                    className="w-full bg-[#f4f6f8] border border-transparent focus:border-primary rounded-xl py-2 px-3 text-sm font-semibold transition-all text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#003178]/10 file:text-[#003178] hover:file:bg-[#003178]/20"
-                  />
-                  {documentFiles.length > 0 && (
-                    <p className="text-xs text-[#003178] font-bold mt-1">Đã chọn {documentFiles.length} tệp đính kèm.</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-800 block font-headline">
-                    Kèm theo (số lượng chứng từ)
-                  </label>
-                  <input
-                    type="text"
-                    value={accompaniedBy}
-                    onChange={(e) => setAccompaniedBy(e.target.value)}
-                    placeholder="Vd: 01 bản hóa đơn..."
-                    className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
-                  />
-                </div>
-              )}
-            </div>
-            
-            {!editingTransaction && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                <div></div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-800 block font-headline">
-                    Kèm theo (số lượng chứng từ)
-                  </label>
-                  <input
-                    type="text"
-                    value={accompaniedBy}
-                    onChange={(e) => setAccompaniedBy(e.target.value)}
-                    placeholder="Vd: 01 bản hóa đơn..."
-                    className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-800 block font-headline">
+                  Tải lên ảnh chứng từ
+                  <span className="ml-2 text-[10px] font-semibold text-slate-400 normal-case">(Tối đa 5MB/ảnh)</span>
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg, image/png, image/webp"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      const files = Array.from(e.target.files);
+                      setDocumentFiles(files);
+                      setDocumentDescriptions(files.map(() => ""));
+                    }
+                  }}
+                  className="w-full bg-[#f4f6f8] border border-transparent focus:border-primary rounded-xl py-2 px-3 text-sm font-semibold transition-all text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#003178]/10 file:text-[#003178] hover:file:bg-[#003178]/20"
+                />
+                {documentFiles.length > 0 && (
+                  <p className="text-xs text-[#003178] font-bold mt-1">Đã chọn {documentFiles.length} tệp đính kèm mới.</p>
+                )}
+                {editingTransaction && (
+                  <a
+                    href={`/documents?transactionId=${editingTransaction.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-[#003178] font-semibold hover:underline mt-1"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Xem chứng từ đã đính kèm trước đó →
+                  </a>
+                )}
               </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+              <div></div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-800 block font-headline">
+                  Kèm theo (số lượng chứng từ)
+                </label>
+                <input
+                  type="text"
+                  value={accompaniedBy}
+                  onChange={(e) => setAccompaniedBy(e.target.value)}
+                  placeholder="Vd: 01 bản hóa đơn..."
+                  className="w-full bg-[#f4f6f8] focus:bg-white border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3.5 px-4 text-sm font-semibold focus:outline-hidden transition-all text-slate-800"
+                />
+              </div>
+            </div>
 
             {/* Real-time Preview Warning Banner */}
             {type === 'expense' && categoryId && parseFloat(amount) > 0 && (

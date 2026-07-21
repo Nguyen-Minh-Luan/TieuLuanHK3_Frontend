@@ -1,5 +1,6 @@
 import { Pencil, Trash2, ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
 import type { CategoryDTO } from '../../services/categoryService';
+import { formatVND } from '../../utils/formatCurrency';
 
 interface CategoryTableProps {
   items: CategoryDTO[];
@@ -12,10 +13,6 @@ interface CategoryTableProps {
   isLoading: boolean;
 }
 
-const formatVND = (num?: number) => {
-  if (num == null) return '—';
-  return new Intl.NumberFormat('vi-VN').format(num) + ' đ';
-};
 
 const TypeBadge = ({ type }: { type: string }) => {
   if (type === 'INCOME') {

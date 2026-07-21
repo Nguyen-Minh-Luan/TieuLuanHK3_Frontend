@@ -1,6 +1,7 @@
 import { ShoppingCart, Banknote, Plane, Utensils, Landmark, Filter, Printer, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useVoucherExport } from "../features/transactionDetail/useVoucherExport";
+import { formatVND } from "../utils/formatCurrency";
 
 interface TransactionDTO {
   id: number;
@@ -172,10 +173,7 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
                       )}
                     >
                       {amountVal > 0 ? "+" : ""}
-                      {amountVal.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
+                      {formatVND(Math.abs(amountVal))}
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
