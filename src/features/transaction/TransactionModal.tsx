@@ -459,22 +459,22 @@ export default function TransactionModal({
                     type="button"
                     onClick={() => setType('income')}
                     className={`h-full rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${type === 'income'
-                      ? 'bg-white text-blue-900 shadow-sm'
+                      ? 'bg-white text-brand-primary shadow-sm'
                       : 'text-slate-500 hover:bg-slate-200/40'
                       }`}
                   >
-                    <ArrowDown className={`h-4 w-4 ${type === 'income' ? 'text-blue-700' : 'text-slate-400'}`} />
+                    <ArrowDown className={`h-4 w-4 ${type === 'income' ? 'text-brand-primary' : 'text-slate-400'}`} />
                     Phiếu thu
                   </button>
                   <button
                     type="button"
                     onClick={() => setType('expense')}
                     className={`h-full rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${type === 'expense'
-                      ? 'bg-white text-blue-900 shadow-sm'
+                      ? 'bg-white text-brand-primary shadow-sm'
                       : 'text-slate-500 hover:bg-slate-200/40'
                       }`}
                   >
-                    <ArrowUp className={`h-4 w-4 ${type === 'expense' ? 'text-blue-700' : 'text-slate-400'}`} />
+                    <ArrowUp className={`h-4 w-4 ${type === 'expense' ? 'text-brand-primary' : 'text-slate-400'}`} />
                     Phiếu chi
                   </button>
                 </div>
@@ -513,7 +513,7 @@ export default function TransactionModal({
                 </label>
                 <div className="bg-[#f0f4f9] border border-transparent focus-within:bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-xl px-4 py-3.5 transition-all">
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-700 font-extrabold text-sm tracking-wide shrink-0">VNĐ</span>
+                    <span className="text-brand-primary font-extrabold text-sm tracking-wide shrink-0">VNĐ</span>
                     <input
                       type="number"
                       step="0.01"
@@ -566,13 +566,13 @@ export default function TransactionModal({
                 </div>
                 {/* Hiển thị thông tin khoản nợ đã chọn */}
                 {selectedDebt && (
-                  <div className="rounded-xl p-3 bg-blue-50 border border-blue-100 text-blue-800 text-xs flex gap-3 animate-fade-in">
-                    <Link2 className="h-4 w-4 shrink-0 mt-0.5 text-blue-500" />
+                  <div className="rounded-xl p-3 bg-blue-50 border border-blue-100 text-brand-primary text-xs flex gap-3 animate-fade-in">
+                    <Link2 className="h-4 w-4 shrink-0 mt-0.5 text-brand-primary" />
                     <div className="space-y-0.5">
                       <p className="font-bold">{selectedDebt.partnerName} — {selectedDebt.title}</p>
                       <p className="font-semibold">
                         Số tiền còn nợ:{' '}
-                        <strong className="text-blue-900">
+                        <strong className="text-brand-primary">
                           {selectedDebt.remainingAmount.toLocaleString('vi-VN')} VNĐ
                         </strong>
                         {' '}(đã tự điền vào ô số tiền — bạn có thể điều chỉnh)

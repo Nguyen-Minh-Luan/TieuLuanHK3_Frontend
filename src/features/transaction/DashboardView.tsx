@@ -157,7 +157,7 @@ export default function DashboardView({
     <div className="space-y-6">
       {/* Page Title Header */}
       <div>
-        <h3 className="text-3xl font-extrabold text-blue-900 font-headline tracking-tight">
+        <h3 className="text-3xl font-extrabold text-brand-primary font-headline tracking-tight">
           Executive Dashboard
         </h3>
         <p className="text-slate-500 mt-1 font-body text-sm">
@@ -179,7 +179,7 @@ export default function DashboardView({
           </div>
           <div className="flex items-baseline gap-2">
             <span
-              className={`text-2xl font-black font-headline tracking-tight ${stats.netAssets >= 0 ? "text-blue-950" : "text-red-500"}`}
+              className={`text-2xl font-black font-headline tracking-tight ${stats.netAssets >= 0 ? "text-brand-primary" : "text-red-500"}`}
             >
               {stats.netAssets >= 0 ? "" : "-"}{formatVND(Math.abs(stats.netAssets))}
             </span>

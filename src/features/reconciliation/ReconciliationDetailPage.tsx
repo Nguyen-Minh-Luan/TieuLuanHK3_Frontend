@@ -28,7 +28,7 @@ import type { ReconciliationStatus } from "./apiTypes";
 const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; cls: string; icon: any }> = {
   DRAFT:    { label: "Nháp",       cls: "bg-amber-100 text-amber-700",       icon: Calendar },
   CLOSED:   { label: "Đã chốt",   cls: "bg-emerald-100 text-emerald-700", icon: Lock },
-  REOPENED: { label: "Mở lại",    cls: "bg-blue-100 text-blue-700",        icon: Unlock },
+  REOPENED: { label: "Mở lại",    cls: "bg-blue-50 text-brand-primary",        icon: Unlock },
 };
 
 function formatDate(iso?: string) {
@@ -84,7 +84,7 @@ export default function ReconciliationDetailPage() {
   if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
       </div>
     );
   }
@@ -170,7 +170,7 @@ export default function ReconciliationDetailPage() {
               <button
                 onClick={handleClose}
                 disabled={submitStatus === "loading"}
-                className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+                className="flex items-center gap-2 primary-gradient text-white border-none font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shadow-lg monolith-shadow"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Chốt kiểm kê
@@ -316,7 +316,7 @@ export default function ReconciliationDetailPage() {
             </div>
             <div className="text-3xl font-mono font-bold">
               {diff !== undefined && diff !== null ? (
-                <span className={diff === 0 ? "text-emerald-600" : diff > 0 ? "text-blue-600" : "text-red-500"}>
+                <span className={diff === 0 ? "text-emerald-600" : diff > 0 ? "text-brand-primary" : "text-red-500"}>
                   {diff > 0 ? "+" : ""}{formatVND(diff)}
                 </span>
               ) : (

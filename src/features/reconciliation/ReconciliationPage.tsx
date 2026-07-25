@@ -33,7 +33,7 @@ import Header from "../../component/Header";
 const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; cls: string }> = {
   DRAFT: { label: "Nháp", cls: "bg-amber-100 text-amber-700 border border-amber-200" },
   CLOSED: { label: "Đã chốt", cls: "bg-emerald-100 text-emerald-700 border border-emerald-200" },
-  REOPENED: { label: "Mở lại", cls: "bg-blue-100 text-blue-700 border border-blue-200" },
+  REOPENED: { label: "Mở lại", cls: "bg-blue-50 text-brand-primary border border-blue-200" },
 };
 
 function formatDate(iso?: string) {
@@ -109,11 +109,11 @@ export default function ReconciliationPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/30">
-            <CalendarCheck className="w-6 h-6 text-white" />
+          <div className="p-2 bg-brand-primary/10 rounded-xl">
+            <CalendarCheck className="w-5 h-5 text-brand-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Kiểm kê quỹ</h1>
+            <h1 className="text-3xl font-display font-extrabold text-brand-primary tracking-tight">Kiểm kê quỹ</h1>
             <p className="text-sm text-slate-500 mt-0.5">
               Quản lý & đối chiếu số dư quỹ theo kỳ
             </p>
@@ -124,7 +124,7 @@ export default function ReconciliationPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition-colors"
+            className="flex items-center gap-2 primary-gradient hover:opacity-90 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg monolith-shadow transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Thêm kiểm kê quỹ</span>
@@ -161,7 +161,7 @@ export default function ReconciliationPage() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleFilter}
-          className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+          className="primary-gradient text-white border-none px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
         >
           Áp dụng
         </motion.button>
@@ -171,7 +171,7 @@ export default function ReconciliationPage() {
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         {status === "loading" ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
@@ -180,7 +180,7 @@ export default function ReconciliationPage() {
             {canManage && (
               <button
                 onClick={() => setShowForm(true)}
-                className="mt-2 text-sm text-blue-600 hover:underline"
+                className="mt-2 text-sm text-brand-primary hover:underline"
               >
                 Thêm kiểm kê quỹ đầu tiên →
               </button>
@@ -232,7 +232,7 @@ export default function ReconciliationPage() {
                         </td>
                         <td className="px-5 py-4 text-right font-mono font-semibold">
                           {diff !== undefined && diff !== null ? (
-                            <span className={diff === 0 ? "text-emerald-600" : diff > 0 ? "text-blue-600" : "text-red-500"}>
+                            <span className={diff === 0 ? "text-emerald-600" : diff > 0 ? "text-brand-primary" : "text-red-500"}>
                               {diff > 0 ? "+" : ""}{formatVND(diff)}
                             </span>
                           ) : "—"}
@@ -253,7 +253,7 @@ export default function ReconciliationPage() {
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               onClick={() => navigate(`/reconciliation/${item.id}`)}
-                              className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-1.5 text-brand-primary hover:bg-blue-50 rounded-lg transition-colors"
                               title="Chi tiết"
                             >
                               <FileText className="w-4 h-4" />

@@ -36,7 +36,7 @@ export const AIInsightPanel: React.FC = () => {
   if (loading && !data) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center min-h-[300px]">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+        <Loader2 className="w-8 h-8 text-brand-primary animate-spin mb-4" />
         <p className="text-gray-500 font-medium">Đang phân tích dữ liệu tài chính với AI...</p>
         <p className="text-gray-400 text-sm mt-2">Việc này có thể mất vài giây để tổng hợp dữ liệu {months} tháng gần nhất.</p>
       </div>
@@ -68,8 +68,8 @@ export const AIInsightPanel: React.FC = () => {
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <Lightbulb className="w-5 h-5 text-blue-600" />
+          <div className="bg-blue-50 p-2 rounded-lg">
+            <Lightbulb className="w-5 h-5 text-brand-primary" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900 leading-none">CFO Ảo (AI Insight)</h3>
@@ -87,7 +87,7 @@ export const AIInsightPanel: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-gray-400 hover:text-brand-primary hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
             title="Làm mới phân tích"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -111,7 +111,7 @@ export const AIInsightPanel: React.FC = () => {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-600" /> Nhận định dòng tiền
+              <TrendingUp className="w-4 h-4 text-brand-primary" /> Nhận định dòng tiền
             </h4>
             {renderStatusBadge(data.cashFlowStatus)}
           </div>

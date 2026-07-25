@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserPlus, Sparkles, RefreshCw, Check } from "lucide-react";
+import { UserPlus, Sparkles, RefreshCw, Check, Users } from "lucide-react";
 import type { User, UserRole, UserStatus } from "./types.ts";
 import Header from "../../../component/Header.tsx";
 import BentoGrid from "./BentoGrid.tsx";
@@ -180,9 +180,14 @@ export default function UserManagementPage() {
               {/* Cover Title Section */}
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
-                  <h2 id="view-title-h2" className="font-display text-3xl font-extrabold text-[#191c1e] tracking-tight mb-2">
-                    Quản lý Người dùng
-                  </h2>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-brand-primary/10 rounded-xl">
+                      <Users className="w-5 h-5 text-brand-primary" />
+                    </div>
+                    <h2 id="view-title-h2" className="font-display text-3xl font-extrabold text-brand-primary tracking-tight">
+                      Quản lý Người dùng
+                    </h2>
+                  </div>
                   <p id="view-desc-p" className="text-on-surface-variant-custom text-base max-w-2xl font-medium opacity-90">
                     Quản lý danh sách thành viên và phân quyền hệ thống cho doanh nghiệp của bạn.
                   </p>

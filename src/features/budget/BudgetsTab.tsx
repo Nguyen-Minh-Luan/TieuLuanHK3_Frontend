@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle, Search, Edit2, ShieldAlert, CheckCircle2, AlertTriangle, Clock, HelpCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Search, Edit2, ShieldAlert, CheckCircle2, AlertTriangle, Clock, HelpCircle, Trash2, Wallet } from 'lucide-react';
 import type { Fund } from './types';
 import { formatVND } from '../../utils/formatCurrency';
 
@@ -45,9 +45,14 @@ export default function BudgetsTab({
       {/* Upper Action Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8" id="budgets-header-block">
         <div id="budgets-title-block">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading" id="main-ledger-title">
-            Quản lý Nguồn vốn
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-brand-primary/10 rounded-xl">
+              <Wallet className="w-5 h-5 text-brand-primary" />
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-brand-primary font-heading" id="main-ledger-title">
+              Quản lý Nguồn vốn
+            </h1>
+          </div>
           <p className="text-slate-500 mt-1 text-sm font-sans" id="main-ledger-sub">
             Theo dõi và điều phối các nguồn lực tài chính của tổ chức
           </p>
@@ -255,7 +260,7 @@ export default function BudgetsTab({
         </div>
 
         <div className="p-5 bg-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.01)] flex gap-4" id="info-widget-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 text-brand-primary flex items-center justify-center shrink-0">
             <Clock className="w-5 h-5" />
           </div>
           <div>

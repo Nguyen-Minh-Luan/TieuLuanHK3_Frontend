@@ -93,7 +93,7 @@ export default function ReconciliationFormModal({ onClose, onSuccess }: Props) {
           {/* Time Period */}
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <Calendar className="w-4 h-4 text-blue-500" />
+              <Calendar className="w-4 h-4 text-brand-primary" />
               Kỳ kiểm kê
             </label>
             <div className="grid grid-cols-2 gap-4">
@@ -123,12 +123,12 @@ export default function ReconciliationFormModal({ onClose, onSuccess }: Props) {
           {/* Funds Selection */}
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <WalletCards className="w-4 h-4 text-blue-500" />
+              <WalletCards className="w-4 h-4 text-brand-primary" />
               Chọn quỹ cần kiểm kê
             </label>
             {fundStatus === "loading" ? (
               <div className="flex justify-center p-4">
-                <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                <Loader2 className="w-5 h-5 animate-spin text-brand-primary" />
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-1">
@@ -143,12 +143,12 @@ export default function ReconciliationFormModal({ onClose, onSuccess }: Props) {
                   >
                     <input
                       type="checkbox"
-                      className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      className="mt-0.5 rounded border-slate-300 text-brand-primary focus:ring-blue-500"
                       checked={selectedFunds.includes(parseInt(fund.id))}
                       onChange={() => toggleFund(parseInt(fund.id))}
                     />
                     <div className="flex-1">
-                      <div className={`text-sm font-medium ${selectedFunds.includes(parseInt(fund.id)) ? "text-blue-900" : "text-slate-700"}`}>
+                      <div className={`text-sm font-medium ${selectedFunds.includes(parseInt(fund.id)) ? "text-brand-primary" : "text-slate-700"}`}>
                         {fund.name}
                       </div>
                     </div>
@@ -172,7 +172,7 @@ export default function ReconciliationFormModal({ onClose, onSuccess }: Props) {
             <button
               type="submit"
               disabled={submitStatus === "loading"}
-              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white primary-gradient hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-lg monolith-shadow flex items-center justify-center gap-2"
             >
               {submitStatus === "loading" && <Loader2 className="w-4 h-4 animate-spin" />}
               <span>Tạo phiên</span>

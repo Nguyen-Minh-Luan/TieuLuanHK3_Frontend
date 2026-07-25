@@ -87,12 +87,12 @@ export default function FundTransferPage() {
         <div className="flex-1 px-8 py-8 space-y-8 overflow-y-auto">
           {/* Header section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-[#003178]/10 rounded-2xl">
-                <ArrowRightLeft className="w-8 h-8 text-[#003178]" />
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-brand-primary/10 rounded-xl">
+                <ArrowRightLeft className="w-5 h-5 text-brand-primary" />
               </div>
               <div>
-                <h2 className="text-2xl font-display font-extrabold text-[#0f172a] tracking-tight">
+                <h2 className="text-3xl font-display font-extrabold text-brand-primary tracking-tight">
                   Lịch sử chuyển quỹ
                 </h2>
                 <p className="text-sm text-[#64748b] font-medium mt-1">

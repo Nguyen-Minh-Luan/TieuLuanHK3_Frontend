@@ -38,7 +38,7 @@ export default function SettingsView({
     <div className="space-y-6">
       {/* Title */}
       <div>
-        <h3 className="text-3xl font-extrabold text-blue-900 font-headline tracking-tight">
+        <h3 className="text-3xl font-extrabold text-brand-primary font-headline tracking-tight">
           System Preferences
         </h3>
         <p className="text-slate-500 mt-1 font-body text-sm">
@@ -168,7 +168,7 @@ export default function SettingsView({
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-5 space-y-3.5">
             <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
-              <Shield className="h-4.5 w-4.5 text-blue-800" /> Ledger
+              <Shield className="h-4.5 w-4.5 text-brand-primary" /> Ledger
               Verification
             </span>
             <div className="text-slate-600 text-xs font-bold leading-normal">

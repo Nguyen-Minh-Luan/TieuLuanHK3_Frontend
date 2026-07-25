@@ -19,7 +19,7 @@ import OptimizerCard from './OptimizerCard';
 import QuickReportCard from './QuickReportCard';
 import { Sidebar } from '../../component/Sidebar';
 import Header from '../../component/Header';
-import { PlusCircle, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { PlusCircle, CheckCircle2, AlertCircle, X, HandCoins } from 'lucide-react';
 import type { DebtDTO, DebtRequest } from './apiTypes';
 
 export default function DebtPage() {
@@ -174,9 +174,14 @@ export default function DebtPage() {
         {/* 2. Page Title & Add Button */}
         <section id="system-headline-bar" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-display font-extrabold text-[#003178] tracking-tight">
-              Quản lý nợ
-            </h2>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-brand-primary/10 rounded-xl">
+                <HandCoins className="w-5 h-5 text-brand-primary" />
+              </div>
+              <h2 className="text-3xl font-display font-extrabold text-brand-primary tracking-tight">
+                Quản lý nợ
+              </h2>
+            </div>
             <p className="text-xs font-medium text-[#64748b] mt-1.5">
               Theo dõi và quản lý các khoản nợ phải thu và nợ phải trả từ API thực tế.
             </p>

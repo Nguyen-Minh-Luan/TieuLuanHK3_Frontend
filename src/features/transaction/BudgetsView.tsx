@@ -91,7 +91,7 @@ export default function BudgetsView({ transactions }: BudgetsViewProps) {
       {/* Title block */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-3xl font-extrabold text-blue-900 font-headline tracking-tight">
+          <h3 className="text-3xl font-extrabold text-brand-primary font-headline tracking-tight">
             Corporate Budgets & Allocations
           </h3>
           <p className="text-slate-500 mt-1 font-body text-sm">
@@ -198,7 +198,7 @@ export default function BudgetsView({ transactions }: BudgetsViewProps) {
                     <AlertTriangle className="h-3.5 w-3.5" /> Over spent
                   </span>
                 ) : (
-                  <span className="text-[11px] font-extrabold text-blue-900 bg-blue-50/60 py-1 px-2 rounded-lg">
+                  <span className="text-[11px] font-extrabold text-brand-primary bg-blue-50/60 py-1 px-2 rounded-lg">
                     {pct.toFixed(0)}% Utilised
                   </span>
                 )}

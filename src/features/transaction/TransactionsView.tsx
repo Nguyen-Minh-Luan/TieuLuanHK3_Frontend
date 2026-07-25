@@ -137,7 +137,7 @@ export default function TransactionsView({
         };
       case "payroll":
         return {
-          bg: "bg-indigo-50 dark:bg-indigo-900/10 text-indigo-600",
+          bg: "bg-blue-50 dark:bg-indigo-900/10 text-brand-primary",
           icon: <Network className="h-5 w-5" />,
         };
       default:
@@ -151,7 +151,7 @@ export default function TransactionsView({
   const getCategoryTheme = (cat: string) => {
     const catUpper = cat.toUpperCase();
     if (catUpper.includes("PROCUR")) {
-      return "bg-blue-100/50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
+      return "bg-blue-50 text-brand-primary dark:bg-blue-900/20 dark:text-blue-300";
     } else if (catUpper.includes("REVEN")) {
       return "bg-emerald-100/50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300";
     } else if (catUpper.includes("MAINTEN")) {
@@ -232,7 +232,7 @@ export default function TransactionsView({
             <span>/</span>
             <span className="text-primary font-bold">Transactions</span>
           </nav>
-          <h3 className="text-3xl font-extrabold text-blue-900 font-headline tracking-tight">
+          <h3 className="text-3xl font-extrabold text-brand-primary font-headline tracking-tight">
             Transaction Management
           </h3>
           <p className="text-slate-500 mt-1 font-body text-sm">
@@ -370,22 +370,22 @@ export default function TransactionsView({
               <tr className="bg-slate-50/60 border-b border-slate-100">
                 <th
                   onClick={() => handleSort("date")}
-                  className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none text-left"
+                  className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none text-left"
                 >
                   <div className="flex items-center gap-1">
                     Ngày giao dịch{" "}
                     {sortField === "date" && (sortOrder === "desc" ? "↓" : "↑")}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap select-none text-left">
+                <th className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline whitespace-nowrap select-none text-left">
                   Mô tả / Mã GD
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline whitespace-nowrap select-none text-left">
+                <th className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline whitespace-nowrap select-none text-left">
                   Danh mục
                 </th>
                 <th
                   onClick={() => handleSort("amount")}
-                  className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-right whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                  className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline text-right whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors select-none"
                 >
                   <div className="flex items-center justify-end gap-1">
                     Số tiền{" "}
@@ -393,13 +393,13 @@ export default function TransactionsView({
                       (sortOrder === "desc" ? "↓" : "↑")}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
+                <th className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
                   Mức vượt chi
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
+                <th className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
                   Trạng thái
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-blue-950 uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
+                <th className="px-6 py-4 text-xs font-bold text-brand-primary uppercase tracking-widest font-headline text-center whitespace-nowrap select-none">
                   Thao tác
                 </th>
               </tr>
@@ -563,7 +563,7 @@ export default function TransactionsView({
                                         }}
                                         className="w-full flex items-center px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left gap-2 cursor-pointer"
                                       >
-                                        <Edit2 className="h-4 w-4 text-blue-600" />
+                                        <Edit2 className="h-4 w-4 text-brand-primary" />
                                         Edit Record
                                       </button>
                                     )}
@@ -656,7 +656,7 @@ export default function TransactionsView({
         <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
           <div className="text-xs font-semibold text-slate-500">
             Showing{" "}
-            <span className="font-extrabold text-blue-900">
+            <span className="font-extrabold text-brand-primary">
               {totalElements > 0 ? (activePage - 1) * itemsPerPage + 1 : 0} -{" "}
               {Math.min(activePage * itemsPerPage, totalElements)}
             </span>{" "}

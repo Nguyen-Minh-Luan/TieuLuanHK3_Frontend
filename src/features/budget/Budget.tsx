@@ -207,10 +207,10 @@ export default function Budget() {
                 systemNotifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`p-4 rounded-xl border border-transparent flex flex-col gap-1 ${n.type === 'warning' ? 'bg-rose-50/50' : 'bg-indigo-50/40'
+                    className={`p-4 rounded-xl border border-transparent flex flex-col gap-1 ${n.type === 'warning' ? 'bg-rose-50/50' : 'bg-blue-50/40'
                       }`}
                   >
-                    <span className={`text-[11px] font-bold ${n.type === 'warning' ? 'text-rose-700' : 'text-indigo-700'
+                    <span className={`text-[11px] font-bold ${n.type === 'warning' ? 'text-rose-700' : 'text-brand-primary'
                       }`}>{n.title}</span>
                     <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1 font-sans">{n.message}</p>
                     <span className="text-[10px] text-slate-400 mt-2 font-mono">Timestamp: UTC {new Date(n.date).toLocaleTimeString()}</span>

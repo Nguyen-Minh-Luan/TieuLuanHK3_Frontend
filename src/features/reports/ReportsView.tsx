@@ -3,7 +3,7 @@ import {
   FileDown, Plus, Pencil, Trash2, RefreshCw, Search,
   ChevronLeft, ChevronRight, X, Check, AlertCircle,
   TrendingUp, TrendingDown, Scale, Loader2,
-  Calendar, ChevronDown, BarChart3,
+  Calendar, ChevronDown, BarChart3, FileBarChart,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import {
@@ -56,7 +56,7 @@ function StatCard({
 
 function ReportTypeBadge({ type }: { type: ReportType }) {
   const colors: Record<ReportType, string> = {
-    MONTHLY:   "bg-blue-50 text-blue-700",
+    MONTHLY:   "bg-blue-50 text-brand-primary",
     QUARTERLY: "bg-purple-50 text-purple-700",
     YEARLY:    "bg-amber-50 text-amber-700",
     CUSTOM:    "bg-teal-50 text-teal-700",
@@ -271,7 +271,7 @@ function ReportDetailPanel({
             <StatCard
               label="Cân đối"
               value={fmt(report.netBalance)}
-              color={report.netBalance >= 0 ? "text-blue-700" : "text-rose-600"}
+              color={report.netBalance >= 0 ? "text-brand-primary" : "text-rose-600"}
               sub={report.netBalance >= 0 ? "Dương" : "Âm"}
             />
           </div>
@@ -318,7 +318,7 @@ function ReportDetailPanel({
           </button>
           <button
             onClick={() => onExportPdf(report.id)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200 cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-brand-primary hover:bg-blue-50 transition-colors border border-blue-200 cursor-pointer"
           >
             <FileDown size={14} />
             Xuất PDF
@@ -449,9 +449,14 @@ export default function ReportsView() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-extrabold text-[#191c1e] tracking-tight">
-                  Trung tâm Báo cáo
-                </h2>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-brand-primary/10 rounded-xl">
+                    <FileBarChart className="w-5 h-5 text-brand-primary" />
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-brand-primary tracking-tight">
+                    Trung tâm Báo cáo
+                  </h2>
+                </div>
                 <p className="text-slate-500 mt-1 text-sm">
                   Tạo, quản lý và xuất báo cáo tài chính theo kỳ.
                 </p>
@@ -589,7 +594,7 @@ export default function ReportsView() {
                         >
                           <td className="px-5 py-4">
                             <div>
-                              <p className="font-semibold text-slate-800 text-sm group-hover:text-blue-700 transition-colors line-clamp-1">{report.title}</p>
+                              <p className="font-semibold text-slate-800 text-sm group-hover:text-brand-primary transition-colors line-clamp-1">{report.title}</p>
                               <p className="text-[11px] text-slate-400 mt-0.5">
                                 {report.createdByName ?? `ID: ${report.createdBy}`} • #{report.id}
                               </p>
@@ -612,7 +617,7 @@ export default function ReportsView() {
                               <span className="text-rose-500 font-semibold flex items-center gap-1">
                                 <TrendingDown size={12} /> {fmt(report.totalExpense)}
                               </span>
-                              <span className={`font-bold flex items-center gap-1 ${report.netBalance >= 0 ? "text-blue-700" : "text-rose-600"}`}>
+                              <span className={`font-bold flex items-center gap-1 ${report.netBalance >= 0 ? "text-brand-primary" : "text-rose-600"}`}>
                                 <Scale size={12} /> {fmt(report.netBalance)}
                               </span>
                             </div>
@@ -635,7 +640,7 @@ export default function ReportsView() {
                                 id={`btn-export-pdf-${report.id}`}
                                 onClick={() => handleExportPdf(report.id)}
                                 title="Xuất PDF"
-                                className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
+                                className="p-2 rounded-xl text-brand-primary hover:bg-blue-50 transition-all cursor-pointer"
                               >
                                 <FileDown size={15} />
                               </button>
@@ -643,7 +648,7 @@ export default function ReportsView() {
                                 id={`btn-edit-report-${report.id}`}
                                 onClick={() => { setEditReport(report); setIsFormOpen(true); }}
                                 title="Chỉnh sửa"
-                                className="p-2 rounded-xl text-slate-500 hover:text-blue-700 hover:bg-blue-50 transition-all cursor-pointer"
+                                className="p-2 rounded-xl text-slate-500 hover:text-brand-primary hover:bg-blue-50 transition-all cursor-pointer"
                               >
                                 <Pencil size={15} />
                               </button>

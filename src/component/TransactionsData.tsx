@@ -57,7 +57,7 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
     ) {
       return { icon: ShoppingCart, color: "bg-orange-100 text-orange-600" };
     }
-    return { icon: Landmark, color: "bg-blue-100 text-blue-600" };
+    return { icon: Landmark, color: "bg-blue-50 text-brand-primary" };
   };
 
   const formatDate = (dateStr: string) => {
