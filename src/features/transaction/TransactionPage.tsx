@@ -69,7 +69,7 @@ export default function TransactionPage() {
   const [localSearch, setLocalSearch] = useState("");
 
   // System parameters
-  const [companyName, setCompanyName] = useState("Architectural Ledger");
+  const [companyName, setCompanyName] = useState("Hệ Thống Sổ Quỹ");
 
   // Dynamic Categories - retrieved from Redux
   const categories = useAppSelector((state) => state.category.items);
@@ -336,7 +336,7 @@ export default function TransactionPage() {
           return;
         }
       } catch (e) {
-        console.error("Lock check failed", e);
+        console.error("Kiểm tra khóa thất bại", e);
       }
     }
     setDeleteTargetId(tx.id);

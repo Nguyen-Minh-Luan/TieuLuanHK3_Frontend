@@ -236,7 +236,7 @@ export default function Home() {
           )}
 
           <footer className="mt-12 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest pb-8">
-            Architectural Ledger © 2023 • All Systems Operational
+            Hệ Thống Sổ Quỹ © 2023 • Mọi hệ thống hoạt động bình thường
           </footer>
         </main>
       </div>

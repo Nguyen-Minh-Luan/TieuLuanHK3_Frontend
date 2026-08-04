@@ -57,7 +57,7 @@ export default function PrintVoucherModal({ isOpen, transactionId, onClose }: Pr
           </div>
         </div>
 
-        {/* Modal Body: PDF Preview */}
+        {/* Modal Body: Xem trước PDF */}
         <div className="flex-1 bg-[#f2f4f6] rounded-lg overflow-hidden border border-[#c3c6d4] relative">
           {isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-[#737783]">
@@ -68,7 +68,7 @@ export default function PrintVoucherModal({ isOpen, transactionId, onClose }: Pr
             <iframe 
               src={previewBlobUrl} 
               className="w-full h-full border-0" 
-              title="PDF Preview"
+              title="Xem trước PDF"
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500">

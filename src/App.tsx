@@ -15,6 +15,7 @@ import ReconciliationPage from "./features/reconciliation/ReconciliationPage";
 import ReconciliationDetailPage from "./features/reconciliation/ReconciliationDetailPage";
 import FundTransferPage from "./features/fundTransfer/FundTransferPage";
 import DocumentPage from "./features/document/DocumentPage";
+import ProfilePage from "./features/profile/ProfilePage";
 
 /**
  * Route structure:
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
       // Routes không hạn chế role (tất cả user đã login)
       { path: "/home",       element: <Home /> },
       { path: "/budget",     element: <Budget /> },
+      { path: "/profile",    element: <ProfilePage /> },
 
       // Transactions — tất cả role có thể truy cập trang,
       // nhưng nút hành động được ẩn/hiện theo role trong component

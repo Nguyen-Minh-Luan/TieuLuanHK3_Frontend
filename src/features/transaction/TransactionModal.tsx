@@ -104,7 +104,7 @@ export default function TransactionModal({
       dispatch(fetchCategories({}));
       apiClient.get("/partners?size=100")
         .then((res) => setPartners(res.data.data.content || []))
-        .catch((err) => console.error("Error loading partners", err));
+        .catch((err) => console.error("Lỗi tải danh sách đối tác", err));
     }
   }, [isOpen, dispatch]);
 
@@ -234,7 +234,7 @@ export default function TransactionModal({
         const locked = await reconciliationService.checkLock(fundId, date);
         setIsLocked(locked);
       } catch (error) {
-        console.error("Failed to check lock status", error);
+        console.error("Lỗi kiểm tra trạng thái khóa", error);
       } finally {
         setCheckingLock(false);
       }

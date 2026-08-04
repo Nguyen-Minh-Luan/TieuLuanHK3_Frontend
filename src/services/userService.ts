@@ -13,6 +13,12 @@ export interface UserFetchParams {
 }
 
 const userService = {
+  /** GET /auth/me — Lấy thông tin cá nhân */
+  getMe: async () => {
+    const res = await apiClient.get<ApiResponse<UserDTO>>('/auth/me');
+    return res.data.data;
+  },
+
   /** GET /auth/user — Lấy danh sách user */
   getAll: async (params: UserFetchParams = {}) => {
     const res = await apiClient.get<ApiResponse<PagedResponse<UserDTO>>>('/auth/user', {

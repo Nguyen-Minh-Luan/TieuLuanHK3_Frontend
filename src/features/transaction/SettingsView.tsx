@@ -39,11 +39,10 @@ export default function SettingsView({
       {/* Title */}
       <div>
         <h3 className="text-3xl font-extrabold text-brand-primary font-headline tracking-tight">
-          System Preferences
+          Cài đặt hệ thống
         </h3>
         <p className="text-slate-500 mt-1 font-body text-sm">
-          Modify enterprise configurations, metadata parameters, and access
-          controls.
+          Quản lý cấu hình doanh nghiệp, tham số hệ thống và quyền truy cập.
         </p>
       </div>
 
@@ -54,8 +53,8 @@ export default function SettingsView({
           className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200/50 shadow-xs space-y-6"
         >
           <h4 className="text-md font-bold text-slate-800 font-headline pb-3 border-b border-slate-100 flex items-center gap-1.5 select-none">
-            <Settings className="h-5 w-5 text-slate-500" /> General Company
-            Context
+            <Settings className="h-5 w-5 text-slate-500" /> Thông tin doanh nghiệp
+            chung
           </h4>
 
           {/* Input blocks */}
@@ -95,7 +94,7 @@ export default function SettingsView({
                 </label>
                 <input
                   type="text"
-                  value="Enterprise Tier • Gold License"
+                  value="Cấp Doanh Nghiệp • Bản Quyền Vàng"
                   disabled
                   className="w-full bg-slate-100 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold text-slate-500 cursor-not-allowed"
                 />
@@ -106,7 +105,7 @@ export default function SettingsView({
           {/* Secure & Security toggles */}
           <div className="pt-6 border-t border-slate-100 space-y-4">
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              Security & Diagnostics
+              Bảo mật & Chẩn đoán
             </h4>
 
             <div className="flex items-center justify-between py-2">
@@ -158,7 +157,7 @@ export default function SettingsView({
                 type="submit"
                 className="py-2.5 px-5 bg-primary text-white rounded-xl text-xs font-extrabold hover:bg-primary-container shadow-xs active:scale-95 transition-all cursor-pointer"
               >
-                Cập nhật Preferences
+                Lưu cấu hình
               </button>
             </div>
           </div>
@@ -168,8 +167,8 @@ export default function SettingsView({
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-5 space-y-3.5">
             <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
-              <Shield className="h-4.5 w-4.5 text-brand-primary" /> Ledger
-              Verification
+              <Shield className="h-4.5 w-4.5 text-brand-primary" /> Xác thực
+              sổ cái
             </span>
             <div className="text-slate-600 text-xs font-bold leading-normal">
               Bản quyền Ledger Pro Enterprise được cấp phép cho địa chỉ Email
@@ -182,23 +181,23 @@ export default function SettingsView({
 
           <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-5 space-y-3">
             <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
-              <HardDrive className="h-4.5 w-4.5 text-slate-600" /> Database
-              Engine Status
+              <HardDrive className="h-4.5 w-4.5 text-slate-600" /> Trạng thái
+              Cơ sở dữ liệu
             </span>
             <div className="divide-y divide-slate-200/50 text-xs">
               <div className="flex justify-between py-1.5 text-slate-600">
-                <span>Database Client:</span>
+                <span>Máy khách CSDL:</span>
                 <span className="font-bold text-slate-700">
-                  Client-Side State Storage
+                  Lưu trữ trạng thái phía Client
                 </span>
               </div>
               <div className="flex justify-between py-1.5 text-slate-600">
-                <span>Local Capacity:</span>
-                <span className="font-bold text-slate-700">Unlimited</span>
+                <span>Dung lượng lưu trữ:</span>
+                <span className="font-bold text-slate-700">Không giới hạn</span>
               </div>
               <div className="flex justify-between py-1.5 text-slate-600 font-semibold text-emerald-600">
-                <span>Core Nodes:</span>
-                <span>Active &amp; Normal</span>
+                <span>Nút cốt lõi:</span>
+                <span>Hoạt động &amp; Bình thường</span>
               </div>
             </div>
           </div>

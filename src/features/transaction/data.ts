@@ -6,7 +6,7 @@
 import type { Budget } from "./types";
 
 export const CATEGORIES = [
-  "All Categories",
+  "Tất cả danh mục",
   "Procurement",
   "Revenue",
   "Maintenance",

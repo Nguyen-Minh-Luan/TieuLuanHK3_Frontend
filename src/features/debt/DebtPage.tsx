@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import {
   fetchDebts,
@@ -43,6 +44,25 @@ export default function DebtPage() {
     setToast({ message, type });
   };
 
+  // Query param: auto-open debt detail modal when navigated from transaction detail
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const debtIdParam = searchParams.get('debtId');
+    if (debtIdParam) {
+      const debtId = Number(debtIdParam);
+      if (!Number.isNaN(debtId)) {
+        dispatch(fetchDebtById(debtId))
+          .unwrap()
+          .catch(() => {
+            triggerToast('Không tìm thấy khoản nợ được yêu cầu, có thể đã bị xóa.', 'error');
+          });
+      }
+      // Clear query param after processing to avoid re-triggering on refresh
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Close toast automatically after 4.5 seconds
   useEffect(() => {
     if (toast) {
@@ -86,7 +106,9 @@ export default function DebtPage() {
   // Thanh toán nợ phải thực hiện qua luồng tạo giao dịch (Transaction) liên kết debtId.
   // Hàm này thông báo cho user thay vì thực hiện patch không hợp lệ.
   const handleMarkAsPaid = (id: number) => {
-    const debtItem = items.find((d) => d.id === id);
+    // Use selectedDebt as fallback when the debt is not in the current page items
+    // (e.g. opened via URL query param from transaction detail)
+    const debtItem = items.find((d) => d.id === id) ?? (selectedDebt?.id === id ? selectedDebt : null);
     if (!debtItem) return;
     triggerToast(
       `Để ghi nhận thanh toán cho khoản nợ của ${debtItem.partnerName || 'đối tác'}, ` +

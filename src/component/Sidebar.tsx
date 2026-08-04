@@ -18,23 +18,23 @@ import { useAppSelector } from "../hooks/useAppDispatch";
 import { ROLE_MENU_KEYS } from "../lib/permissions";
 
 const ALL_MENU_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard",      path: "/home" },
-  { icon: Receipt,         label: "Transactions",   path: "/transaction" },
-  { icon: Coins,           label: "Debt",           path: "/debt" },
-  { icon: BarChart3,       label: "Reports",        path: "/report" },
-  { icon: Wallet,          label: "Budgets",        path: "/budget" },
-  { icon: Tags,            label: "Categories",     path: "/category" },
-  { icon: Handshake,       label: "Partners",       path: "/partners" },
-  { icon: FileText,        label: "Reconciliation", path: "/reconciliation" },
-  { icon: FileText,        label: "Fund Transfer",  path: "/fund-transfer" },
-  { icon: FileText,        label: "Documents",      path: "/documents" },
-  { icon: User,            label: "Users",          path: "/users" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/home" },
+  { icon: Receipt, label: "Transactions", path: "/transaction" },
+  { icon: Coins, label: "Debt", path: "/debt" },
+  { icon: BarChart3, label: "Reports", path: "/report" },
+  { icon: Wallet, label: "Budgets", path: "/budget" },
+  { icon: Tags, label: "Categories", path: "/category" },
+  { icon: Handshake, label: "Partners", path: "/partners" },
+  { icon: FileText, label: "Reconciliation", path: "/reconciliation" },
+  { icon: FileText, label: "Chuyển Quỹ", path: "/fund-transfer" },
+  { icon: FileText, label: "Documents", path: "/documents" },
+  { icon: User, label: "Users", path: "/users" },
 ];
 
 const MotionLink = motion(Link);
 
 export function Sidebar() {
-  const location  = useLocation();
+  const location = useLocation();
   const currentPath = location.pathname;
   const role = useAppSelector((state) => state.auth.role);
 

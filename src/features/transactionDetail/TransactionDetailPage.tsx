@@ -26,7 +26,8 @@ export default function TransactionDetailPage() {
     detailLoading,
     detailError,
     updateTransaction,
-    cancelTransaction
+    cancelTransaction,
+    partners
   } = useTransactionDetail(id);
 
   // Handler: Update transaction via API
@@ -40,10 +41,10 @@ export default function TransactionDetailPage() {
   };
 
   // Handler: Cancel payment transaction via API
-  const handleCancel = async (idStr: string) => {
+  const handleCancel = async () => {
     if (confirm(`Bạn có chắc chắn muốn hủy giao dịch này? Thao tác này sẽ đánh dấu trạng thái giao dịch thành CANCELLED.`)) {
       try {
-        await cancelTransaction(idStr);
+        await cancelTransaction();
         toast.success(`Đã hủy thành công giao dịch!`);
       } catch (err: any) {
         toast.error(err?.message || 'Hủy giao dịch thất bại.');
@@ -79,6 +80,7 @@ export default function TransactionDetailPage() {
             ) : selectedTransaction ? (
               <TransactionDetails
                 transaction={selectedTransaction}
+                partners={partners}
                 relatedDebt={relatedDebt}
                 spendingWarning={spendingWarning}
                 onUpdate={handleUpdate}

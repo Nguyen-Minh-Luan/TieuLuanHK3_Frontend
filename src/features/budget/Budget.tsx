@@ -259,10 +259,10 @@ export default function Budget() {
               <div className="p-4 bg-blue-50/50 rounded-xl flex flex-col gap-2" id="intro-box">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-brand-primary">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>The Architectural Ledger v1.2</span>
+                  <span>Hệ Thống Sổ Quỹ v1.2</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed font-sans mt-1">
-                  Chào mừng tới <strong>Architectural Ledger</strong>, công cụ vận hành vốn doanh nghiệp thuộc lớp thiết kế <em>The Precise Monolith</em>. Ứng dụng cung cấp bảng quản trị cấu trúc vốn tối ưu, đồng bộ dòng tiền tức thời và bảo vệ quỹ an toàn tuyệt đối.
+                  Chào mừng tới <strong>Hệ Thống Sổ Quỹ</strong>, công cụ vận hành vốn doanh nghiệp thuộc lớp thiết kế <em>The Precise Monolith</em>. Ứng dụng cung cấp bảng quản trị cấu trúc vốn tối ưu, đồng bộ dòng tiền tức thời và bảo vệ quỹ an toàn tuyệt đối.
                 </p>
               </div>
 
@@ -282,7 +282,7 @@ export default function Budget() {
               <div>
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest font-heading mb-2">2. Quản lý Giao dịch & Chuyển Quỹ</h4>
                 <p className="text-xs text-slate-500 leading-relaxed font-sans mb-2">
-                  Khi phát sinh thanh toán, hãy lựa chọn hành động <strong>"New Entry"</strong> ở góc dưới thanh menu:
+                  Khi phát sinh thanh toán, hãy lựa chọn hành động <strong>"Giao dịch mới"</strong> ở góc dưới thanh menu:
                 </p>
                 <div className="p-3 bg-slate-50 rounded-lg flex flex-col gap-1.5 mt-2" id="tx-help-cases">
                   <div className="flex items-start gap-1.5 text-xs text-slate-600">

@@ -206,29 +206,18 @@ export function useTransactionDetail(id?: string) {
   };
 
   // 4. Cancel transaction API integration
-  const cancelTransaction = async (idStr: string) => {
-    let dbId: number | null = null;
-    if (idStr.includes('-')) {
-      const parts = idStr.split('-');
-      const numPart = Number(parts[parts.length - 1]);
-      if (!isNaN(numPart)) {
-        dbId = numPart;
-      }
-    } else {
-      const numVal = Number(idStr);
-      if (!isNaN(numVal)) {
-        dbId = numVal;
-      }
+  const cancelTransaction = async () => {
+    if (!rawSelectedTransaction) {
+      throw new Error('Không tìm thấy thông tin giao dịch gốc để hủy.');
     }
 
-    if (dbId === null) {
-      throw new Error('Mã giao dịch không hợp lệ để hủy.');
-    }
-
-    await transactionService.cancel(dbId);
+    const apiId = rawSelectedTransaction.id;
+    await transactionService.cancel(apiId);
     
     // Refresh details
-    await fetchDetail(idStr);
+    if (id) {
+      await fetchDetail(id);
+    }
   };
 
   return {
@@ -241,6 +230,7 @@ export function useTransactionDetail(id?: string) {
     detailError,
     updateTransaction,
     cancelTransaction,
+    partners,
     refresh: () => id && fetchDetail(id),
   };
 }

@@ -281,7 +281,7 @@ export default function TransactionsView({
               }}
               className="w-full bg-transparent border-none outline-hidden focus:outline-hidden text-sm py-3 px-3 text-slate-700 font-bold appearance-none cursor-pointer pr-8"
             >
-              <option value="">All Categories</option>
+              <option value="">Tất cả danh mục</option>
               {categoriesList.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}

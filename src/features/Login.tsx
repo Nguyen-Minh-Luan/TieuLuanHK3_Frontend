@@ -59,7 +59,7 @@ export function Login() {
             </div>
           </div>
           <h1 className="font-display font-extrabold text-4xl tracking-tighter text-primary">
-            Architectural Ledger
+            Hệ Thống Sổ Quỹ
           </h1>
           <p className="font-sans text-xs tracking-[0.3em] uppercase text-outline mt-2 font-semibold">
             Enterprise Resource Planning

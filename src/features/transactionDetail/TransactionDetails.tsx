@@ -28,6 +28,7 @@ import {
 
 interface TransactionDetailsProps {
   transaction: Transaction;
+  partners: any[];
   relatedDebt?: RelatedDebt | null;
   spendingWarning?: SpendingWarning | null;
   onUpdate: (updated: Transaction) => void;
@@ -37,6 +38,7 @@ interface TransactionDetailsProps {
 
 export default function TransactionDetails({
   transaction,
+  partners,
   relatedDebt,
   spendingWarning,
   onUpdate,
@@ -49,7 +51,6 @@ export default function TransactionDetails({
 
   const categories = useAppSelector((state) => state.category.items);
   const funds = useAppSelector((state) => state.fund.items);
-  const partners = useAppSelector((state) => state.partner.items);
 
   // Sync state if transaction prop changes
   React.useEffect(() => {
@@ -117,14 +118,16 @@ export default function TransactionDetails({
         {/* Action button panel */}
         {!isEditing ? (
           <div className="flex flex-wrap gap-3" id="details-action-buttons">
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-[#eceef0] text-[#191c1e] px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#e0e3e5] transition-colors active:scale-95 cursor-pointer text-sm"
-              id="btn-edit-transaction"
-            >
-              <Edit3 size={16} />
-              <span>Chỉnh sửa</span>
-            </button>
+            {transaction.status === 'ACTIVE' && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-[#eceef0] text-[#191c1e] px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#e0e3e5] transition-colors active:scale-95 cursor-pointer text-sm"
+                id="btn-edit-transaction"
+              >
+                <Edit3 size={16} />
+                <span>Chỉnh sửa</span>
+              </button>
+            )}
             <button
               onClick={onPrintClick}
               className="bg-[#eceef0] text-[#191c1e] px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#e0e3e5] transition-colors active:scale-95 cursor-pointer text-sm"
@@ -376,7 +379,7 @@ export default function TransactionDetails({
                   <div className="w-12 h-12 bg-[#f8f9fb] rounded-xl shadow-inner flex items-center justify-center overflow-hidden border border-[#eceef0]">
                     {transaction.counterparty.logoUrl ? (
                       <img
-                        alt="Partner Brand"
+                        alt="Thương hiệu đối tác"
                         className="w-10 h-10 object-contain"
                         src={transaction.counterparty.logoUrl}
                         referrerPolicy="no-referrer"
@@ -491,12 +494,12 @@ export default function TransactionDetails({
                 </div>
                 {relatedDebt && (
                   <div className="pt-3 border-t border-[#f2f4f6] mt-3">
-                    <a
-                      href="/debts"
-                      className="w-full text-center block text-xs font-bold text-[#003178] hover:text-[#002150] transition-colors"
+                    <button
+                      onClick={() => navigate(`/debt?debtId=${relatedDebt.id}`)}
+                      className="w-full text-center block text-xs font-bold text-[#003178] hover:text-[#002150] transition-colors cursor-pointer"
                     >
                       Xem chi tiết khoản nợ →
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>

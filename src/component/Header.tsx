@@ -1,44 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Bell, Settings, LogOut } from "lucide-react";
+import { Search, Bell, Settings, LogOut, User } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../hooks/useAppDispatch";
 import { logout } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "./ConfirmDialog";
 import apiClient from "../services/apiClient";
 
-// --- Helper: lấy 2 chữ cái đầu của tên ---
-function getInitials(name: string): string {
-  const parts = name.trim().split(" ");
-  if (parts.length >= 2) {
-    const first = parts[0]?.charAt(0) ?? "";
-    const last = parts[parts.length - 1]?.charAt(0) ?? "";
-    return `${first}${last}`.toUpperCase();
-  }
-  return (name.slice(0, 2) || "U").toUpperCase();
-}
-
-// --- Helper: ánh xạ role number sang nhãn tiếng Việt ---
-function getRoleLabel(role: number | null | undefined): string {
-  if (role === 1) return "Quản trị viên";
-  if (role === 2) return "Kế toán viên";
-  if (role === 0) return "Người xem";
-  return "Người dùng";
-}
-
-// --- Helper: màu nền avatar cố định theo id ---
-const AVATAR_COLORS = [
-  "bg-blue-700",
-  "bg-violet-700",
-  "bg-emerald-700",
-  "bg-amber-700",
-  "bg-rose-700",
-  "bg-teal-700",
-  "bg-indigo-700",
-];
-function getAvatarColor(id: number | null | undefined): string {
-  if (id == null) return AVATAR_COLORS[0]!;
-  return AVATAR_COLORS[id % AVATAR_COLORS.length]!;
-}
+import { getInitials, getRoleLabel, getAvatarColor } from "../utils/userDisplay";
 
 // --- Props ---
 export interface HeaderProps {
@@ -65,6 +33,7 @@ export default function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,8 +42,22 @@ export default function Header({
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsMenuOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsMenuOpen(false);
+    }, 200);
+  };
 
   const handleLogoutClick = () => {
     setIsMenuOpen(false);
@@ -159,7 +142,12 @@ export default function Header({
           </div>
 
           {/* Avatar initials */}
-          <div className="relative" ref={menuRef}>
+          <div 
+            className="relative" 
+            ref={menuRef}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
             <div
               id="profile-avatar-executive"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -178,7 +166,17 @@ export default function Header({
                   <p className="text-sm font-bold text-slate-800 truncate">{displayName}</p>
                   <p className="text-xs text-slate-500 truncate">{roleLabel}</p>
                 </div>
-                <div className="py-1">
+                <div className="py-2.5">
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="w-full text-left px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors flex items-center gap-3 group cursor-pointer"
+                  >
+                    <User className="h-4.5 w-4.5 text-slate-400 group-hover:text-primary transition-colors" />
+                    Xem hồ sơ chi tiết
+                  </button>
                   <button
                     onClick={handleLogoutClick}
                     className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"

@@ -244,7 +244,7 @@ export default function UserManagementPage() {
                 Màn hình {activeView.toUpperCase()}
               </h3>
               <p className="text-sm text-on-surface-variant-custom leading-relaxed mb-6">
-                Màn hình này đang liên kết với hệ thống máy chủ tổng bộ <b>Architectural Ledger</b>. Vui lòng bấm vào thẻ <b>Settings</b> ở menu bên trái để mở bảng quản trị nhân sự "Quản lý Người dùng" chính xác nhất.
+                Màn hình này đang liên kết với hệ thống máy chủ tổng bộ <b>Hệ Thống Sổ Quỹ</b>. Vui lòng bấm vào thẻ <b>Settings</b> ở menu bên trái để mở bảng quản trị nhân sự "Quản lý Người dùng" chính xác nhất.
               </p>
               <button
                 id="btn-switch-back-to-settings"
