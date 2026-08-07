@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { loginAsync, clearError } from "../store/slices/authSlice";
 
@@ -144,12 +144,12 @@ export function Login() {
                 </button>
               </div>
               <div className="flex justify-end pr-1">
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="text-xs font-semibold text-secondary hover:text-primary-container transition-colors"
                 >
                   Forgot Password? (Quên mật khẩu?)
-                </a>
+                </Link>
               </div>
             </div>
 

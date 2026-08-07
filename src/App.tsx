@@ -1,5 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Login } from "./features/Login";
+import { ForgotPassword } from "./features/ForgotPassword";
+import { ResetPassword } from "./features/ResetPassword";
 import Home from "./features/Home";
 import TransactionPage from "./features/transaction/TransactionPage";
 import TransactionDetailPage from "./features/transactionDetail/TransactionDetailPage";
@@ -28,6 +30,9 @@ import ProfilePage from "./features/profile/ProfilePage";
 const router = createBrowserRouter([
   { path: "/",      element: <Login /> },
   { path: "/login", element: <Login /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
+
 
   // ── Tất cả route cần đăng nhập ──
   {

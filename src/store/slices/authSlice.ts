@@ -86,6 +86,37 @@ export const loginAsync = createAsyncThunk<LoginResponse, LoginPayload>(
   }
 );
 
+export const forgotPasswordAsync = createAsyncThunk<void, string>(
+  "auth/forgotPassword",
+  async (email, { rejectWithValue }) => {
+    const response = await fetch("http://localhost:8080/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+      return rejectWithValue(json.message ?? "Yêu cầu khôi phục mật khẩu thất bại");
+    }
+  }
+);
+
+export const resetPasswordAsync = createAsyncThunk<string, string>(
+  "auth/resetPassword",
+  async (token, { rejectWithValue }) => {
+    const response = await fetch("http://localhost:8080/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+      return rejectWithValue(json.message ?? "Link không hợp lệ hoặc đã hết hạn");
+    }
+    return json.data as string;
+  }
+);
+
 // --- Slice ---
 const authSlice = createSlice({
   name: "auth",

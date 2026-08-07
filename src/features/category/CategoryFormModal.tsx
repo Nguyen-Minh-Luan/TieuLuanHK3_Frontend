@@ -280,13 +280,16 @@ export default function CategoryFormModal({
             <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
               Mã tài khoản (Kế toán)
             </label>
-            <select
+            <input
               id="input-category-account"
+              list="account-options"
+              type="text"
               value={accountCode}
               onChange={(e) => setAccountCode(e.target.value)}
-              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none cursor-pointer"
-            >
-              <option value="">— Không chọn —</option>
+              placeholder="Nhập hoặc chọn mã tài khoản..."
+              className="w-full bg-[#f8f9fb] border border-transparent focus:border-[#003178]/40 focus:bg-white text-sm font-semibold text-[#0f172a] px-4 py-3 rounded-xl transition-all outline-none"
+            />
+            <datalist id="account-options">
               {accounts
                 .filter(a => type === 'INCOME' ? ['REVENUE', 'OTHER_INCOME'].includes(a.group) : ['EXPENSE', 'OTHER_EXPENSE'].includes(a.group))
                 .map((opt) => (
@@ -294,7 +297,7 @@ export default function CategoryFormModal({
                     {opt.code} - {opt.name}
                   </option>
                 ))}
-            </select>
+            </datalist>
           </div>
 
           {/* Actions */}
