@@ -45,7 +45,7 @@ export function KPICards({
           </span>
         </div>
         <div className="text-sm font-medium text-slate-500 mb-1">
-          Total Balance
+          Tồng Số Dư
         </div>
         <div className="text-4xl font-black text-brand-text font-display">
           {formatVND(totalBalance)}
@@ -65,13 +65,13 @@ export function KPICards({
           </div>
         </div>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-          Income
+          Tổng Thu
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
           {formatVND(totalIncome)}
         </div>
         <div className="text-[10px] text-slate-400 mt-2 italic flex items-center gap-1">
-          Inflow total
+          Tổng Dòng Tiền Vào
         </div>
       </motion.div>
 
@@ -88,13 +88,13 @@ export function KPICards({
           </div>
         </div>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-          Expenses
+          Tổng Chi
         </div>
         <div className="text-2xl font-bold text-brand-text font-display">
           {formatVND(totalExpense)}
         </div>
         <div className="text-[10px] text-red-600 mt-2 font-bold flex items-center gap-1">
-          Outflow total
+          Tổng Nguồn Tiền Ra
         </div>
       </motion.div>
 
@@ -116,7 +116,7 @@ export function KPICards({
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  Net Profit Margin
+                  Tỷ Suất Lợi Nhuận Ròng
                 </span>
                 <span className="text-[10px] font-bold text-brand-primary px-2 py-0.5 bg-white rounded-md border border-brand-primary/10">
                   {netProfitMargin !== null && netProfitMargin >= 20 ? "Healthy" : "Attention"}
@@ -127,9 +127,6 @@ export function KPICards({
               </div>
             </div>
           </div>
-          <button className="bg-brand-primary text-white font-bold py-3 px-6 rounded-lg text-xs shadow-md hover:brightness-110 active:scale-[0.98] transition-all">
-            Optimize Margin
-          </button>
         </div>
       </motion.div>
     </div>

@@ -225,18 +225,11 @@ export default function TransactionsView({
       {/* Page Header Section */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <nav className="flex text-xs font-semibold text-slate-400 mb-2 space-x-2 select-none">
-            <span className="hover:text-primary cursor-pointer transition-colors">
-              Main
-            </span>
-            <span>/</span>
-            <span className="text-primary font-bold">Transactions</span>
-          </nav>
           <h3 className="text-3xl font-extrabold text-brand-primary font-headline tracking-tight">
-            Transaction Management
+            Quản Lý Giao Dịch
           </h3>
           <p className="text-slate-500 mt-1 font-body text-sm">
-            Monitor and audit all enterprise-level financial movements.
+            Theo dõi và kiểm toán dòng tiền tài chính trong toàn doanh nghiệp
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

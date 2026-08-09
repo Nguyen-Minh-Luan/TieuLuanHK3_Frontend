@@ -79,7 +79,7 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-8 border-b border-slate-50 flex justify-between items-center">
         <h3 className="text-xl font-black text-brand-text font-display">
-          Recent Transactions
+          Các Giao Dịch Gần Đây
         </h3>
         <div className="flex items-center gap-4">
           <div className="flex -space-x-2">
@@ -109,12 +109,12 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
         <table className="w-full text-left">
           <thead className="bg-slate-50/50">
             <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              <th className="px-8 py-4">Date</th>
-              <th className="px-8 py-4">Description</th>
-              <th className="px-8 py-4">Category</th>
-              <th className="px-8 py-4 text-right">Amount</th>
-              <th className="px-8 py-4">Status</th>
-              <th className="px-8 py-4 text-center">Action</th>
+              <th className="px-8 py-4">Ngày Giao Dịch</th>
+              <th className="px-8 py-4">Nội dung</th>
+              <th className="px-8 py-4">Danh mục</th>
+              <th className="px-8 py-4 text-right">Số Tiền</th>
+              <th className="px-8 py-4">Trạng Thái</th>
+              <th className="px-8 py-4 text-center">Thao Tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -183,10 +183,10 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
                             statusLabel === "Hoạt động"
                               ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
                               : statusLabel === "Đã cập nhật"
-                              ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
-                              : statusLabel === "Đã hủy"
-                              ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]"
-                              : "bg-slate-300"
+                                ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                                : statusLabel === "Đã hủy"
+                                  ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]"
+                                  : "bg-slate-300"
                           )}
                         />
                         <span
@@ -195,10 +195,10 @@ export function TransactionsData({ transactions, categoriesMap }: TransactionsDa
                             statusLabel === "Hoạt động"
                               ? "text-emerald-600"
                               : statusLabel === "Đã cập nhật"
-                              ? "text-amber-600"
-                              : statusLabel === "Đã hủy"
-                              ? "text-rose-600"
-                              : "text-slate-400"
+                                ? "text-amber-600"
+                                : statusLabel === "Đã hủy"
+                                  ? "text-rose-600"
+                                  : "text-slate-400"
                           )}
                         >
                           {statusLabel}

@@ -179,7 +179,7 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     className="text-4xl font-black text-brand-text tracking-tight mb-2 font-display"
                   >
-                    Financial Overview
+                    Tổng quan Tài chính
                   </motion.h1>
                   <div className="flex items-center gap-2 text-slate-500 font-medium text-sm">
                     <span>As of {today}</span>
@@ -189,15 +189,6 @@ export default function Home() {
                       Live Data
                     </span>
                   </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button className="bg-white px-6 py-3 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm">
-                    Export CSV
-                  </button>
-                  <button className="primary-gradient text-white px-6 py-3 rounded-xl text-xs font-bold shadow-lg shadow-blue-900/10 hover:brightness-110 active:scale-[0.98] transition-all">
-                    Generate Report
-                  </button>
                 </div>
               </div>
 

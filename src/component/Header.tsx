@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Search, Bell, Settings, LogOut, User } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../hooks/useAppDispatch";
 import { logout } from "../store/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import ConfirmDialog from "./ConfirmDialog";
 import apiClient from "../services/apiClient";
 
@@ -84,7 +84,12 @@ export default function Header({
       {/* Left: Logo (mobile) + Search bar */}
       <div className="flex items-center gap-4 flex-1">
         {/* Logo — chỉ hiện trên mobile */}
-        <span className="text-2xl font-black text-primary font-display md:hidden">LP</span>
+        <Link
+          to="/home"
+          className="text-xl font-black text-primary font-display md:hidden hover:opacity-80 transition-opacity"
+        >
+          Smart Financial
+        </Link>
 
         {/* Search bar — ẩn trên mobile, ẩn nếu showSearch=false */}
         {showSearch && (
@@ -107,24 +112,7 @@ export default function Header({
 
       {/* Right: Notifications, Settings, Profile */}
       <div className="flex items-center gap-3">
-        {/* Bell */}
-        <button
-          id="btn-notifications"
-          title="Thông báo"
-          className="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all relative"
-        >
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse" />
-        </button>
 
-        {/* Settings */}
-        <button
-          id="btn-settings"
-          title="Cài đặt"
-          className="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all"
-        >
-          <Settings size={20} />
-        </button>
 
         {/* Divider */}
         <div className="h-8 w-px bg-outline-variant/30 mx-1" />
@@ -142,8 +130,8 @@ export default function Header({
           </div>
 
           {/* Avatar initials */}
-          <div 
-            className="relative" 
+          <div
+            className="relative"
             ref={menuRef}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -158,7 +146,7 @@ export default function Header({
             </div>
             {/* Online indicator */}
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
-            
+
             {/* Dropdown Menu */}
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-2 animate-fade-in z-50">

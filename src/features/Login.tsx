@@ -59,10 +59,10 @@ export function Login() {
             </div>
           </div>
           <h1 className="font-display font-extrabold text-4xl tracking-tighter text-primary">
-            Hệ Thống Sổ Quỹ
+            Smart Financial Management
           </h1>
           <p className="font-sans text-xs tracking-[0.3em] uppercase text-outline mt-2 font-semibold">
-            Enterprise Resource Planning
+            Bộ Giải pháp Tài chính Doanh nghiệp Thông minh
           </p>
         </motion.div>
 
@@ -75,11 +75,10 @@ export function Login() {
         >
           <div className="mb-10">
             <h2 className="font-display font-bold text-2xl text-[#191c1e] mb-2 tracking-tight">
-              Secure Gateway
+              Đặng Nhập
             </h2>
             <p className="text-outline text-sm leading-relaxed">
-              Please authenticate using your corporate credentials to access the
-              ledger management systems.
+              Vui lòng đăng nhập vào hệ thống bằng tài khoản mà công ty đã cấp cho bạn để có thể truy cập vào hệ thống Smart Financial
             </p>
           </div>
 
@@ -116,7 +115,7 @@ export function Login() {
                 className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1"
                 htmlFor="password"
               >
-                Security Key
+                Password
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors">
@@ -148,7 +147,7 @@ export function Login() {
                   to="/forgot-password"
                   className="text-xs font-semibold text-secondary hover:text-primary-container transition-colors"
                 >
-                  Forgot Password? (Quên mật khẩu?)
+                  Quên mật khẩu?
                 </Link>
               </div>
             </div>
@@ -196,7 +195,7 @@ export function Login() {
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
+                  <span>Đăng Nhập</span>
                   <span className="material-symbols-outlined text-xl">login</span>
                 </>
               )}
@@ -204,10 +203,10 @@ export function Login() {
           </form>
 
           {/* Footer separator */}
-          <div className="mt-12 flex items-center justify-center space-x-4 opacity-30">
+          <div className="mt-12 flex items-center justify-center space-x-4 opacity-70">
             <div className="h-[1px] flex-1 bg-outline" />
-            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-outline whitespace-nowrap">
-              Authorized Personnel Only
+            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-outline whitespace-nowrap">
+              Chỉ dành cho nhân viên có thẩm quyền
             </div>
             <div className="h-[1px] flex-1 bg-outline" />
           </div>

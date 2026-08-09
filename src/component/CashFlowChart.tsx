@@ -24,18 +24,15 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
       <div className="flex justify-between items-center mb-10">
         <div>
           <h3 className="text-xl font-black text-brand-text font-display">
-            Cash Flow Analysis
+            Phân Tích Dòng Tiền
           </h3>
           <p className="text-sm text-slate-500 font-medium">
-            Projected vs Actuals for the last 6 months
+            Dự kiến so với Thực tế trong 6 tháng qua
           </p>
         </div>
         <div className="flex bg-slate-50 p-1 rounded-full border border-slate-200">
           <button className="px-5 py-1.5 text-xs font-bold bg-brand-primary text-white rounded-full shadow-sm">
-            6M
-          </button>
-          <button className="px-5 py-1.5 text-xs font-bold text-slate-500 hover:text-brand-primary transition-colors">
-            1Y
+            6 Tháng
           </button>
         </div>
       </div>

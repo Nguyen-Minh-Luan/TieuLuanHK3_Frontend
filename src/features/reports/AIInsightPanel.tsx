@@ -72,8 +72,8 @@ export const AIInsightPanel: React.FC = () => {
             <Lightbulb className="w-5 h-5 text-brand-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 leading-none">CFO Ảo (AI Insight)</h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <h3 className="text-lg font-bold text-gray-900 leading-none">Trợ Lý Ảo</h3>
+            <p className="text-s text-gray-500 mt-1">
               Phân tích tự động dựa trên dữ liệu {months} tháng gần nhất
             </p>
           </div>
