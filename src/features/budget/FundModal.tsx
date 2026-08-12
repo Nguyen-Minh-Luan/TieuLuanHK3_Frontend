@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Landmark, FileText, CheckCircle2, ChevronRight } from 'lucide-react';
 import type { Fund } from './types';
-import { chartOfAccountService, type ChartOfAccount } from '../../services/chartOfAccountService';
 
 interface FundModalProps {
   isOpen: boolean;
@@ -19,13 +18,6 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
   const [code, setCode] = useState('');
   const [note, setNote] = useState('');
   const [accountCode, setAccountCode] = useState('');
-  const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
-
-  useEffect(() => {
-    if (isOpen) {
-      chartOfAccountService.getAll('ASSET').then(setAccounts).catch(console.error);
-    }
-  }, [isOpen]);
 
   // When editingFund changes, load its data
   useEffect(() => {
@@ -65,6 +57,10 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
     }
     if (availableBalance > totalCapital) {
       alert("Số dư khả dụng không được lớn hơn tổng vốn!");
+      return;
+    }
+    if (accountCode && !/^\d+$/.test(accountCode)) {
+      alert("Mã tài khoản kế toán chỉ được chứa chữ số!");
       return;
     }
 
@@ -159,19 +155,20 @@ export default function FundModal({ isOpen, onClose, onSave, editingFund }: Fund
             <label id="lbl-account" className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-heading">
               Mã tài khoản (Kế toán)
             </label>
-            <select
-              id="select-account"
+            <input
+              id="input-account"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={accountCode}
-              onChange={(e) => setAccountCode(e.target.value)}
-              className="w-full bg-[#f8fafc] text-sm text-[#0f172a] p-3 rounded-lg border-r-[12px] border-r-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-all font-medium"
-            >
-              <option value="">— Không chọn —</option>
-              {accounts.map((opt) => (
-                <option key={opt.code} value={opt.code}>
-                  {opt.code} - {opt.name}
-                </option>
-              ))}
-            </select>
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
+                setAccountCode(digitsOnly);
+              }}
+              placeholder="VD: 111"
+              maxLength={10}
+              className="w-full bg-[#f8fafc] text-sm text-[#0f172a] p-3 rounded-lg border border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-all placeholder:text-slate-400 font-mono"
+            />
           </div>
 
           {/* Row 2: Type and Status */}
