@@ -18,6 +18,7 @@ import type {
 import { REPORT_TYPE_LABELS, REPORT_STATUS_LABELS } from "./reportTypes";
 import { Sidebar } from "../../component/Sidebar";
 import Header from "../../component/Header";
+import PrintReportModal from "./PrintReportModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,10 +57,10 @@ function StatCard({
 
 function ReportTypeBadge({ type }: { type: ReportType }) {
   const colors: Record<ReportType, string> = {
-    MONTHLY:   "bg-blue-50 text-brand-primary",
+    MONTHLY: "bg-blue-50 text-brand-primary",
     QUARTERLY: "bg-purple-50 text-purple-700",
-    YEARLY:    "bg-amber-50 text-amber-700",
-    CUSTOM:    "bg-teal-50 text-teal-700",
+    YEARLY: "bg-amber-50 text-amber-700",
+    CUSTOM: "bg-teal-50 text-teal-700",
   };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${colors[type]}`}>
@@ -228,12 +229,12 @@ function ReportFormModal({ isOpen, onClose, onSubmit, editReport, userId }: Form
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
 function ReportDetailPanel({
-  report, onClose, onRecalculate, onExportPdf, isRecalculating,
+  report, onClose, onRecalculate, onOpenPreview, isRecalculating,
 }: {
   report: ReportResponse;
   onClose: () => void;
   onRecalculate: (id: number) => void;
-  onExportPdf: (id: number) => void;
+  onOpenPreview: (id: number) => void;
   isRecalculating: boolean;
 }) {
   return (
@@ -317,7 +318,7 @@ function ReportDetailPanel({
             Tái tính số liệu
           </button>
           <button
-            onClick={() => onExportPdf(report.id)}
+            onClick={() => onOpenPreview(report.id)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-brand-primary hover:bg-blue-50 transition-colors border border-blue-200 cursor-pointer"
           >
             <FileDown size={14} />
@@ -345,6 +346,7 @@ export default function ReportsView() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastOk, setToastOk] = useState(true);
   const [recalcId, setRecalcId] = useState<number | null>(null);
+  const [previewReportId, setPreviewReportId] = useState<number | null>(null);
 
   const triggerToast = useCallback((msg: string, ok = true) => {
     setToastMsg(msg); setToastOk(ok);
@@ -402,8 +404,11 @@ export default function ReportsView() {
     }
   };
 
-  const handleExportPdf = (id: number) => {
-    window.open(reportService.exportPdfUrl(id), "_blank");
+  const handleOpenPreview = (id: number) => {
+    setDetailReport(null);
+    setTimeout(() => {
+      setPreviewReportId(id);
+    }, 150);
   };
 
   const currentPage = params.page ?? 1;
@@ -638,8 +643,8 @@ export default function ReportsView() {
                               </button>
                               <button
                                 id={`btn-export-pdf-${report.id}`}
-                                onClick={() => handleExportPdf(report.id)}
-                                title="Xuất PDF"
+                                onClick={() => handleOpenPreview(report.id)}
+                                title="Xem trước PDF"
                                 className="p-2 rounded-xl text-brand-primary hover:bg-blue-50 transition-all cursor-pointer"
                               >
                                 <FileDown size={15} />
@@ -730,10 +735,16 @@ export default function ReportsView() {
           report={detailReport}
           onClose={() => setDetailReport(null)}
           onRecalculate={handleRecalculate}
-          onExportPdf={handleExportPdf}
+          onOpenPreview={handleOpenPreview}
           isRecalculating={recalcId === detailReport.id}
         />
       )}
+
+      <PrintReportModal
+        isOpen={previewReportId !== null}
+        reportId={previewReportId || 0}
+        onClose={() => setPreviewReportId(null)}
+      />
     </div>
   );
 }

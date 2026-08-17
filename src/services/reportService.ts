@@ -66,6 +66,16 @@ const reportService = {
   },
 
   /**
+   * Xem trước PDF báo cáo (trả về blob).
+   */
+  previewReportPdfBlob: async (id: number) => {
+    const res = await apiClient.get(`/pdf/reports/${id}/preview`, {
+      responseType: "blob",
+    });
+    return { blob: res.data as Blob };
+  },
+
+  /**
    * Trả về URL để mở/tải PDF báo cáo trong tab mới.
    * Endpoint GET /pdf/reports/{id} là permitAll, không cần token.
    */
