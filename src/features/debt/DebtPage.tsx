@@ -10,6 +10,7 @@ import {
   fetchDebtById,
   setParams,
   clearSelectedDebt,
+  markDebtAsPaid,
 } from '../../store/slices/debtSlice';
 import { useDebounce } from '../../hooks/useDebounce';
 import DebtDetailsModal from './DebtDetailsModal';
@@ -102,19 +103,35 @@ export default function DebtPage() {
   };
 
   // Mark debt as fully paid
-  // NOTE: Backend không cho phép set paidAmount trực tiếp qua PATCH /debts.
-  // Thanh toán nợ phải thực hiện qua luồng tạo giao dịch (Transaction) liên kết debtId.
-  // Hàm này thông báo cho user thay vì thực hiện patch không hợp lệ.
-  const handleMarkAsPaid = (id: number) => {
-    // Use selectedDebt as fallback when the debt is not in the current page items
-    // (e.g. opened via URL query param from transaction detail)
+  // Hai luồng:
+  //   A) Nếu remainingAmount <= 1đ (kự thuật = 0 sau khi màn hình hiển thị): gọi API mark-paid.
+  //   B) Nếu còn nợ thật sự: hướng dẫn tạo giao dịch để thanh toán qua luồng Transaction.
+  const handleMarkAsPaid = async (id: number) => {
     const debtItem = items.find((d) => d.id === id) ?? (selectedDebt?.id === id ? selectedDebt : null);
     if (!debtItem) return;
-    triggerToast(
-      `Để ghi nhận thanh toán cho khoản nợ của ${debtItem.partnerName || 'đối tác'}, ` +
-      `vui lòng tạo giao dịch mới và liên kết với khoản nợ này.`,
-      'info'
-    );
+
+    const remaining = debtItem.remainingAmount ?? (debtItem.totalAmount - (debtItem.paidAmount ?? 0));
+
+    if (remaining <= 1) {
+      // remaining ≤ 1đ: do sai số floating-point — gọi API xác nhận tất toán thủ công
+      try {
+        await dispatch(markDebtAsPaid(id)).unwrap();
+        dispatch(fetchDebtSummary()); // làm mới KPI cards
+        triggerToast(
+          `Đã xác nhận tất toán khoản nợ của ${debtItem.partnerName || 'đối tác'} thành công!`,
+          'success'
+        );
+      } catch (err: any) {
+        triggerToast(err ?? 'Xác nhận tất toán thất bại!', 'error');
+      }
+    } else {
+      // Còn nợ thật sự: hướng dẫn tạo giao dịch
+      triggerToast(
+        `Để ghi nhận thanh toán cho khoản nợ của ${debtItem.partnerName || 'đối tác'}, ` +
+        `vui lòng tạo giao dịch mới và liên kết với khoản nợ này.`,
+        'info'
+      );
+    }
   };
 
   // Delete Debt

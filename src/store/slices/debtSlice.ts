@@ -121,6 +121,27 @@ export const fetchDebtSummary = createAsyncThunk(
 );
 
 /**
+ * PATCH /debts/:id/mark-paid — Xác nhận tất toán thủ công.
+ * Backend chỉ cho phép khi remainingAmount <= PAYMENT_EPSILON (1đ).
+ * Sau khi thành công:
+ *  - Cập nhật item tương ứng trong danh sách items (optimistic-ish update)
+ *  - Cập nhật selectedDebt nếu đang xem cùng khoản nợ
+ *  - Trigger refetch summary để KPI cards cập nhật chính xác
+ */
+export const markDebtAsPaid = createAsyncThunk(
+  'debt/markAsPaid',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      return await debtService.markAsPaid(id);
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message ?? 'Xác nhận tất toán thất bại'
+      );
+    }
+  }
+);
+
+/**
  * GET /debts/:id — Lấy payments cho dropdown của 1 dòng nợ.
  * Tách khỏi fetchDebtById để không ghi đè selectedDebt.
  * Cache: nếu đã 'succeeded', caller nên kiểm tra trước khi dispatch.
@@ -233,6 +254,21 @@ const debtSlice = createSlice({
         state.summary = action.payload;
       })
 
+      // ── markDebtAsPaid ──────────────────────────────────────────────────────
+      .addCase(markDebtAsPaid.fulfilled, (state, action) => {
+        const updated = action.payload;
+        // Cập nhật item trong danh sách
+        const idx = state.items.findIndex((d) => d.id === updated.id);
+        if (idx !== -1) state.items[idx] = updated;
+        // Cập nhật selectedDebt nếu đang xem cùng khoản nợ
+        if (state.selectedDebt?.id === updated.id) state.selectedDebt = updated;
+        // Trigger refetch summary để KPI cards phản ánh đúng
+        state.status = 'idle';
+      })
+      .addCase(markDebtAsPaid.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+
       // ── fetchDebtPayments ───────────────────────────────────────────────────
       .addCase(fetchDebtPayments.pending, (state, action) => {
         const id = action.meta.arg;
@@ -259,3 +295,4 @@ const debtSlice = createSlice({
 
 export const { setParams, resetSubmitStatus, clearSelectedDebt, invalidateDebtPayments } = debtSlice.actions;
 export default debtSlice.reducer;
+

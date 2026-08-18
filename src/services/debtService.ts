@@ -78,6 +78,16 @@ const debtService = {
     const res = await apiClient.get<ApiResponse<DebtResponse[]>>(`/debts/unpaid/${debtType}`);
     return res.data.data;
   },
+
+  /**
+   * PATCH /debts/:id/mark-paid — Xác nhận tất toán thủ công.
+   * Backend chỉ cho phép khi remainingAmount <= 1đ (epsilon).
+   * Dùng để kế toán viên chốt tay khi hệ thống không tự chốt do sai số float.
+   */
+  markAsPaid: async (id: number) => {
+    const res = await apiClient.patch<ApiResponse<DebtResponse>>(`/debts/${id}/mark-paid`);
+    return res.data.data;
+  },
 };
 
 export default debtService;
