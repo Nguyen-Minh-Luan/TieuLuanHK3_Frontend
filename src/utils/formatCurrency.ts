@@ -8,3 +8,14 @@ export const formatVND = (num?: number | null): string => {
   if (num === null || num === undefined || Number.isNaN(num)) return "0 đ";
   return new Intl.NumberFormat("vi-VN").format(num) + " đ";
 };
+
+export const formatNumberInput = (value: string): string => {
+  const raw = value.replace(/[^0-9]/g, '');
+  if (!raw) return '';
+  return new Intl.NumberFormat('vi-VN').format(parseInt(raw, 10));
+};
+
+export const parseNumberInput = (value: string): number => {
+  const raw = value.replace(/[^0-9]/g, '');
+  return raw ? parseInt(raw, 10) : 0;
+};

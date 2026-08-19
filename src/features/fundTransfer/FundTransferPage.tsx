@@ -6,6 +6,7 @@ import { fundTransferService } from '../../services/fundTransferService';
 import type { FundTransferDTO } from './apiTypes';
 import FundTransferHistoryTable from './FundTransferHistoryTable';
 import FundTransferFormModal from './FundTransferFormModal';
+import FundTransferDetailModal from './FundTransferDetailModal';
 import Header from '../../component/Header';
 import { Sidebar } from '../../component/Sidebar';
 
@@ -26,6 +27,8 @@ export default function FundTransferPage() {
 
   // Modal state
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDetailVisible, setIsDetailVisible] = useState(false);
+  const [selectedTransferId, setSelectedTransferId] = useState<number | null>(null);
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -76,6 +79,11 @@ export default function FundTransferPage() {
     loadData();
     // Tải lại danh sách quỹ để cập nhật số dư mới nhất
     dispatch(fetchFunds({ page: 1, size: 100 }));
+  };
+
+  const handleRowClick = (item: FundTransferDTO) => {
+    setSelectedTransferId(item.id);
+    setIsDetailVisible(true);
   };
 
   return (
@@ -178,7 +186,6 @@ export default function FundTransferPage() {
             </button>
           </div>
 
-          {/* Table section */}
           <FundTransferHistoryTable
             data={data}
             loading={loading}
@@ -186,6 +193,7 @@ export default function FundTransferPage() {
             currentPage={page}
             pageSize={size}
             onPageChange={handlePageChange}
+            onRowClick={handleRowClick}
           />
         </div>
       </main>
@@ -196,6 +204,12 @@ export default function FundTransferPage() {
         onCancel={() => setIsModalVisible(false)}
         onSuccess={handleTransferSuccess}
         onError={(msg) => triggerToast(msg, 'error')}
+      />
+
+      <FundTransferDetailModal
+        visible={isDetailVisible}
+        transferId={selectedTransferId}
+        onClose={() => setIsDetailVisible(false)}
       />
 
       {/* Toast Notification */}

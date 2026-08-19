@@ -19,6 +19,7 @@ interface Props {
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number, pageSize: number) => void;
+  onRowClick?: (item: FundTransferDTO) => void;
 }
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -45,6 +46,7 @@ export default function FundTransferHistoryTable({
   currentPage,
   pageSize,
   onPageChange,
+  onRowClick,
 }: Props) {
   const totalPages = Math.ceil(total / pageSize);
   const startIndex = (currentPage - 1) * pageSize + 1;
@@ -81,7 +83,11 @@ export default function FundTransferHistoryTable({
               ))
             ) : data.length > 0 ? (
               data.map((item) => (
-                <tr key={item.id} className="hover:bg-[#f8f9fb]/60 group transition-all duration-150">
+                <tr 
+                  key={item.id} 
+                  className={`hover:bg-[#f8f9fb]/60 group transition-all duration-150 ${onRowClick ? 'cursor-pointer' : ''}`}
+                  onClick={() => onRowClick && onRowClick(item)}
+                >
                   <td className="py-4 px-5 text-sm font-semibold text-[#0f172a]">{item.transferCode}</td>
                   <td className="py-4 px-5 text-sm text-[#475569]">{formatDate(item.createdAt)}</td>
                   <td className="py-4 px-5">

@@ -27,6 +27,7 @@ import reconciliationService from '../../services/reconciliationService';
 import { fetchFunds } from '../../store/slices/fundSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
 import { toLocalDateInputValue } from '../transactionDetail/mappers';
+import { formatNumberInput, parseNumberInput } from '../../utils/formatCurrency';
 
 interface DebtOption {
   id: number;
@@ -50,6 +51,7 @@ export default function TransactionModal({
   editingTransaction,
 }: TransactionModalProps) {
   const [amount, setAmount] = useState('');
+  const [amountDisplay, setAmountDisplay] = useState('');
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [fundId, setFundId] = useState<number | null>(null);
@@ -141,7 +143,9 @@ export default function TransactionModal({
     setSubmitting(false);
     if (editingTransaction && isOpen) {
       const ext = editingTransaction as any;
-      setAmount(Math.abs(editingTransaction.amount).toString());
+      const amt = Math.abs(editingTransaction.amount).toString();
+      setAmount(amt);
+      setAmountDisplay(formatNumberInput(amt));
       setType(editingTransaction.amount >= 0 ? 'income' : 'expense');
       setCategoryId(ext.categoryId || null);
       setFundId(ext.fundId || null);
@@ -160,6 +164,7 @@ export default function TransactionModal({
       }
     } else if (isOpen) {
       setAmount('');
+      setAmountDisplay('');
       setType('expense');
       setCategoryId(null);
       setFundId(null);
@@ -258,7 +263,9 @@ export default function TransactionModal({
     if (selected) {
       // Gợi ý điền số tiền = phần còn nợ
       if (selected.remainingAmount > 0) {
-        setAmount(selected.remainingAmount.toString());
+        const amt = selected.remainingAmount.toString();
+        setAmount(amt);
+        setAmountDisplay(formatNumberInput(amt));
       }
     }
   };
@@ -515,11 +522,15 @@ export default function TransactionModal({
                   <div className="flex items-center gap-2">
                     <span className="text-brand-primary font-extrabold text-sm tracking-wide shrink-0">VNĐ</span>
                     <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      type="text"
+                      inputMode="numeric"
+                      value={amountDisplay}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setAmountDisplay(formatNumberInput(val));
+                        const parsed = parseNumberInput(val);
+                        setAmount(parsed ? parsed.toString() : '');
+                      }}
                       placeholder="0"
                       className="w-full bg-transparent border-none outline-hidden text-lg font-bold text-slate-900 focus:outline-hidden focus:ring-0 p-0"
                       required
